@@ -472,7 +472,7 @@ def handle_absents_command(slack_user_id, team_id):
     today = date.today()
 
     # Get all approved leaves that include today
-    absents = LeaveRequest.query.join(User).filter(
+    absents = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == user.company_id,
         LeaveRequest.status == LeaveRequest.STATUS_APPROVED,
         LeaveRequest.start_date <= today,
@@ -663,7 +663,7 @@ def handle_demandes_command(slack_user_id, team_id):
         })
 
         if user.is_hr():
-            pending = LeaveRequest.query.join(User).filter(
+            pending = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
                 User.company_id == user.company_id,
                 LeaveRequest.status == LeaveRequest.STATUS_PENDING_HR
             ).order_by(LeaveRequest.created_at.desc()).limit(5).all()

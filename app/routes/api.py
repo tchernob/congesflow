@@ -28,7 +28,7 @@ def calendar_events():
         end_date = start_date + timedelta(days=31)
 
     # Toujours filtrer par entreprise
-    query = LeaveRequest.query.join(User).filter(
+    query = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == current_user.company_id,
         LeaveRequest.status == 'approved',
         LeaveRequest.start_date <= end_date,
@@ -201,12 +201,12 @@ def dashboard_stats():
 
     if current_user.is_hr():
         # Stats globales pour RH (filtrées par entreprise)
-        pending_count = LeaveRequest.query.join(User).filter(
+        pending_count = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
             User.company_id == company_id,
             LeaveRequest.status == LeaveRequest.STATUS_PENDING_HR
         ).count()
 
-        absent_today = LeaveRequest.query.join(User).filter(
+        absent_today = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
             User.company_id == company_id,
             LeaveRequest.status == 'approved',
             LeaveRequest.start_date <= today,

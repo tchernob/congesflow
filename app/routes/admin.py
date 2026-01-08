@@ -41,7 +41,7 @@ def dashboard():
     company_id = current_user.company_id
 
     # Demandes en attente RH (filtrées par entreprise)
-    pending_hr = LeaveRequest.query.join(User).filter(
+    pending_hr = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == company_id,
         LeaveRequest.status == LeaveRequest.STATUS_PENDING_HR
     ).count()
@@ -50,7 +50,7 @@ def dashboard():
     active_employees = User.query.filter_by(is_active=True, company_id=company_id).count()
 
     # Absences aujourd'hui dans cette entreprise
-    absent_today = LeaveRequest.query.join(User).filter(
+    absent_today = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == company_id,
         LeaveRequest.status == 'approved',
         LeaveRequest.start_date <= today,
@@ -59,7 +59,7 @@ def dashboard():
 
     # Demandes ce mois dans cette entreprise
     month_start = today.replace(day=1)
-    requests_this_month = LeaveRequest.query.join(User).filter(
+    requests_this_month = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == company_id,
         LeaveRequest.created_at >= month_start
     ).count()
@@ -72,7 +72,7 @@ def dashboard():
     }
 
     # Demandes récentes en attente de cette entreprise
-    pending_requests = LeaveRequest.query.join(User).filter(
+    pending_requests = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == company_id,
         LeaveRequest.status == LeaveRequest.STATUS_PENDING_HR
     ).order_by(LeaveRequest.created_at.desc()).limit(10).all()
@@ -90,7 +90,7 @@ def requests():
     year_filter = request.args.get('year', date.today().year, type=int)
 
     # Filtrer par entreprise
-    query = LeaveRequest.query.join(User).filter(User.company_id == current_user.company_id)
+    query = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(User.company_id == current_user.company_id)
 
     if status_filter == 'pending_hr':
         query = query.filter(LeaveRequest.status == LeaveRequest.STATUS_PENDING_HR)
@@ -114,7 +114,7 @@ def requests():
 @hr_required
 def view_request(request_id):
     # Vérifier que la demande appartient à un employé de la même entreprise
-    leave_request = LeaveRequest.query.join(User).filter(
+    leave_request = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         LeaveRequest.id == request_id,
         User.company_id == current_user.company_id
     ).first_or_404()
@@ -127,7 +127,7 @@ def view_request(request_id):
 @hr_required
 def approve_request(request_id):
     # Vérifier que la demande appartient à un employé de la même entreprise
-    leave_request = LeaveRequest.query.join(User).filter(
+    leave_request = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         LeaveRequest.id == request_id,
         User.company_id == current_user.company_id
     ).first_or_404()
@@ -163,7 +163,7 @@ def approve_request(request_id):
 @hr_required
 def reject_request(request_id):
     # Vérifier que la demande appartient à un employé de la même entreprise
-    leave_request = LeaveRequest.query.join(User).filter(
+    leave_request = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         LeaveRequest.id == request_id,
         User.company_id == current_user.company_id
     ).first_or_404()

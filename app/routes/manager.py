@@ -91,7 +91,7 @@ def requests():
 @manager_required
 def view_request(request_id):
     # Vérifier que la demande appartient à un employé de la même entreprise
-    leave_request = LeaveRequest.query.join(User).filter(
+    leave_request = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         LeaveRequest.id == request_id,
         User.company_id == current_user.company_id
     ).first_or_404()
@@ -122,7 +122,7 @@ def view_request(request_id):
 @manager_required
 def approve_request(request_id):
     # Vérifier que la demande appartient à un employé de la même entreprise
-    leave_request = LeaveRequest.query.join(User).filter(
+    leave_request = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         LeaveRequest.id == request_id,
         User.company_id == current_user.company_id
     ).first_or_404()
@@ -151,7 +151,7 @@ def approve_request(request_id):
 @manager_required
 def reject_request(request_id):
     # Vérifier que la demande appartient à un employé de la même entreprise
-    leave_request = LeaveRequest.query.join(User).filter(
+    leave_request = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         LeaveRequest.id == request_id,
         User.company_id == current_user.company_id
     ).first_or_404()
