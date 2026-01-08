@@ -4,11 +4,11 @@ server {
 
     location / {
         include proxy_params;
-        proxy_pass http://unix:/var/www/timeoff/timeoff.sock;
+        proxy_pass http://unix:/home/tcher/timeoff/timeoff.sock;
     }
 
     location /static {
-        alias /var/www/timeoff/app/static;
+        alias /home/tcher/timeoff/app/static;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }

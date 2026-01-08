@@ -4,7 +4,7 @@
 
 set -e
 
-APP_DIR="/var/www/timeoff"
+APP_DIR="/home/tcher/timeoff"
 REPO="https://github.com/tchernob/congesflow.git"
 
 echo "=== Déploiement TimeOff ==="
@@ -39,7 +39,7 @@ if [ ! -f ".env" ]; then
     echo "Création du fichier .env..."
     cp .env.example .env
     echo ""
-    echo "⚠️  IMPORTANT: Éditez /var/www/timeoff/.env avec vos valeurs !"
+    echo "⚠️  IMPORTANT: Éditez /home/tcher/timeoff/.env avec vos valeurs !"
     echo ""
 fi
 
@@ -72,7 +72,7 @@ echo ""
 echo "=== Déploiement terminé ==="
 echo ""
 echo "Prochaines étapes :"
-echo "1. Éditez /var/www/timeoff/.env avec vos valeurs"
+echo "1. Éditez /home/tcher/timeoff/.env avec vos valeurs"
 echo "2. Configurez le DNS Gandi (A record vers IP du serveur)"
 echo "3. Installez SSL : sudo certbot --nginx -d timeoff.fr -d www.timeoff.fr"
 echo ""
