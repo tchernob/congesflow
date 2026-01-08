@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Types de contrat - TimeOff{% endblock %}
+{% block page_title %}Types de contrat{% endblock %}
+
+{% block content %}
+<div class="page-header-actions">
+    <a href="{{ url_for('admin.new_contract_type') }}" class="btn btn-primary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Nouveau type
+    </a>
+    {% if not contract_types %}
+    <form method="POST" action="{{ url_for('admin.init_contract_types') }}" style="display: inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-secondary">
+            Initialiser les types par défaut
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+{% if contract_types %}
+<div class="card-static">
+    <div class="table-container" style="border: none;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Nom</th>
+                    <th class="text-center">CP/an</th>
+                    <th class="text-center">RTT/an</th>
+                    <th class="text-center">Congés examens</th>
+                    <th class="text-center">Statut</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ct in contract_types %}
+                <tr>
+                    <td>
+                        <span class="badge badge-neutral">{{ ct.code }}</span>
+                    </td>
+                    <td>
+                        <div class="font-semibold">{{ ct.name }}</div>
+                        {% if ct.description %}
+                        <div class="text-xs text-muted">{{ ct.description }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if ct.cp_annual_allowance > 0 %}
+                        {{ ct.cp_annual_allowance | round(1) }} j
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if ct.has_rtt %}
+                        {{ ct.rtt_annual_allowance | round(1) }} j
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if ct.has_exam_leave %}
+                        {{ ct.exam_leave_days | round(1) }} j
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if ct.is_active %}
+                        <span class="badge badge-success">Actif</span>
+                        {% else %}
+                        <span class="badge badge-neutral">Inactif</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.edit_contract_type', type_id=ct.id) }}" class="btn btn-ghost btn-sm">
+                            Modifier
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+    </svg>
+    <h3>Aucun type de contrat</h3>
+    <p class="text-muted">Créez des types de contrat pour définir les règles d'acquisition de congés.</p>
+</div>
+{% endif %}
+
+<style>
+.page-header-actions {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+}
+
+.badge-neutral {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md);
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #16a34a;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md);
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--space-10);
+    color: var(--color-ink-muted);
+}
+
+.empty-state svg {
+    margin-bottom: var(--space-4);
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    margin-bottom: var(--space-2);
+    color: var(--color-ink);
+}
+</style>
+{% endblock %}

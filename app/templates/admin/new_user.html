@@ -65,6 +65,21 @@
                 </div>
 
                 <div class="form-section">
+                    <h3 class="form-section-title">Contrat</h3>
+
+                    <div class="form-group">
+                        <label class="form-label" for="contract_type_id">Type de contrat</label>
+                        <select id="contract_type_id" name="contract_type_id" class="form-input">
+                            <option value="">Sélectionner un type</option>
+                            {% for ct in contract_types %}
+                            <option value="{{ ct.id }}">{{ ct.name }} ({{ ct.code }})</option>
+                            {% endfor %}
+                        </select>
+                        <span class="form-hint">Détermine les droits aux congés (CP, RTT, etc.)</span>
+                    </div>
+                </div>
+
+                <div class="form-section">
                     <h3 class="form-section-title">Organisation</h3>
 
                     <div class="form-group">

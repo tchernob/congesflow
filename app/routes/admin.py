@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, date
 from functools import wraps
 from app import db
-from app.models.user import User, Role
+from app.models.user import User, Role, ContractType
 from app.models.leave import LeaveRequest, LeaveType, LeaveBalance, CompanyLeaveSettings
 from app.models.team import Team
 from app.models.notification import Notification
@@ -219,6 +219,7 @@ def new_user():
         role_id = request.form.get('role_id', type=int)
         team_id = request.form.get('team_id', type=int)
         manager_id = request.form.get('manager_id', type=int)
+        contract_type_id = request.form.get('contract_type_id', type=int)
 
         # Check for existing user with same email (globally unique)
         existing_user = User.query.filter_by(email=email).first()
@@ -233,6 +234,7 @@ def new_user():
             role_id=role_id,
             team_id=team_id if team_id else None,
             manager_id=manager_id if manager_id else None,
+            contract_type_id=contract_type_id if contract_type_id else None,
             company_id=current_user.company_id,
             email_verified=True  # Invitation = email vérifié
         )
@@ -246,17 +248,38 @@ def new_user():
         db.session.add(user)
         db.session.commit()
 
-        # Créer les soldes de congés initiaux
+        # Créer les soldes de congés initiaux selon le type de contrat
         current_year = date.today().year
+        contract_type = user.contract_type
+
+        # Récupérer les types de congés de l'entreprise
         leave_types = LeaveType.query.filter_by(is_active=True, company_id=current_user.company_id).all()
+
         for lt in leave_types:
-            balance = LeaveBalance(
-                user_id=user.id,
-                leave_type_id=lt.id,
-                year=current_year,
-                initial_balance=lt.default_days
-            )
-            db.session.add(balance)
+            initial_balance = lt.default_days
+
+            # Adapter selon le type de contrat
+            if contract_type:
+                if lt.code == 'CP':
+                    initial_balance = contract_type.cp_annual_allowance
+                elif lt.code == 'RTT':
+                    if not contract_type.has_rtt:
+                        continue  # Pas de RTT pour ce type de contrat
+                    initial_balance = contract_type.rtt_annual_allowance
+                elif lt.code == 'EXA':  # Congés examens
+                    if not contract_type.has_exam_leave:
+                        continue
+                    initial_balance = contract_type.exam_leave_days
+
+            if initial_balance > 0:
+                balance = LeaveBalance(
+                    user_id=user.id,
+                    leave_type_id=lt.id,
+                    year=current_year,
+                    initial_balance=initial_balance
+                )
+                db.session.add(balance)
+
         db.session.commit()
 
         # Send invitation email
@@ -272,11 +295,16 @@ def new_user():
         User.company_id == current_user.company_id,
         User.role_id.in_([r.id for r in Role.query.filter(Role.name.in_(['manager', 'hr', 'admin'])).all()])
     ).all()
+    contract_types = ContractType.query.filter_by(
+        company_id=current_user.company_id,
+        is_active=True
+    ).order_by(ContractType.name).all()
 
     return render_template('admin/new_user.html',
                            teams=teams,
                            roles=roles,
-                           managers=managers)
+                           managers=managers,
+                           contract_types=contract_types)
 
 
 @bp.route('/users/<int:user_id>')
@@ -308,6 +336,7 @@ def edit_user(user_id):
         user.role_id = request.form.get('role_id', type=int)
         user.team_id = request.form.get('team_id', type=int) or None
         user.manager_id = request.form.get('manager_id', type=int) or None
+        user.contract_type_id = request.form.get('contract_type_id', type=int) or None
         user.is_active = request.form.get('is_active') == 'on'
 
         new_password = request.form.get('password')
@@ -324,12 +353,17 @@ def edit_user(user_id):
         User.company_id == current_user.company_id,
         User.role_id.in_([r.id for r in Role.query.filter(Role.name.in_(['manager', 'hr', 'admin'])).all()])
     ).all()
+    contract_types = ContractType.query.filter_by(
+        company_id=current_user.company_id,
+        is_active=True
+    ).order_by(ContractType.name).all()
 
     return render_template('admin/edit_user.html',
                            user=user,
                            teams=teams,
                            roles=roles,
-                           managers=managers)
+                           managers=managers,
+                           contract_types=contract_types)
 
 
 # Gestion des équipes
@@ -612,3 +646,94 @@ def send_expiry_alerts():
         flash('Aucune alerte à envoyer', 'info')
 
     return redirect(url_for('admin.leave_settings'))
+
+
+# Gestion des types de contrat
+@bp.route('/contract-types')
+@login_required
+@admin_required
+def contract_types():
+    """Liste des types de contrat."""
+    types = ContractType.query.filter_by(
+        company_id=current_user.company_id
+    ).order_by(ContractType.name).all()
+    return render_template('admin/contract_types.html', contract_types=types)
+
+
+@bp.route('/contract-types/new', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def new_contract_type():
+    """Créer un nouveau type de contrat."""
+    if request.method == 'POST':
+        code = request.form.get('code', '').upper().strip()
+        name = request.form.get('name', '').strip()
+
+        # Vérifier unicité du code
+        existing = ContractType.query.filter_by(
+            company_id=current_user.company_id,
+            code=code
+        ).first()
+        if existing:
+            flash('Un type de contrat avec ce code existe déjà', 'error')
+            return redirect(url_for('admin.new_contract_type'))
+
+        contract_type = ContractType(
+            company_id=current_user.company_id,
+            code=code,
+            name=name,
+            description=request.form.get('description', ''),
+            cp_acquisition_rate=request.form.get('cp_acquisition_rate', 2.08, type=float),
+            cp_annual_allowance=request.form.get('cp_annual_allowance', 25.0, type=float),
+            has_rtt=request.form.get('has_rtt') == 'on',
+            rtt_annual_allowance=request.form.get('rtt_annual_allowance', 10.0, type=float),
+            has_exam_leave=request.form.get('has_exam_leave') == 'on',
+            exam_leave_days=request.form.get('exam_leave_days', 0, type=float),
+            is_paid_leave=request.form.get('is_paid_leave') == 'on',
+        )
+        db.session.add(contract_type)
+        db.session.commit()
+
+        flash(f'Type de contrat "{name}" créé avec succès', 'success')
+        return redirect(url_for('admin.contract_types'))
+
+    return render_template('admin/new_contract_type.html')
+
+
+@bp.route('/contract-types/<int:type_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_contract_type(type_id):
+    """Modifier un type de contrat."""
+    contract_type = ContractType.query.filter_by(
+        id=type_id,
+        company_id=current_user.company_id
+    ).first_or_404()
+
+    if request.method == 'POST':
+        contract_type.name = request.form.get('name', '').strip()
+        contract_type.description = request.form.get('description', '')
+        contract_type.cp_acquisition_rate = request.form.get('cp_acquisition_rate', 2.08, type=float)
+        contract_type.cp_annual_allowance = request.form.get('cp_annual_allowance', 25.0, type=float)
+        contract_type.has_rtt = request.form.get('has_rtt') == 'on'
+        contract_type.rtt_annual_allowance = request.form.get('rtt_annual_allowance', 10.0, type=float)
+        contract_type.has_exam_leave = request.form.get('has_exam_leave') == 'on'
+        contract_type.exam_leave_days = request.form.get('exam_leave_days', 0, type=float)
+        contract_type.is_paid_leave = request.form.get('is_paid_leave') == 'on'
+        contract_type.is_active = request.form.get('is_active') == 'on'
+
+        db.session.commit()
+        flash('Type de contrat mis à jour', 'success')
+        return redirect(url_for('admin.contract_types'))
+
+    return render_template('admin/edit_contract_type.html', contract_type=contract_type)
+
+
+@bp.route('/contract-types/init', methods=['POST'])
+@login_required
+@admin_required
+def init_contract_types():
+    """Initialiser les types de contrat par défaut."""
+    ContractType.insert_default_types(current_user.company_id)
+    flash('Types de contrat par défaut créés', 'success')
+    return redirect(url_for('admin.contract_types'))

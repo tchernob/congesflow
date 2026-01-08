@@ -35,6 +35,125 @@ class Role(db.Model):
         db.session.commit()
 
 
+class ContractType(db.Model):
+    """Types de contrat avec règles d'acquisition de congés."""
+    __tablename__ = 'contract_types'
+
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False, index=True)
+    name = db.Column(db.String(50), nullable=False)  # CDI, CDD, Alternant, Stagiaire, etc.
+    code = db.Column(db.String(20), nullable=False)  # CDI, CDD, ALT, STG, etc.
+    description = db.Column(db.String(200))
+
+    # Règles d'acquisition CP
+    cp_acquisition_rate = db.Column(db.Float, default=2.08)  # Jours par mois (2.08 = 25j/an)
+    cp_annual_allowance = db.Column(db.Float, default=25.0)  # Allocation annuelle totale
+
+    # Règles RTT
+    has_rtt = db.Column(db.Boolean, default=True)
+    rtt_annual_allowance = db.Column(db.Float, default=10.0)  # Jours RTT par an
+
+    # Congés spéciaux
+    has_exam_leave = db.Column(db.Boolean, default=False)  # Congés pour examens (alternants)
+    exam_leave_days = db.Column(db.Float, default=0)
+
+    # Autres règles
+    is_paid_leave = db.Column(db.Boolean, default=True)  # Congés payés ou non
+    min_tenure_days = db.Column(db.Integer, default=0)  # Ancienneté min pour congés (ex: 0 pour salariés)
+
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    users = db.relationship('User', backref='contract_type', lazy='dynamic')
+
+    __table_args__ = (
+        db.UniqueConstraint('company_id', 'code', name='unique_contract_code_per_company'),
+    )
+
+    # Codes standards
+    CDI = 'CDI'
+    CDD = 'CDD'
+    ALTERNANT = 'ALT'
+    STAGIAIRE = 'STG'
+    INTERIM = 'INT'
+
+    @staticmethod
+    def insert_default_types(company_id):
+        """Crée les types de contrat par défaut pour une entreprise."""
+        defaults = [
+            {
+                'code': 'CDI',
+                'name': 'CDI',
+                'description': 'Contrat à durée indéterminée',
+                'cp_acquisition_rate': 2.08,
+                'cp_annual_allowance': 25.0,
+                'has_rtt': True,
+                'rtt_annual_allowance': 10.0,
+                'has_exam_leave': False,
+                'is_paid_leave': True,
+            },
+            {
+                'code': 'CDD',
+                'name': 'CDD',
+                'description': 'Contrat à durée déterminée',
+                'cp_acquisition_rate': 2.08,
+                'cp_annual_allowance': 25.0,
+                'has_rtt': True,
+                'rtt_annual_allowance': 10.0,
+                'has_exam_leave': False,
+                'is_paid_leave': True,
+            },
+            {
+                'code': 'ALT',
+                'name': 'Alternant',
+                'description': 'Contrat d\'apprentissage ou de professionnalisation',
+                'cp_acquisition_rate': 2.08,
+                'cp_annual_allowance': 25.0,
+                'has_rtt': True,
+                'rtt_annual_allowance': 10.0,
+                'has_exam_leave': True,
+                'exam_leave_days': 5.0,
+                'is_paid_leave': True,
+            },
+            {
+                'code': 'STG',
+                'name': 'Stagiaire',
+                'description': 'Convention de stage',
+                'cp_acquisition_rate': 0,
+                'cp_annual_allowance': 0,
+                'has_rtt': False,
+                'rtt_annual_allowance': 0,
+                'has_exam_leave': False,
+                'is_paid_leave': False,
+            },
+            {
+                'code': 'INT',
+                'name': 'Intérimaire',
+                'description': 'Travail temporaire',
+                'cp_acquisition_rate': 0,  # Indemnité compensatrice à la place
+                'cp_annual_allowance': 0,
+                'has_rtt': False,
+                'rtt_annual_allowance': 0,
+                'has_exam_leave': False,
+                'is_paid_leave': False,
+            },
+        ]
+
+        for data in defaults:
+            existing = ContractType.query.filter_by(
+                company_id=company_id,
+                code=data['code']
+            ).first()
+            if not existing:
+                contract_type = ContractType(company_id=company_id, **data)
+                db.session.add(contract_type)
+
+        db.session.commit()
+
+    def __repr__(self):
+        return f'<ContractType {self.code}>'
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
@@ -52,6 +171,7 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
     manager_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    contract_type_id = db.Column(db.Integer, db.ForeignKey('contract_types.id'), nullable=True)
 
     # Superadmin flag (for platform-level administration)
     is_superadmin = db.Column(db.Boolean, default=False)

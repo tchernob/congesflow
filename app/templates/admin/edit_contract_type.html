@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier {{ contract_type.name }} - TimeOff{% endblock %}
+{% block page_title %}Modifier le type de contrat{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <form method="POST" class="card-static">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="card-body">
+            <div class="form-section">
+                <h3 class="section-title">Informations générales</h3>
+
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Code</label>
+                        <input type="text" class="form-input" value="{{ contract_type.code }}" disabled>
+                        <span class="form-hint">Le code ne peut pas être modifié</span>
+                    </div>
+                    <div class="form-group" style="flex: 2;">
+                        <label class="form-label" for="name">Nom *</label>
+                        <input type="text" id="name" name="name" class="form-input" required
+                               value="{{ contract_type.name }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Description</label>
+                    <input type="text" id="description" name="description" class="form-input"
+                           value="{{ contract_type.description or '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="toggle-option">
+                        <input type="checkbox" name="is_active" {% if contract_type.is_active %}checked{% endif %}>
+                        <span class="toggle-label">
+                            <span class="toggle-title">Actif</span>
+                            <span class="toggle-desc">Ce type de contrat peut être attribué aux utilisateurs</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">Congés payés</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="cp_annual_allowance">Allocation annuelle (jours)</label>
+                        <input type="number" id="cp_annual_allowance" name="cp_annual_allowance"
+                               class="form-input" value="{{ contract_type.cp_annual_allowance }}" step="0.5" min="0">
+                        <span class="form-hint">Nombre de jours CP par an</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="cp_acquisition_rate">Taux d'acquisition mensuel</label>
+                        <input type="number" id="cp_acquisition_rate" name="cp_acquisition_rate"
+                               class="form-input" value="{{ contract_type.cp_acquisition_rate }}" step="0.01" min="0">
+                        <span class="form-hint">Jours acquis par mois travaillé</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="toggle-option">
+                        <input type="checkbox" name="is_paid_leave" {% if contract_type.is_paid_leave %}checked{% endif %}>
+                        <span class="toggle-label">
+                            <span class="toggle-title">Congés payés</span>
+                            <span class="toggle-desc">Les absences sont rémunérées</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">RTT</h3>
+
+                <div class="form-group">
+                    <label class="toggle-option">
+                        <input type="checkbox" name="has_rtt" id="has_rtt"
+                               {% if contract_type.has_rtt %}checked{% endif %} onchange="toggleRttFields()">
+                        <span class="toggle-label">
+                            <span class="toggle-title">Droit aux RTT</span>
+                            <span class="toggle-desc">Ce type de contrat donne droit aux RTT</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="form-group rtt-field">
+                    <label class="form-label" for="rtt_annual_allowance">RTT annuels (jours)</label>
+                    <input type="number" id="rtt_annual_allowance" name="rtt_annual_allowance"
+                           class="form-input" value="{{ contract_type.rtt_annual_allowance }}" step="0.5" min="0">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">Congés spéciaux</h3>
+
+                <div class="form-group">
+                    <label class="toggle-option">
+                        <input type="checkbox" name="has_exam_leave" id="has_exam_leave"
+                               {% if contract_type.has_exam_leave %}checked{% endif %} onchange="toggleExamFields()">
+                        <span class="toggle-label">
+                            <span class="toggle-title">Congés pour examens</span>
+                            <span class="toggle-desc">Pour les alternants (5 jours ouvrables légaux)</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="form-group exam-field">
+                    <label class="form-label" for="exam_leave_days">Jours pour examens</label>
+                    <input type="number" id="exam_leave_days" name="exam_leave_days"
+                           class="form-input" value="{{ contract_type.exam_leave_days }}" step="0.5" min="0">
+                </div>
+            </div>
+
+            {% set users_count = contract_type.users.count() %}
+            {% if users_count > 0 %}
+            <div class="info-box">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>{{ users_count }} utilisateur(s) avec ce type de contrat</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card-footer">
+            <a href="{{ url_for('admin.contract_types') }}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.form-container {
+    max-width: 700px;
+}
+
+.card-body {
+    padding: var(--space-6);
+}
+
+.card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border-top: 1px solid var(--color-border);
+}
+
+.form-section {
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.section-title {
+    font-size: var(--text-base);
+    font-weight: 600;
+    margin-bottom: var(--space-4);
+}
+
+.form-row {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.form-group {
+    margin-bottom: var(--space-4);
+}
+
+.form-label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+}
+
+.form-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.form-input:disabled {
+    background: var(--color-surface);
+    color: var(--color-ink-muted);
+}
+
+.form-hint {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-1);
+}
+
+.toggle-option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    cursor: pointer;
+}
+
+.toggle-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--color-accent);
+}
+
+.toggle-label {
+    display: flex;
+    flex-direction: column;
+}
+
+.toggle-title {
+    font-weight: 500;
+}
+
+.toggle-desc {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.info-box {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-accent-light);
+    border-radius: var(--radius-md);
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    margin-top: var(--space-4);
+}
+</style>
+
+<script>
+function toggleRttFields() {
+    const hasRtt = document.getElementById('has_rtt').checked;
+    document.querySelectorAll('.rtt-field').forEach(el => {
+        el.style.display = hasRtt ? 'block' : 'none';
+    });
+}
+
+function toggleExamFields() {
+    const hasExam = document.getElementById('has_exam_leave').checked;
+    document.querySelectorAll('.exam-field').forEach(el => {
+        el.style.display = hasExam ? 'block' : 'none';
+    });
+}
+
+// Init
+toggleRttFields();
+toggleExamFields();
+</script>
+{% endblock %}
