@@ -49,13 +49,13 @@
                         {% if balance %}
                         <button type="button"
                                 class="balance-btn {% if balance.available < 0 %}negative{% elif balance.available < 5 %}warning{% endif %}"
-                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name }}', {{ lt.id }}, '{{ lt.name }}', {{ balance.initial_balance }}, {{ balance.used }}, {{ balance.available }})">
+                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name | e }}', {{ lt.id }}, '{{ lt.name | e }}', {{ balance.initial_balance }}, {{ balance.used }}, {{ balance.available }})">
                             {{ balance.available | round(1) }}
                         </button>
                         {% else %}
                         <button type="button"
                                 class="balance-btn empty"
-                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name }}', {{ lt.id }}, '{{ lt.name }}', 0, 0, 0)">
+                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name | e }}', {{ lt.id }}, '{{ lt.name | e }}', 0, 0, 0)">
                             -
                         </button>
                         {% endif %}
@@ -210,14 +210,17 @@
 .modal {
     display: none;
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 1000;
     align-items: center;
     justify-content: center;
 }
 
 .modal.open {
-    display: flex;
+    display: flex !important;
 }
 
 .modal-backdrop {
@@ -233,7 +236,8 @@
     box-shadow: var(--shadow-xl);
     width: 100%;
     max-width: 440px;
-    margin: var(--space-4);
+    margin: auto;
+    z-index: 1001;
 }
 
 .modal-header {

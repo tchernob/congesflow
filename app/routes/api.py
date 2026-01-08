@@ -10,6 +10,15 @@ from app.models.notification import Notification
 bp = Blueprint('api', __name__, url_prefix='/api')
 
 
+def parse_date_param(date_str):
+    """Parse une date depuis un paramètre, gère plusieurs formats."""
+    if not date_str:
+        return None
+    # Prendre uniquement la partie date (avant T ou espace)
+    date_str = date_str.split('T')[0].split(' ')[0]
+    return datetime.strptime(date_str, '%Y-%m-%d').date()
+
+
 @bp.route('/calendar/events')
 @login_required
 def calendar_events():
@@ -17,14 +26,12 @@ def calendar_events():
     end = request.args.get('end')
     team_id = request.args.get('team_id', type=int)
 
-    if start:
-        start_date = datetime.strptime(start, '%Y-%m-%d').date()
-    else:
+    start_date = parse_date_param(start)
+    if not start_date:
         start_date = date.today().replace(day=1)
 
-    if end:
-        end_date = datetime.strptime(end, '%Y-%m-%d').date()
-    else:
+    end_date = parse_date_param(end)
+    if not end_date:
         end_date = start_date + timedelta(days=31)
 
     # Toujours filtrer par entreprise
