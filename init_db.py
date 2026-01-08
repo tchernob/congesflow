@@ -36,7 +36,7 @@ def init_database():
             demo_company = Company(
                 name='Demo Company',
                 slug='demo',
-                email='demo@congesflow.com',
+                email='demo@timeoff.com',
                 plan='trial',
                 max_employees=50
             )
@@ -50,11 +50,11 @@ def init_database():
 
         # Créer un admin de démo
         admin_role = Role.query.filter_by(name='admin').first()
-        admin_user = User.query.filter_by(email='admin@demo.congesflow.com').first()
+        admin_user = User.query.filter_by(email='admin@demo.timeoff.com').first()
 
         if not admin_user:
             admin_user = User(
-                email='admin@demo.congesflow.com',
+                email='admin@demo.timeoff.com',
                 first_name='Admin',
                 last_name='Demo',
                 role_id=admin_role.id,
@@ -64,7 +64,7 @@ def init_database():
             admin_user.set_password('demo123')
             db.session.add(admin_user)
             db.session.commit()
-            print(f"Admin créé: admin@demo.congesflow.com / demo123")
+            print(f"Admin créé: admin@demo.timeoff.com / demo123")
 
         print("\n✅ Base de données initialisée avec succès!")
         print(f"DATABASE_URL: {os.environ.get('DATABASE_URL', 'Non défini')[:50]}...")

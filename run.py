@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CongesFlow - Leave Management SaaS
+TimeOff - Leave Management SaaS
 Run this file to start the application.
 """
 
@@ -46,13 +46,13 @@ def create_admin():
         print('Please run init-db first.')
         return
 
-    existing = User.query.filter_by(email='admin@congesflow.com').first()
+    existing = User.query.filter_by(email='admin@timeoff.com').first()
     if existing:
         print('Admin user already exists.')
         return
 
     admin = User(
-        email='admin@congesflow.com',
+        email='admin@timeoff.com',
         first_name='Admin',
         last_name='System',
         role_id=admin_role.id
@@ -62,7 +62,7 @@ def create_admin():
     db.session.commit()
 
     print('Admin user created:')
-    print('  Email: admin@congesflow.com')
+    print('  Email: admin@timeoff.com')
     print('  Password: admin123')
 
 
@@ -87,14 +87,14 @@ def create_demo_company():
     if demo_company:
         print('Demo company already exists.')
         print('Use these accounts to login:')
-        print('  - Admin: admin@demo.congesflow.com / demo123')
+        print('  - Admin: admin@demo.timeoff.com / demo123')
         return
 
     # Create demo company
     demo_company = Company(
         name='Demo Company',
         slug='demo-company',
-        email='contact@demo.congesflow.com',
+        email='contact@demo.timeoff.com',
         plan=Company.PLAN_PRO,
         max_employees=100,
         trial_ends_at=datetime.utcnow() + timedelta(days=365)
@@ -121,13 +121,13 @@ def create_demo_company():
 
     # Create users
     users_data = [
-        {'email': 'admin@demo.congesflow.com', 'first_name': 'Admin', 'last_name': 'Demo', 'role': admin_role, 'team': None},
-        {'email': 'rh@demo.congesflow.com', 'first_name': 'Marie', 'last_name': 'Dupont', 'role': hr_role, 'team': None},
-        {'email': 'manager.dev@demo.congesflow.com', 'first_name': 'Pierre', 'last_name': 'Martin', 'role': manager_role, 'team': teams['Développement']},
-        {'email': 'manager.mkt@demo.congesflow.com', 'first_name': 'Sophie', 'last_name': 'Bernard', 'role': manager_role, 'team': teams['Marketing']},
-        {'email': 'dev1@demo.congesflow.com', 'first_name': 'Lucas', 'last_name': 'Petit', 'role': employee_role, 'team': teams['Développement']},
-        {'email': 'dev2@demo.congesflow.com', 'first_name': 'Emma', 'last_name': 'Roux', 'role': employee_role, 'team': teams['Développement']},
-        {'email': 'mkt1@demo.congesflow.com', 'first_name': 'Hugo', 'last_name': 'Moreau', 'role': employee_role, 'team': teams['Marketing']},
+        {'email': 'admin@demo.timeoff.com', 'first_name': 'Admin', 'last_name': 'Demo', 'role': admin_role, 'team': None},
+        {'email': 'rh@demo.timeoff.com', 'first_name': 'Marie', 'last_name': 'Dupont', 'role': hr_role, 'team': None},
+        {'email': 'manager.dev@demo.timeoff.com', 'first_name': 'Pierre', 'last_name': 'Martin', 'role': manager_role, 'team': teams['Développement']},
+        {'email': 'manager.mkt@demo.timeoff.com', 'first_name': 'Sophie', 'last_name': 'Bernard', 'role': manager_role, 'team': teams['Marketing']},
+        {'email': 'dev1@demo.timeoff.com', 'first_name': 'Lucas', 'last_name': 'Petit', 'role': employee_role, 'team': teams['Développement']},
+        {'email': 'dev2@demo.timeoff.com', 'first_name': 'Emma', 'last_name': 'Roux', 'role': employee_role, 'team': teams['Développement']},
+        {'email': 'mkt1@demo.timeoff.com', 'first_name': 'Hugo', 'last_name': 'Moreau', 'role': employee_role, 'team': teams['Marketing']},
     ]
 
     users = {}
@@ -146,12 +146,12 @@ def create_demo_company():
         users[user_data['email']] = user
 
     # Set managers
-    manager_dev = users['manager.dev@demo.congesflow.com']
-    manager_mkt = users['manager.mkt@demo.congesflow.com']
+    manager_dev = users['manager.dev@demo.timeoff.com']
+    manager_mkt = users['manager.mkt@demo.timeoff.com']
 
-    users['dev1@demo.congesflow.com'].manager_id = manager_dev.id
-    users['dev2@demo.congesflow.com'].manager_id = manager_dev.id
-    users['mkt1@demo.congesflow.com'].manager_id = manager_mkt.id
+    users['dev1@demo.timeoff.com'].manager_id = manager_dev.id
+    users['dev2@demo.timeoff.com'].manager_id = manager_dev.id
+    users['mkt1@demo.timeoff.com'].manager_id = manager_mkt.id
 
     # Create leave balances for all users
     current_year = date.today().year
@@ -174,13 +174,13 @@ def create_demo_company():
     print('Demo company created!')
     print('')
     print('Demo accounts (password: demo123):')
-    print('  - Admin: admin@demo.congesflow.com')
-    print('  - RH: rh@demo.congesflow.com')
-    print('  - Manager Dev: manager.dev@demo.congesflow.com')
-    print('  - Manager Mkt: manager.mkt@demo.congesflow.com')
-    print('  - Dev 1: dev1@demo.congesflow.com')
-    print('  - Dev 2: dev2@demo.congesflow.com')
-    print('  - Marketing: mkt1@demo.congesflow.com')
+    print('  - Admin: admin@demo.timeoff.com')
+    print('  - RH: rh@demo.timeoff.com')
+    print('  - Manager Dev: manager.dev@demo.timeoff.com')
+    print('  - Manager Mkt: manager.mkt@demo.timeoff.com')
+    print('  - Dev 1: dev1@demo.timeoff.com')
+    print('  - Dev 2: dev2@demo.timeoff.com')
+    print('  - Marketing: mkt1@demo.timeoff.com')
 
 
 if __name__ == '__main__':

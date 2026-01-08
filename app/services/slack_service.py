@@ -1,5 +1,5 @@
 """
-Slack integration service for CongesFlow.
+Slack integration service for TimeOff.
 Handles sending notifications and interactive messages to Slack.
 """
 import requests
@@ -250,7 +250,7 @@ class SlackService:
 
     def sync_users_by_email(self, company_id: int) -> dict:
         """
-        Synchronise les utilisateurs Slack avec CongesFlow par email.
+        Synchronise les utilisateurs Slack avec TimeOff par email.
         Retourne un dict avec les stats de synchronisation.
         """
         from app import db
@@ -279,7 +279,7 @@ class SlackService:
                 stats['already_linked'] += 1
                 continue
 
-            # Chercher l'utilisateur CongesFlow par email
+            # Chercher l'utilisateur TimeOff par email
             user = User.query.filter_by(
                 email=email,
                 company_id=company_id,

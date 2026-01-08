@@ -1,5 +1,5 @@
 /**
- * CongesFlow - Main JavaScript Application
+ * TimeOff - Main JavaScript Application
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -570,7 +570,7 @@ function initCalendar(elementId, options) {
 /**
  * Export functionality
  */
-window.CongesFlow = {
+window.TimeOff = {
     openModal: openModal,
     closeModal: closeModal,
     confirmAction: confirmAction,

@@ -37,7 +37,7 @@ class SlackIntegration(db.Model):
 
 
 class SlackUserMapping(db.Model):
-    """Maps CongesFlow users to Slack user IDs."""
+    """Maps TimeOff users to Slack user IDs."""
     __tablename__ = 'slack_user_mappings'
 
     id = db.Column(db.Integer, primary_key=True)

@@ -1,5 +1,5 @@
 """
-Slack integration routes for CongesFlow.
+Slack integration routes for TimeOff.
 Handles OAuth flow, webhooks, and interactive messages.
 """
 import hmac
@@ -172,7 +172,7 @@ def settings():
 @bp.route('/sync-users', methods=['POST'])
 @login_required
 def sync_users():
-    """Synchroniser les utilisateurs Slack avec CongesFlow."""
+    """Synchroniser les utilisateurs Slack avec TimeOff."""
     if not current_user.is_admin():
         flash('Accès réservé aux administrateurs', 'error')
         return redirect(url_for('main.dashboard'))
@@ -190,7 +190,7 @@ def sync_users():
     stats = service.sync_users_by_email(current_user.company_id)
 
     flash(f'Synchronisation terminée : {stats["linked"]} nouveau(x) compte(s) lié(s), '
-          f'{stats["already_linked"]} déjà lié(s), {stats["not_found"]} non trouvé(s) dans CongesFlow.', 'success')
+          f'{stats["already_linked"]} déjà lié(s), {stats["not_found"]} non trouvé(s) dans TimeOff.', 'success')
 
     return redirect(url_for('admin.slack_settings'))
 
@@ -263,7 +263,7 @@ def handle_conges_command(slack_user_id, team_id, trigger_id):
     if not user_mapping:
         return jsonify({
             'response_type': 'ephemeral',
-            'text': ':warning: Votre compte Slack n\'est pas lié à CongesFlow.\n\nConnectez-vous à CongesFlow et liez votre compte Slack dans votre profil pour utiliser cette commande.'
+            'text': ':warning: Votre compte Slack n\'est pas lié à TimeOff.\n\nConnectez-vous à TimeOff et liez votre compte Slack dans votre profil pour utiliser cette commande.'
         })
 
     user = user_mapping.user
@@ -386,7 +386,7 @@ def handle_soldes_command(slack_user_id, team_id):
     if not user_mapping:
         return jsonify({
             'response_type': 'ephemeral',
-            'text': ':warning: Votre compte Slack n\'est pas lié à CongesFlow.'
+            'text': ':warning: Votre compte Slack n\'est pas lié à TimeOff.'
         })
 
     user = user_mapping.user
@@ -465,7 +465,7 @@ def handle_absents_command(slack_user_id, team_id):
     if not user_mapping:
         return jsonify({
             'response_type': 'ephemeral',
-            'text': ':warning: Votre compte Slack n\'est pas lié à CongesFlow.'
+            'text': ':warning: Votre compte Slack n\'est pas lié à TimeOff.'
         })
 
     user = user_mapping.user
@@ -532,7 +532,7 @@ def handle_equipe_command(slack_user_id, team_id):
     if not user_mapping:
         return jsonify({
             'response_type': 'ephemeral',
-            'text': ':warning: Votre compte Slack n\'est pas lié à CongesFlow.'
+            'text': ':warning: Votre compte Slack n\'est pas lié à TimeOff.'
         })
 
     user = user_mapping.user
@@ -614,7 +614,7 @@ def handle_demandes_command(slack_user_id, team_id):
     if not user_mapping:
         return jsonify({
             'response_type': 'ephemeral',
-            'text': ':warning: Votre compte Slack n\'est pas lié à CongesFlow.'
+            'text': ':warning: Votre compte Slack n\'est pas lié à TimeOff.'
         })
 
     user = user_mapping.user
@@ -915,7 +915,7 @@ def handle_block_action(payload):
     if not user_mapping:
         return jsonify({
             'response_type': 'ephemeral',
-            'text': 'Votre compte Slack n\'est pas lié à CongesFlow. Connectez-vous à l\'application pour lier votre compte.'
+            'text': 'Votre compte Slack n\'est pas lié à TimeOff. Connectez-vous à l\'application pour lier votre compte.'
         })
 
     user = user_mapping.user
@@ -943,7 +943,7 @@ def handle_block_action(payload):
         request_url = url_for('leave.view_request', request_id=request_id, _external=True)
         return jsonify({
             'response_type': 'ephemeral',
-            'text': f'<{request_url}|Voir la demande dans CongesFlow>'
+            'text': f'<{request_url}|Voir la demande dans TimeOff>'
         })
 
     return jsonify({'ok': True})
