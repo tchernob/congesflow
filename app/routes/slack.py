@@ -43,11 +43,8 @@ def install():
         'users:read.email'
     ]
 
-    # Construire l'URL de callback à partir de l'URL actuelle (pour ngrok)
-    base_url = request.url_root.rstrip('/')
-    if base_url.startswith('http://') and 'ngrok' in base_url:
-        base_url = base_url.replace('http://', 'https://')
-    redirect_uri = f"{base_url}/slack/oauth/callback"
+    # URL de callback fixe pour la production
+    redirect_uri = "https://www.timeoff.fr/slack/oauth/callback"
 
     state = f"{current_user.company_id}"  # Store company_id in state
 
@@ -92,11 +89,8 @@ def oauth_callback():
     client_id = current_app.config.get('SLACK_CLIENT_ID')
     client_secret = current_app.config.get('SLACK_CLIENT_SECRET')
 
-    # Construire l'URL de callback à partir de l'URL actuelle (pour ngrok)
-    base_url = request.url_root.rstrip('/')
-    if base_url.startswith('http://') and 'ngrok' in base_url:
-        base_url = base_url.replace('http://', 'https://')
-    redirect_uri = f"{base_url}/slack/oauth/callback"
+    # URL de callback fixe pour la production
+    redirect_uri = "https://www.timeoff.fr/slack/oauth/callback"
 
     response = requests.post(
         'https://slack.com/api/oauth.v2.access',
