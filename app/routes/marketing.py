@@ -59,6 +59,10 @@ def signup():
         if Company.query.filter_by(name=company_name).first():
             errors.append('Une entreprise avec ce nom existe déjà')
 
+        # Check if email already exists
+        if User.query.filter_by(email=email).first():
+            errors.append('Un compte avec cet email existe déjà')
+
         if errors:
             for error in errors:
                 flash(error, 'error')

@@ -38,25 +38,29 @@ def dashboard():
     # Statistiques globales
     today = date.today()
     current_year = today.year
+    company_id = current_user.company_id
 
-    # Demandes en attente RH
-    pending_hr = LeaveRequest.query.filter_by(
-        status=LeaveRequest.STATUS_PENDING_HR
+    # Demandes en attente RH (filtrées par entreprise)
+    pending_hr = LeaveRequest.query.join(User).filter(
+        User.company_id == company_id,
+        LeaveRequest.status == LeaveRequest.STATUS_PENDING_HR
     ).count()
 
-    # Employés actifs
-    active_employees = User.query.filter_by(is_active=True).count()
+    # Employés actifs de cette entreprise
+    active_employees = User.query.filter_by(is_active=True, company_id=company_id).count()
 
-    # Absences aujourd'hui
-    absent_today = LeaveRequest.query.filter(
+    # Absences aujourd'hui dans cette entreprise
+    absent_today = LeaveRequest.query.join(User).filter(
+        User.company_id == company_id,
         LeaveRequest.status == 'approved',
         LeaveRequest.start_date <= today,
         LeaveRequest.end_date >= today
     ).count()
 
-    # Demandes ce mois
+    # Demandes ce mois dans cette entreprise
     month_start = today.replace(day=1)
-    requests_this_month = LeaveRequest.query.filter(
+    requests_this_month = LeaveRequest.query.join(User).filter(
+        User.company_id == company_id,
         LeaveRequest.created_at >= month_start
     ).count()
 
@@ -67,9 +71,10 @@ def dashboard():
         'requests_this_month': requests_this_month
     }
 
-    # Demandes récentes en attente
-    pending_requests = LeaveRequest.query.filter_by(
-        status=LeaveRequest.STATUS_PENDING_HR
+    # Demandes récentes en attente de cette entreprise
+    pending_requests = LeaveRequest.query.join(User).filter(
+        User.company_id == company_id,
+        LeaveRequest.status == LeaveRequest.STATUS_PENDING_HR
     ).order_by(LeaveRequest.created_at.desc()).limit(10).all()
 
     return render_template('admin/dashboard.html',
@@ -84,12 +89,13 @@ def requests():
     status_filter = request.args.get('status', 'pending_hr')
     year_filter = request.args.get('year', date.today().year, type=int)
 
-    query = LeaveRequest.query
+    # Filtrer par entreprise
+    query = LeaveRequest.query.join(User).filter(User.company_id == current_user.company_id)
 
     if status_filter == 'pending_hr':
-        query = query.filter_by(status=LeaveRequest.STATUS_PENDING_HR)
+        query = query.filter(LeaveRequest.status == LeaveRequest.STATUS_PENDING_HR)
     elif status_filter != 'all':
-        query = query.filter_by(status=status_filter)
+        query = query.filter(LeaveRequest.status == status_filter)
 
     query = query.filter(
         db.extract('year', LeaveRequest.start_date) == year_filter
@@ -107,7 +113,11 @@ def requests():
 @login_required
 @hr_required
 def view_request(request_id):
-    leave_request = LeaveRequest.query.get_or_404(request_id)
+    # Vérifier que la demande appartient à un employé de la même entreprise
+    leave_request = LeaveRequest.query.join(User).filter(
+        LeaveRequest.id == request_id,
+        User.company_id == current_user.company_id
+    ).first_or_404()
     settings = CompanyLeaveSettings.get_or_create_for_company(current_user.company_id)
     return render_template('admin/view_request.html', request=leave_request, settings=settings)
 
@@ -116,7 +126,11 @@ def view_request(request_id):
 @login_required
 @hr_required
 def approve_request(request_id):
-    leave_request = LeaveRequest.query.get_or_404(request_id)
+    # Vérifier que la demande appartient à un employé de la même entreprise
+    leave_request = LeaveRequest.query.join(User).filter(
+        LeaveRequest.id == request_id,
+        User.company_id == current_user.company_id
+    ).first_or_404()
     settings = CompanyLeaveSettings.get_or_create_for_company(current_user.company_id)
 
     # Vérifier si les RH peuvent approuver selon le workflow
@@ -148,7 +162,11 @@ def approve_request(request_id):
 @login_required
 @hr_required
 def reject_request(request_id):
-    leave_request = LeaveRequest.query.get_or_404(request_id)
+    # Vérifier que la demande appartient à un employé de la même entreprise
+    leave_request = LeaveRequest.query.join(User).filter(
+        LeaveRequest.id == request_id,
+        User.company_id == current_user.company_id
+    ).first_or_404()
     settings = CompanyLeaveSettings.get_or_create_for_company(current_user.company_id)
 
     # Vérifier si les RH peuvent refuser selon le workflow
@@ -181,8 +199,8 @@ def reject_request(request_id):
 @login_required
 @hr_required
 def users():
-    users_list = User.query.order_by(User.last_name).all()
-    teams = Team.query.filter_by(is_active=True).all()
+    users_list = User.query.filter_by(company_id=current_user.company_id).order_by(User.last_name).all()
+    teams = Team.query.filter_by(is_active=True, company_id=current_user.company_id).all()
     roles = Role.query.all()
     return render_template('admin/users.html',
                            users=users_list,
@@ -202,11 +220,8 @@ def new_user():
         team_id = request.form.get('team_id', type=int)
         manager_id = request.form.get('manager_id', type=int)
 
-        # Check for existing user with same email in same company
-        existing_user = User.query.filter_by(
-            email=email,
-            company_id=current_user.company_id
-        ).first()
+        # Check for existing user with same email (globally unique)
+        existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash('Un utilisateur avec cet email existe déjà', 'error')
             return redirect(url_for('admin.new_user'))
@@ -251,11 +266,12 @@ def new_user():
         flash(f'Utilisateur créé. Lien d\'invitation (valide 7 jours) : {invitation_url}', 'success')
         return redirect(url_for('admin.users'))
 
-    teams = Team.query.filter_by(is_active=True).all()
+    teams = Team.query.filter_by(is_active=True, company_id=current_user.company_id).all()
     roles = Role.query.all()
-    managers = User.query.filter(User.role_id.in_(
-        [r.id for r in Role.query.filter(Role.name.in_(['manager', 'hr', 'admin'])).all()]
-    )).all()
+    managers = User.query.filter(
+        User.company_id == current_user.company_id,
+        User.role_id.in_([r.id for r in Role.query.filter(Role.name.in_(['manager', 'hr', 'admin'])).all()])
+    ).all()
 
     return render_template('admin/new_user.html',
                            teams=teams,
@@ -267,7 +283,7 @@ def new_user():
 @login_required
 @hr_required
 def view_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = User.query.filter_by(id=user_id, company_id=current_user.company_id).first_or_404()
     current_year = date.today().year
     balances = LeaveBalance.query.filter_by(user_id=user.id, year=current_year).all()
     recent_requests = LeaveRequest.query.filter_by(
@@ -284,7 +300,7 @@ def view_user(user_id):
 @login_required
 @admin_required
 def edit_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = User.query.filter_by(id=user_id, company_id=current_user.company_id).first_or_404()
 
     if request.method == 'POST':
         user.first_name = request.form.get('first_name')
@@ -302,11 +318,12 @@ def edit_user(user_id):
         flash('Utilisateur mis à jour', 'success')
         return redirect(url_for('admin.view_user', user_id=user_id))
 
-    teams = Team.query.filter_by(is_active=True).all()
+    teams = Team.query.filter_by(is_active=True, company_id=current_user.company_id).all()
     roles = Role.query.all()
-    managers = User.query.filter(User.role_id.in_(
-        [r.id for r in Role.query.filter(Role.name.in_(['manager', 'hr', 'admin'])).all()]
-    )).all()
+    managers = User.query.filter(
+        User.company_id == current_user.company_id,
+        User.role_id.in_([r.id for r in Role.query.filter(Role.name.in_(['manager', 'hr', 'admin'])).all()])
+    ).all()
 
     return render_template('admin/edit_user.html',
                            user=user,
@@ -320,7 +337,7 @@ def edit_user(user_id):
 @login_required
 @hr_required
 def teams():
-    teams_list = Team.query.all()
+    teams_list = Team.query.filter_by(company_id=current_user.company_id).all()
     return render_template('admin/teams.html', teams=teams_list)
 
 
@@ -333,11 +350,11 @@ def new_team():
         description = request.form.get('description')
         color = request.form.get('color', '#3B82F6')
 
-        if Team.query.filter_by(name=name).first():
+        if Team.query.filter_by(name=name, company_id=current_user.company_id).first():
             flash('Une équipe avec ce nom existe déjà', 'error')
             return redirect(url_for('admin.new_team'))
 
-        team = Team(name=name, description=description, color=color)
+        team = Team(name=name, description=description, color=color, company_id=current_user.company_id)
         db.session.add(team)
         db.session.commit()
 
@@ -369,7 +386,7 @@ def new_leave_type():
         max_days = request.form.get('max_consecutive_days', type=int)
         is_paid = request.form.get('is_paid') == 'on'
 
-        if LeaveType.query.filter_by(code=code).first():
+        if LeaveType.query.filter_by(code=code, company_id=current_user.company_id).first():
             flash('Un type de congé avec ce code existe déjà', 'error')
             return redirect(url_for('admin.new_leave_type'))
 
@@ -380,7 +397,8 @@ def new_leave_type():
             color=color,
             requires_justification=requires_justification,
             max_consecutive_days=max_days,
-            is_paid=is_paid
+            is_paid=is_paid,
+            company_id=current_user.company_id
         )
         db.session.add(leave_type)
         db.session.commit()
@@ -417,7 +435,7 @@ def export_report():
 @login_required
 @hr_required
 def calendar():
-    teams = Team.query.filter_by(is_active=True).all()
+    teams = Team.query.filter_by(is_active=True, company_id=current_user.company_id).all()
     return render_template('admin/calendar.html', teams=teams)
 
 
@@ -440,10 +458,16 @@ def balances():
 @login_required
 @hr_required
 def adjust_balance(user_id):
+    # Vérifier que l'utilisateur appartient à la même entreprise
+    user = User.query.filter_by(id=user_id, company_id=current_user.company_id).first_or_404()
+
     leave_type_id = request.form.get('leave_type_id', type=int)
     year = request.form.get('year', date.today().year, type=int)
     adjustment = request.form.get('adjustment', 0, type=float)
     reason = request.form.get('reason', '')
+
+    # Vérifier que le type de congé appartient à la même entreprise
+    leave_type = LeaveType.query.filter_by(id=leave_type_id, company_id=current_user.company_id).first_or_404()
 
     balance = LeaveBalance.query.filter_by(
         user_id=user_id,

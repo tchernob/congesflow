@@ -40,7 +40,7 @@ class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True, index=True)
-    email = db.Column(db.String(120), nullable=False, index=True)
+    email = db.Column(db.String(120), nullable=False, unique=True, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
@@ -57,7 +57,6 @@ class User(UserMixin, db.Model):
     is_superadmin = db.Column(db.Boolean, default=False)
 
     __table_args__ = (
-        db.UniqueConstraint('company_id', 'email', name='unique_email_per_company'),
         db.UniqueConstraint('company_id', 'employee_id', name='unique_employee_id_per_company'),
     )
 

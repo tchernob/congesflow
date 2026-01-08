@@ -90,7 +90,11 @@ def requests():
 @login_required
 @manager_required
 def view_request(request_id):
-    leave_request = LeaveRequest.query.get_or_404(request_id)
+    # Vérifier que la demande appartient à un employé de la même entreprise
+    leave_request = LeaveRequest.query.join(User).filter(
+        LeaveRequest.id == request_id,
+        User.company_id == current_user.company_id
+    ).first_or_404()
 
     if not current_user.can_approve(leave_request):
         flash('Accès non autorisé', 'error')
@@ -117,7 +121,11 @@ def view_request(request_id):
 @login_required
 @manager_required
 def approve_request(request_id):
-    leave_request = LeaveRequest.query.get_or_404(request_id)
+    # Vérifier que la demande appartient à un employé de la même entreprise
+    leave_request = LeaveRequest.query.join(User).filter(
+        LeaveRequest.id == request_id,
+        User.company_id == current_user.company_id
+    ).first_or_404()
 
     if not current_user.can_approve(leave_request):
         flash('Accès non autorisé', 'error')
@@ -142,7 +150,11 @@ def approve_request(request_id):
 @login_required
 @manager_required
 def reject_request(request_id):
-    leave_request = LeaveRequest.query.get_or_404(request_id)
+    # Vérifier que la demande appartient à un employé de la même entreprise
+    leave_request = LeaveRequest.query.join(User).filter(
+        LeaveRequest.id == request_id,
+        User.company_id == current_user.company_id
+    ).first_or_404()
 
     if not current_user.can_approve(leave_request):
         flash('Accès non autorisé', 'error')
@@ -178,11 +190,12 @@ def team():
 @login_required
 @manager_required
 def team_member(user_id):
-    member = User.query.get_or_404(user_id)
-
-    if member.manager_id != current_user.id:
-        flash('Accès non autorisé', 'error')
-        return redirect(url_for('manager.team'))
+    # Vérifier que l'utilisateur appartient à la même entreprise et est un subordonné
+    member = User.query.filter_by(
+        id=user_id,
+        company_id=current_user.company_id,
+        manager_id=current_user.id
+    ).first_or_404()
 
     # Soldes de congés
     current_year = date.today().year

@@ -142,11 +142,11 @@ def new_request():
 @bp.route('/requests/<int:request_id>')
 @login_required
 def view_request(request_id):
-    leave_request = LeaveRequest.query.get_or_404(request_id)
-
-    if leave_request.employee_id != current_user.id:
-        flash('Accès non autorisé', 'error')
-        return redirect(url_for('employee.requests'))
+    # Vérifier que la demande appartient à l'utilisateur courant
+    leave_request = LeaveRequest.query.filter_by(
+        id=request_id,
+        employee_id=current_user.id
+    ).first_or_404()
 
     return render_template('employee/view_request.html', request=leave_request)
 
@@ -154,11 +154,11 @@ def view_request(request_id):
 @bp.route('/requests/<int:request_id>/cancel', methods=['POST'])
 @login_required
 def cancel_request(request_id):
-    leave_request = LeaveRequest.query.get_or_404(request_id)
-
-    if leave_request.employee_id != current_user.id:
-        flash('Accès non autorisé', 'error')
-        return redirect(url_for('employee.requests'))
+    # Vérifier que la demande appartient à l'utilisateur courant
+    leave_request = LeaveRequest.query.filter_by(
+        id=request_id,
+        employee_id=current_user.id
+    ).first_or_404()
 
     if not leave_request.can_cancel:
         flash('Cette demande ne peut pas être annulée', 'error')
@@ -216,10 +216,11 @@ def notifications():
 @bp.route('/notifications/<int:notification_id>/read', methods=['POST'])
 @login_required
 def mark_notification_read(notification_id):
-    notification = Notification.query.get_or_404(notification_id)
-
-    if notification.user_id != current_user.id:
-        return jsonify({'error': 'Non autorisé'}), 403
+    # Vérifier que la notification appartient à l'utilisateur courant
+    notification = Notification.query.filter_by(
+        id=notification_id,
+        user_id=current_user.id
+    ).first_or_404()
 
     notification.mark_as_read()
     db.session.commit()

@@ -27,16 +27,20 @@ def calendar_events():
     else:
         end_date = start_date + timedelta(days=31)
 
-    query = LeaveRequest.query.filter(
+    # Toujours filtrer par entreprise
+    query = LeaveRequest.query.join(User).filter(
+        User.company_id == current_user.company_id,
         LeaveRequest.status == 'approved',
         LeaveRequest.start_date <= end_date,
         LeaveRequest.end_date >= start_date
     )
 
-    # Filtrer par équipe si spécifié
+    # Filtrer par équipe si spécifié (vérifier que l'équipe appartient à l'entreprise)
     if team_id:
-        team_member_ids = [u.id for u in User.query.filter_by(team_id=team_id).all()]
-        query = query.filter(LeaveRequest.employee_id.in_(team_member_ids))
+        team = Team.query.filter_by(id=team_id, company_id=current_user.company_id).first()
+        if team:
+            team_member_ids = [u.id for u in User.query.filter_by(team_id=team_id, company_id=current_user.company_id).all()]
+            query = query.filter(LeaveRequest.employee_id.in_(team_member_ids))
     elif not current_user.is_hr():
         # Si non-RH, limiter à son équipe
         if current_user.is_manager():
@@ -44,7 +48,7 @@ def calendar_events():
         else:
             team_member_ids = [current_user.id]
             if current_user.team_id:
-                team_member_ids = [u.id for u in User.query.filter_by(team_id=current_user.team_id).all()]
+                team_member_ids = [u.id for u in User.query.filter_by(team_id=current_user.team_id, company_id=current_user.company_id).all()]
         query = query.filter(LeaveRequest.employee_id.in_(team_member_ids))
 
     leaves = query.all()
@@ -74,6 +78,11 @@ def calendar_events():
 def user_balances():
     user_id = request.args.get('user_id', current_user.id, type=int)
     year = request.args.get('year', date.today().year, type=int)
+
+    # Vérifier que l'utilisateur appartient à la même entreprise
+    target_user = User.query.filter_by(id=user_id, company_id=current_user.company_id).first()
+    if not target_user:
+        return jsonify({'error': 'Utilisateur non trouvé'}), 404
 
     # Vérifier les permissions
     if user_id != current_user.id and not current_user.is_hr():
@@ -105,7 +114,8 @@ def user_balances():
 @bp.route('/leave-types')
 @login_required
 def leave_types():
-    types = LeaveType.query.filter_by(is_active=True).all()
+    # Filtrer par entreprise
+    types = LeaveType.query.filter_by(is_active=True, company_id=current_user.company_id).all()
     result = [{
         'id': lt.id,
         'name': lt.name,
@@ -144,10 +154,11 @@ def notifications():
 @bp.route('/notifications/<int:notification_id>/read', methods=['POST'])
 @login_required
 def mark_read(notification_id):
-    notification = Notification.query.get_or_404(notification_id)
-
-    if notification.user_id != current_user.id:
-        return jsonify({'error': 'Non autorisé'}), 403
+    # Vérifier que la notification appartient à l'utilisateur courant
+    notification = Notification.query.filter_by(
+        id=notification_id,
+        user_id=current_user.id
+    ).first_or_404()
 
     notification.mark_as_read()
     db.session.commit()
@@ -170,7 +181,8 @@ def mark_all_read():
 @bp.route('/teams')
 @login_required
 def teams():
-    teams_list = Team.query.filter_by(is_active=True).all()
+    # Filtrer par entreprise
+    teams_list = Team.query.filter_by(is_active=True, company_id=current_user.company_id).all()
     result = [{
         'id': t.id,
         'name': t.name,
@@ -185,20 +197,23 @@ def teams():
 def dashboard_stats():
     today = date.today()
     current_year = today.year
+    company_id = current_user.company_id
 
     if current_user.is_hr():
-        # Stats globales pour RH
-        pending_count = LeaveRequest.query.filter_by(
-            status=LeaveRequest.STATUS_PENDING_HR
+        # Stats globales pour RH (filtrées par entreprise)
+        pending_count = LeaveRequest.query.join(User).filter(
+            User.company_id == company_id,
+            LeaveRequest.status == LeaveRequest.STATUS_PENDING_HR
         ).count()
 
-        absent_today = LeaveRequest.query.filter(
+        absent_today = LeaveRequest.query.join(User).filter(
+            User.company_id == company_id,
             LeaveRequest.status == 'approved',
             LeaveRequest.start_date <= today,
             LeaveRequest.end_date >= today
         ).count()
 
-        total_employees = User.query.filter_by(is_active=True).count()
+        total_employees = User.query.filter_by(is_active=True, company_id=company_id).count()
 
     elif current_user.is_manager():
         # Stats pour manager
@@ -257,10 +272,14 @@ def check_conflicts():
     start_date = datetime.strptime(start, '%Y-%m-%d').date()
     end_date = datetime.strptime(end, '%Y-%m-%d').date()
 
-    # Trouver les membres de l'équipe
-    employee = User.query.get(employee_id)
+    # Vérifier que l'employé appartient à la même entreprise
+    employee = User.query.filter_by(id=employee_id, company_id=current_user.company_id).first()
+    if not employee:
+        return jsonify({'error': 'Utilisateur non trouvé'}), 404
+
+    # Trouver les membres de l'équipe (filtrés par entreprise)
     if employee.team_id:
-        team_member_ids = [u.id for u in User.query.filter_by(team_id=employee.team_id).all()]
+        team_member_ids = [u.id for u in User.query.filter_by(team_id=employee.team_id, company_id=current_user.company_id).all()]
     else:
         team_member_ids = []
 
