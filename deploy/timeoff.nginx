@@ -1,0 +1,15 @@
+server {
+    listen 80;
+    server_name timeoff.fr www.timeoff.fr;
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/var/www/timeoff/timeoff.sock;
+    }
+
+    location /static {
+        alias /var/www/timeoff/app/static;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}

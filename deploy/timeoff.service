@@ -1,0 +1,14 @@
+[Unit]
+Description=TimeOff Gunicorn daemon
+After=network.target
+
+[Service]
+User=tcher
+Group=www-data
+WorkingDirectory=/var/www/timeoff
+Environment="PATH=/var/www/timeoff/venv/bin"
+EnvironmentFile=/var/www/timeoff/.env
+ExecStart=/var/www/timeoff/venv/bin/gunicorn --workers 3 --bind unix:timeoff.sock -m 007 run:app
+
+[Install]
+WantedBy=multi-user.target
