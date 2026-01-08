@@ -5,7 +5,10 @@ Run this file to start the application.
 """
 
 from app import create_app, db
-from app.models import User, Role, LeaveType, LeaveBalance, Team, Company, CompanyInvitation
+from app.models import (
+    User, Role, LeaveType, LeaveBalance, Team, Company, CompanyInvitation,
+    LeaveRequest, CompanyLeaveSettings, Notification, SlackIntegration, SlackUserMapping
+)
 from datetime import date, datetime, timedelta
 
 app = create_app()
