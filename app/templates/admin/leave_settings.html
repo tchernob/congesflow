@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+
+{% block title %}Paramètres des congés - CongesFlow{% endblock %}
+{% block page_title %}Paramètres des congés{% endblock %}
+
+{% block content %}
+<div class="settings-layout">
+    <!-- Info période actuelle -->
+    <div class="card-static mb-6">
+        <div class="card-body">
+            <div class="period-info">
+                <div class="period-info-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div class="period-info-content">
+                    <h3>Période de référence actuelle</h3>
+                    <p class="period-label">{{ period_label }}</p>
+                    <p class="period-dates">
+                        Du {{ current_period.start.strftime('%d/%m/%Y') }}
+                        au {{ current_period.end.strftime('%d/%m/%Y') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertes expiration -->
+    {% if expiring_soon %}
+    <div class="alert alert-warning mb-6">
+        <div class="alert-content">
+            <strong>Congés en cours d'expiration</strong>
+            <p>{{ expiring_soon|length }} employé(s) ont des jours qui vont expirer :</p>
+            <ul class="mt-2">
+                {% for item in expiring_soon[:5] %}
+                <li>
+                    <strong>{{ item.user_name }}</strong> : {{ item.days_expiring }} jour(s) de {{ item.leave_type_name }}
+                    expirent le {{ item.expires_at.strftime('%d/%m/%Y') }}
+                    (dans {{ item.days_until_expiry }} jours)
+                </li>
+                {% endfor %}
+                {% if expiring_soon|length > 5 %}
+                <li>... et {{ expiring_soon|length - 5 }} autre(s)</li>
+                {% endif %}
+            </ul>
+            <form method="POST" action="{{ url_for('admin.send_expiry_alerts') }}" class="mt-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-warning btn-sm">
+                    Envoyer les alertes maintenant
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('admin.leave_settings') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="settings-grid">
+            <!-- Période de référence -->
+            <div class="card-static">
+                <div class="card-header">
+                    <h3 class="card-title">Période de référence</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-sm mb-4">
+                        Définissez la période d'acquisition des congés payés. En France, la période légale
+                        va du 1er juin au 31 mai de l'année suivante.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-label">Type de période</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="reference_period_type" value="legal"
+                                       {{ 'checked' if settings.reference_period_type == 'legal' }}>
+                                <span class="radio-label">
+                                    <strong>Légale (1er juin - 31 mai)</strong>
+                                    <span class="radio-description">Période légale française</span>
+                                </span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="reference_period_type" value="calendar"
+                                       {{ 'checked' if settings.reference_period_type == 'calendar' }}>
+                                <span class="radio-label">
+                                    <strong>Année civile (1er janvier - 31 décembre)</strong>
+                                    <span class="radio-description">Plus simple pour certaines entreprises</span>
+                                </span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="reference_period_type" value="custom"
+                                       {{ 'checked' if settings.reference_period_type == 'custom' }}>
+                                <span class="radio-label">
+                                    <strong>Personnalisée</strong>
+                                    <span class="radio-description">Définir une date de début spécifique</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row custom-period-fields" id="customPeriodFields"
+                         style="{{ 'display: none;' if settings.reference_period_type != 'custom' }}">
+                        <div class="form-group">
+                            <label class="form-label" for="custom_period_start_day">Jour de début</label>
+                            <input type="number" name="custom_period_start_day" id="custom_period_start_day"
+                                   class="form-input" min="1" max="31"
+                                   value="{{ settings.custom_period_start_day }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="custom_period_start_month">Mois de début</label>
+                            <select name="custom_period_start_month" id="custom_period_start_month" class="form-select">
+                                <option value="1" {{ 'selected' if settings.custom_period_start_month == 1 }}>Janvier</option>
+                                <option value="2" {{ 'selected' if settings.custom_period_start_month == 2 }}>Février</option>
+                                <option value="3" {{ 'selected' if settings.custom_period_start_month == 3 }}>Mars</option>
+                                <option value="4" {{ 'selected' if settings.custom_period_start_month == 4 }}>Avril</option>
+                                <option value="5" {{ 'selected' if settings.custom_period_start_month == 5 }}>Mai</option>
+                                <option value="6" {{ 'selected' if settings.custom_period_start_month == 6 }}>Juin</option>
+                                <option value="7" {{ 'selected' if settings.custom_period_start_month == 7 }}>Juillet</option>
+                                <option value="8" {{ 'selected' if settings.custom_period_start_month == 8 }}>Août</option>
+                                <option value="9" {{ 'selected' if settings.custom_period_start_month == 9 }}>Septembre</option>
+                                <option value="10" {{ 'selected' if settings.custom_period_start_month == 10 }}>Octobre</option>
+                                <option value="11" {{ 'selected' if settings.custom_period_start_month == 11 }}>Novembre</option>
+                                <option value="12" {{ 'selected' if settings.custom_period_start_month == 12 }}>Décembre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="monthly_acquisition_rate">Taux d'acquisition mensuel (CP)</label>
+                        <input type="number" name="monthly_acquisition_rate" id="monthly_acquisition_rate"
+                               class="form-input" step="0.01" min="0" max="5"
+                               value="{{ settings.monthly_acquisition_rate }}">
+                        <p class="form-hint">Jours acquis par mois travaillé. Standard : 2.08 (= 25 jours/an)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Règles de report CP -->
+            <div class="card-static">
+                <div class="card-header">
+                    <h3 class="card-title">Report des Congés Payés</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-sm mb-4">
+                        Les CP non pris peuvent être reportés sur la période suivante, dans la limite
+                        d'un nombre de jours et d'un délai d'utilisation.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" name="cp_carryover_enabled"
+                                   {{ 'checked' if settings.cp_carryover_enabled }}>
+                            <span>Autoriser le report des CP</span>
+                        </label>
+                    </div>
+
+                    <div class="carryover-options" id="cpCarryoverOptions"
+                         style="{{ 'display: none;' if not settings.cp_carryover_enabled }}">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="cp_carryover_max_days">Maximum de jours reportables</label>
+                                <input type="number" name="cp_carryover_max_days" id="cp_carryover_max_days"
+                                       class="form-input" step="0.5" min="0" max="30"
+                                       value="{{ settings.cp_carryover_max_days }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="cp_carryover_deadline_months">Délai d'utilisation (mois)</label>
+                                <input type="number" name="cp_carryover_deadline_months" id="cp_carryover_deadline_months"
+                                       class="form-input" min="1" max="12"
+                                       value="{{ settings.cp_carryover_deadline_months }}">
+                                <p class="form-hint">Après la fin de la période de référence</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Règles de report RTT -->
+            <div class="card-static">
+                <div class="card-header">
+                    <h3 class="card-title">Report des RTT</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-sm mb-4">
+                        Les RTT sont généralement à prendre dans l'année civile. Le report est souvent
+                        plus limité que pour les CP.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" name="rtt_carryover_enabled"
+                                   {{ 'checked' if settings.rtt_carryover_enabled }}>
+                            <span>Autoriser le report des RTT</span>
+                        </label>
+                    </div>
+
+                    <div class="carryover-options" id="rttCarryoverOptions"
+                         style="{{ 'display: none;' if not settings.rtt_carryover_enabled }}">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="rtt_carryover_max_days">Maximum de jours reportables</label>
+                                <input type="number" name="rtt_carryover_max_days" id="rtt_carryover_max_days"
+                                       class="form-input" step="0.5" min="0" max="20"
+                                       value="{{ settings.rtt_carryover_max_days }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="rtt_carryover_deadline_months">Délai d'utilisation (mois)</label>
+                                <input type="number" name="rtt_carryover_deadline_months" id="rtt_carryover_deadline_months"
+                                       class="form-input" min="1" max="12"
+                                       value="{{ settings.rtt_carryover_deadline_months }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflow de validation -->
+            <div class="card-static">
+                <div class="card-header">
+                    <h3 class="card-title">Workflow de validation</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-sm mb-4">
+                        Définissez le circuit de validation des demandes de congés dans votre entreprise.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-label">Circuit de validation</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="approval_workflow" value="manager_then_hr"
+                                       {{ 'checked' if settings.approval_workflow == 'manager_then_hr' }}>
+                                <span class="radio-label">
+                                    <strong>Manager puis RH</strong>
+                                    <span class="radio-description">La demande doit être approuvée par le manager, puis par les RH</span>
+                                </span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="approval_workflow" value="manager_only"
+                                       {{ 'checked' if settings.approval_workflow == 'manager_only' }}>
+                                <span class="radio-label">
+                                    <strong>Manager seul</strong>
+                                    <span class="radio-description">Seule l'approbation du manager est requise</span>
+                                </span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="approval_workflow" value="hr_only"
+                                       {{ 'checked' if settings.approval_workflow == 'hr_only' }}>
+                                <span class="radio-label">
+                                    <strong>RH seul</strong>
+                                    <span class="radio-description">Seule l'approbation des RH est requise</span>
+                                </span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="approval_workflow" value="manager_or_hr"
+                                       {{ 'checked' if settings.approval_workflow == 'manager_or_hr' }}>
+                                <span class="radio-label">
+                                    <strong>Manager ou RH</strong>
+                                    <span class="radio-description">Le manager ou les RH peuvent approuver la demande</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="workflow-diagram mt-4" id="workflowDiagram">
+                        <!-- Diagram will be updated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Règles générales -->
+            <div class="card-static">
+                <div class="card-header">
+                    <h3 class="card-title">Règles générales</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" name="allow_negative_balance"
+                                   {{ 'checked' if settings.allow_negative_balance }}
+                                   id="allowNegativeBalance">
+                            <span>Autoriser les soldes négatifs</span>
+                        </label>
+                        <p class="form-hint">Permet de poser des congés même si le solde est insuffisant</p>
+                    </div>
+
+                    <div class="form-group negative-options" id="negativeOptions"
+                         style="{{ 'display: none;' if not settings.allow_negative_balance }}">
+                        <label class="form-label" for="max_negative_days">Maximum de jours en négatif</label>
+                        <input type="number" name="max_negative_days" id="max_negative_days"
+                               class="form-input" step="0.5" min="0" max="10"
+                               value="{{ settings.max_negative_days }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertes -->
+            <div class="card-static">
+                <div class="card-header">
+                    <h3 class="card-title">Alertes automatiques</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="alert_days_before_expiry">Alerte expiration (jours avant)</label>
+                            <input type="number" name="alert_days_before_expiry" id="alert_days_before_expiry"
+                                   class="form-input" min="7" max="90"
+                                   value="{{ settings.alert_days_before_expiry }}">
+                            <p class="form-hint">Notifier les employés X jours avant expiration de leurs reports</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="alert_low_balance_threshold">Alerte solde bas (jours)</label>
+                            <input type="number" name="alert_low_balance_threshold" id="alert_low_balance_threshold"
+                                   class="form-input" step="0.5" min="0" max="20"
+                                   value="{{ settings.alert_low_balance_threshold }}">
+                            <p class="form-hint">Alerter si le solde CP descend sous ce seuil</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions mt-6">
+            <button type="submit" class="btn btn-primary">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Enregistrer les paramètres
+            </button>
+        </div>
+    </form>
+
+    <!-- Actions manuelles -->
+    <div class="card-static mt-8">
+        <div class="card-header">
+            <h3 class="card-title">Actions manuelles</h3>
+        </div>
+        <div class="card-body">
+            <div class="manual-actions">
+                <div class="manual-action">
+                    <div class="manual-action-info">
+                        <h4>Traiter les reports</h4>
+                        <p>Exécute le calcul des reports de la période précédente vers la période actuelle.
+                           À faire au début de chaque nouvelle période.</p>
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.process_rollover') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-secondary">
+                            Traiter les reports
+                        </button>
+                    </form>
+                </div>
+
+                <div class="manual-action">
+                    <div class="manual-action-info">
+                        <h4>Envoyer les alertes d'expiration</h4>
+                        <p>Notifie tous les employés qui ont des jours reportés qui vont expirer prochainement.</p>
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.send_expiry_alerts') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-secondary">
+                            Envoyer les alertes
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-layout {
+    max-width: 900px;
+}
+
+.settings-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.period-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.period-info-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--color-primary-light);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+}
+
+.period-info-content h3 {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-1);
+}
+
+.period-label {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    margin-bottom: var(--space-1);
+}
+
+.period-dates {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.radio-option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-bg);
+    border: var(--border-thin);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.radio-option:hover {
+    background: var(--color-bg-sunken);
+}
+
+.radio-option input:checked + .radio-label {
+    color: var(--color-primary);
+}
+
+.radio-option input {
+    margin-top: 4px;
+}
+
+.radio-label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.radio-description {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-weight: 400;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+.carryover-options,
+.negative-options,
+.custom-period-fields {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: var(--border-thin);
+}
+
+.manual-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.manual-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-4);
+    background: var(--color-bg);
+    border: var(--border-thin);
+}
+
+.manual-action-info h4 {
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+}
+
+.manual-action-info p {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    max-width: 500px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.workflow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    background: var(--color-bg-sunken);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    flex-wrap: wrap;
+}
+
+.workflow-step {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: 500;
+}
+
+.workflow-step.employee {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.workflow-step.manager {
+    background: #FEF3C7;
+    border-color: #F59E0B;
+    color: #B45309;
+}
+
+.workflow-step.hr {
+    background: #DBEAFE;
+    border-color: #3B82F6;
+    color: #1D4ED8;
+}
+
+.workflow-step.approved {
+    background: #D1FAE5;
+    border-color: #10B981;
+    color: #047857;
+}
+
+.workflow-arrow {
+    color: var(--color-ink-muted);
+    font-size: var(--text-lg);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .manual-action {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .period-info {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle custom period fields
+    const periodRadios = document.querySelectorAll('input[name="reference_period_type"]');
+    const customFields = document.getElementById('customPeriodFields');
+
+    periodRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            customFields.style.display = this.value === 'custom' ? 'grid' : 'none';
+        });
+    });
+
+    // Toggle CP carryover options
+    const cpCarryoverCheckbox = document.querySelector('input[name="cp_carryover_enabled"]');
+    const cpCarryoverOptions = document.getElementById('cpCarryoverOptions');
+
+    cpCarryoverCheckbox.addEventListener('change', function() {
+        cpCarryoverOptions.style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Toggle RTT carryover options
+    const rttCarryoverCheckbox = document.querySelector('input[name="rtt_carryover_enabled"]');
+    const rttCarryoverOptions = document.getElementById('rttCarryoverOptions');
+
+    rttCarryoverCheckbox.addEventListener('change', function() {
+        rttCarryoverOptions.style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Toggle negative balance options
+    const negativeCheckbox = document.getElementById('allowNegativeBalance');
+    const negativeOptions = document.getElementById('negativeOptions');
+
+    negativeCheckbox.addEventListener('change', function() {
+        negativeOptions.style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Workflow diagram
+    const workflowRadios = document.querySelectorAll('input[name="approval_workflow"]');
+    const workflowDiagram = document.getElementById('workflowDiagram');
+
+    function createStep(text, className) {
+        const span = document.createElement('span');
+        span.className = 'workflow-step ' + className;
+        span.textContent = text;
+        return span;
+    }
+
+    function createArrow() {
+        const span = document.createElement('span');
+        span.className = 'workflow-arrow';
+        span.textContent = '→';
+        return span;
+    }
+
+    function createOr() {
+        const span = document.createElement('span');
+        span.style.margin = '0 var(--space-2)';
+        span.style.color = 'var(--color-ink-muted)';
+        span.textContent = 'ou';
+        return span;
+    }
+
+    function updateWorkflowDiagram() {
+        const selected = document.querySelector('input[name="approval_workflow"]:checked');
+        if (!selected) return;
+
+        workflowDiagram.textContent = '';
+
+        workflowDiagram.appendChild(createStep('Employé', 'employee'));
+        workflowDiagram.appendChild(createArrow());
+
+        if (selected.value === 'manager_then_hr') {
+            workflowDiagram.appendChild(createStep('Manager', 'manager'));
+            workflowDiagram.appendChild(createArrow());
+            workflowDiagram.appendChild(createStep('RH', 'hr'));
+        } else if (selected.value === 'manager_only') {
+            workflowDiagram.appendChild(createStep('Manager', 'manager'));
+        } else if (selected.value === 'hr_only') {
+            workflowDiagram.appendChild(createStep('RH', 'hr'));
+        } else if (selected.value === 'manager_or_hr') {
+            workflowDiagram.appendChild(createStep('Manager', 'manager'));
+            workflowDiagram.appendChild(createOr());
+            workflowDiagram.appendChild(createStep('RH', 'hr'));
+        }
+
+        workflowDiagram.appendChild(createArrow());
+        workflowDiagram.appendChild(createStep('Approuvé', 'approved'));
+    }
+
+    workflowRadios.forEach(radio => {
+        radio.addEventListener('change', updateWorkflowDiagram);
+    });
+
+    updateWorkflowDiagram();
+});
+</script>
+{% endblock %}

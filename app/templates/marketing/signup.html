@@ -1,0 +1,485 @@
+{% extends "marketing/base_marketing.html" %}
+
+{% block title %}Créer un compte - CongesFlow{% endblock %}
+
+{% block content %}
+<section class="signup-section">
+    <div class="signup-container">
+        <div class="signup-content">
+            <div class="signup-header">
+                <a href="{{ url_for('marketing.home') }}" class="signup-back">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Retour
+                </a>
+                <h1 class="signup-title">Créez votre compte</h1>
+                <p class="signup-subtitle">14 jours d'essai gratuit. Aucune carte de crédit requise.</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form class="signup-form" method="POST" action="{{ url_for('marketing.signup') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Votre entreprise</h3>
+
+                    <div class="form-group">
+                        <label class="form-label" for="company_name">Nom de l'entreprise *</label>
+                        <input type="text"
+                               id="company_name"
+                               name="company_name"
+                               class="form-input"
+                               placeholder="Ex: Acme Inc."
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="company_email">Email de l'entreprise</label>
+                        <input type="email"
+                               id="company_email"
+                               name="company_email"
+                               class="form-input"
+                               placeholder="contact@entreprise.com">
+                        <span class="form-hint">Optionnel - pour les communications officielles</span>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Votre compte administrateur</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="first_name">Prénom *</label>
+                            <input type="text"
+                                   id="first_name"
+                                   name="first_name"
+                                   class="form-input"
+                                   placeholder="Jean"
+                                   required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="last_name">Nom *</label>
+                            <input type="text"
+                                   id="last_name"
+                                   name="last_name"
+                                   class="form-input"
+                                   placeholder="Dupont"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email professionnel *</label>
+                        <input type="email"
+                               id="email"
+                               name="email"
+                               class="form-input"
+                               placeholder="jean@entreprise.com"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Mot de passe *</label>
+                        <input type="password"
+                               id="password"
+                               name="password"
+                               class="form-input"
+                               placeholder="Minimum 8 caractères"
+                               minlength="8"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password_confirm">Confirmer le mot de passe *</label>
+                        <input type="password"
+                               id="password_confirm"
+                               name="password_confirm"
+                               class="form-input"
+                               placeholder="Répétez votre mot de passe"
+                               minlength="8"
+                               required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" name="terms" required>
+                        <span>J'accepte les <a href="#">conditions d'utilisation</a> et la <a href="#">politique de confidentialité</a></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-full">
+                    Créer mon compte
+                    <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </button>
+
+                <p class="signup-login">
+                    Déjà un compte ? <a href="{{ url_for('auth.login') }}">Se connecter</a>
+                </p>
+            </form>
+        </div>
+
+        <div class="signup-benefits">
+            <div class="benefits-content">
+                <h2 class="benefits-title">Inclus dans votre essai gratuit</h2>
+
+                <ul class="benefits-list">
+                    <li class="benefit-item">
+                        <div class="benefit-icon">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Accès complet</strong>
+                            <p>Toutes les fonctionnalités Pro pendant 14 jours</p>
+                        </div>
+                    </li>
+
+                    <li class="benefit-item">
+                        <div class="benefit-icon">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>10 employés inclus</strong>
+                            <p>Invitez votre équipe pour tester ensemble</p>
+                        </div>
+                    </li>
+
+                    <li class="benefit-item">
+                        <div class="benefit-icon">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Support inclus</strong>
+                            <p>Notre équipe vous accompagne par email</p>
+                        </div>
+                    </li>
+
+                    <li class="benefit-item">
+                        <div class="benefit-icon">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Sans engagement</strong>
+                            <p>Annulez à tout moment, sans frais</p>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="benefits-quote">
+                    <p>"La mise en place a pris moins de 10 minutes. L'interface est tellement intuitive que tout le monde a compris immédiatement."</p>
+                    <div class="benefits-author">
+                        <strong>Marie L.</strong>
+                        <span>RH, Startup Tech</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.signup-section {
+    min-height: 100vh;
+    padding: var(--space-20) var(--space-6);
+}
+
+.signup-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: var(--space-16);
+    align-items: start;
+}
+
+.signup-content {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-12);
+}
+
+.signup-back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-ink-muted);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-6);
+    transition: color 0.2s ease;
+}
+
+.signup-back:hover {
+    color: var(--color-ink);
+}
+
+.signup-header {
+    margin-bottom: var(--space-8);
+}
+
+.signup-title {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: 400;
+    margin-bottom: var(--space-2);
+}
+
+.signup-subtitle {
+    color: var(--color-ink-muted);
+}
+
+.signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.form-section {
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.form-section-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-4);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.form-label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+}
+
+.form-input {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-family: var(--font-body);
+    transition: all 0.2s ease;
+    background: var(--color-surface);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+}
+
+.form-input::placeholder {
+    color: var(--color-ink-muted);
+}
+
+.form-hint {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    color: var(--color-ink-light);
+}
+
+.form-checkbox input {
+    margin-top: 3px;
+}
+
+.form-checkbox a {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+.form-checkbox a:hover {
+    text-decoration: underline;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.signup-login {
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.signup-login a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.signup-login a:hover {
+    text-decoration: underline;
+}
+
+/* Benefits sidebar */
+.signup-benefits {
+    position: sticky;
+    top: var(--space-24);
+}
+
+.benefits-content {
+    background: var(--color-ink);
+    color: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+}
+
+.benefits-title {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: 400;
+    margin-bottom: var(--space-6);
+}
+
+.benefits-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+}
+
+.benefit-item {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.benefit-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(255,255,255,0.1);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #22c55e;
+}
+
+.benefit-item strong {
+    display: block;
+    font-size: var(--text-sm);
+    margin-bottom: 2px;
+}
+
+.benefit-item p {
+    font-size: var(--text-sm);
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+}
+
+.benefits-quote {
+    padding-top: var(--space-6);
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.benefits-quote p {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--text-base);
+    line-height: 1.6;
+    margin-bottom: var(--space-4);
+    opacity: 0.9;
+}
+
+.benefits-author {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.benefits-author strong {
+    font-size: var(--text-sm);
+}
+
+.benefits-author span {
+    font-size: var(--text-sm);
+    opacity: 0.6;
+}
+
+/* Alert */
+.alert {
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-4);
+}
+
+.alert-error {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+@media (max-width: 1024px) {
+    .signup-container {
+        grid-template-columns: 1fr;
+    }
+
+    .signup-benefits {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 640px) {
+    .signup-content {
+        padding: var(--space-6);
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

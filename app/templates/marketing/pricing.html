@@ -1,0 +1,534 @@
+{% extends "marketing/base_marketing.html" %}
+
+{% block title %}Tarifs - CongesFlow{% endblock %}
+
+{% block content %}
+<section class="pricing-hero">
+    <div class="container">
+        <div class="pricing-hero-content">
+            <div class="section-label">Tarifs</div>
+            <h1 class="pricing-hero-title">Des tarifs simples,<br><em>sans surprise</em></h1>
+            <p class="pricing-hero-subtitle">
+                Commencez gratuitement pendant 14 jours. Choisissez ensuite le plan adapté à votre équipe.
+            </p>
+
+            <div class="billing-toggle">
+                <span class="billing-option active">Mensuel</span>
+                <button class="billing-switch" id="billingSwitchBtn" type="button">
+                    <span class="billing-switch-thumb"></span>
+                </button>
+                <span class="billing-option">
+                    Annuel
+                    <span class="billing-badge">-20%</span>
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pricing-cards">
+    <div class="container">
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="pricing-card-header">
+                    <div class="pricing-name">Starter</div>
+                    <div class="pricing-price" data-monthly="29" data-yearly="23">
+                        <span class="price-value">29</span>€
+                        <span class="price-period">/mois</span>
+                    </div>
+                    <p class="pricing-description">Pour les petites équipes qui veulent se simplifier la vie.</p>
+                </div>
+
+                <ul class="pricing-features">
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span><strong>25</strong> employés maximum</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Tous les types de congés</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Workflow Manager → RH</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Calendrier d'équipe</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Notifications email</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Support email</span>
+                    </li>
+                </ul>
+
+                <a href="{{ url_for('marketing.signup') }}" class="btn btn-outline btn-lg w-full">
+                    Commencer l'essai gratuit
+                </a>
+            </div>
+
+            <div class="pricing-card featured">
+                <div class="pricing-badge">Le plus populaire</div>
+                <div class="pricing-card-header">
+                    <div class="pricing-name">Pro</div>
+                    <div class="pricing-price" data-monthly="79" data-yearly="63">
+                        <span class="price-value">79</span>€
+                        <span class="price-period">/mois</span>
+                    </div>
+                    <p class="pricing-description">Pour les entreprises en croissance qui ont besoin de plus.</p>
+                </div>
+
+                <ul class="pricing-features">
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span><strong>100</strong> employés maximum</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Tout Starter, plus :</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Rapports et statistiques avancés</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Export Excel / CSV</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Intégration Slack & Teams</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Multi-équipes</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Support prioritaire</span>
+                    </li>
+                </ul>
+
+                <a href="{{ url_for('marketing.signup') }}" class="btn btn-primary btn-lg w-full">
+                    Commencer l'essai gratuit
+                </a>
+            </div>
+
+            <div class="pricing-card">
+                <div class="pricing-card-header">
+                    <div class="pricing-name">Enterprise</div>
+                    <div class="pricing-price custom">
+                        <span class="price-value">Sur mesure</span>
+                    </div>
+                    <p class="pricing-description">Pour les grandes organisations avec des besoins spécifiques.</p>
+                </div>
+
+                <ul class="pricing-features">
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Employés <strong>illimités</strong></span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Tout Pro, plus :</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>SSO / SAML</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>API personnalisée</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Workflows personnalisables</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Account manager dédié</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>SLA garanti</span>
+                    </li>
+                </ul>
+
+                <a href="{{ url_for('marketing.contact') }}" class="btn btn-outline btn-lg w-full">
+                    Nous contacter
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="faq">
+    <div class="container">
+        <div class="faq-header">
+            <h2 class="faq-title">Questions fréquentes</h2>
+            <p class="faq-subtitle">Tout ce que vous devez savoir sur nos tarifs</p>
+        </div>
+
+        <div class="faq-grid">
+            <div class="faq-item">
+                <h3 class="faq-question">Puis-je changer de plan à tout moment ?</h3>
+                <p class="faq-answer">Oui, vous pouvez upgrader ou downgrader votre plan à tout moment. Le changement prend effet immédiatement et la facturation est ajustée au prorata.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">Que se passe-t-il après l'essai gratuit ?</h3>
+                <p class="faq-answer">À la fin des 14 jours, vous pouvez choisir un plan payant ou votre compte passera en mode lecture seule. Vos données sont conservées pendant 30 jours supplémentaires.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">Y a-t-il des frais cachés ?</h3>
+                <p class="faq-answer">Non, jamais. Le prix affiché est le prix final. Pas de frais de mise en place, pas de coûts additionnels pour le support ou les mises à jour.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">Puis-je annuler mon abonnement ?</h3>
+                <p class="faq-answer">Oui, vous pouvez annuler à tout moment depuis votre espace admin. Vous conservez l'accès jusqu'à la fin de la période payée.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">Comment fonctionne la facturation ?</h3>
+                <p class="faq-answer">Vous êtes facturé en début de période (mensuelle ou annuelle). Nous acceptons les cartes bancaires et les virements pour les comptes Enterprise.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">Proposez-vous des réductions pour les associations ?</h3>
+                <p class="faq-answer">Oui ! Nous offrons 50% de réduction aux associations et ONG. Contactez-nous avec un justificatif pour en bénéficier.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta">
+    <div class="container">
+        <div class="cta-inner">
+            <h2 class="cta-title">Prêt à essayer CongesFlow ?</h2>
+            <p class="cta-subtitle">
+                14 jours gratuits, toutes les fonctionnalités, aucune carte de crédit requise.
+            </p>
+            <div class="cta-actions">
+                <a href="{{ url_for('marketing.signup') }}" class="btn btn-primary btn-lg">
+                    Démarrer l'essai gratuit
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.pricing-hero {
+    padding: var(--space-32) 0 var(--space-16);
+    text-align: center;
+}
+
+.pricing-hero-content {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.pricing-hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(var(--text-4xl), 6vw, var(--text-6xl));
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-6);
+}
+
+.pricing-hero-title em {
+    font-style: italic;
+}
+
+.pricing-hero-subtitle {
+    font-size: var(--text-lg);
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-8);
+}
+
+.billing-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2);
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+}
+
+.billing-option {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.billing-option.active {
+    color: var(--color-ink);
+    font-weight: 500;
+}
+
+.billing-switch {
+    width: 44px;
+    height: 24px;
+    background: var(--color-border);
+    border: none;
+    border-radius: var(--radius-full);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.billing-switch.active {
+    background: var(--color-ink);
+}
+
+.billing-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.billing-switch.active .billing-switch-thumb {
+    transform: translateX(20px);
+}
+
+.billing-badge {
+    background: var(--color-success);
+    color: white;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Pricing Cards */
+.pricing-cards {
+    padding: var(--space-12) 0 var(--space-32);
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-6);
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.pricing-card {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.pricing-card.featured {
+    border-color: var(--color-ink);
+    box-shadow: var(--shadow-xl);
+    transform: scale(1.02);
+}
+
+.pricing-card.featured:hover {
+    transform: scale(1.02) translateY(-4px);
+}
+
+.pricing-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-ink);
+    color: white;
+    padding: var(--space-1) var(--space-4);
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+}
+
+.pricing-card-header {
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.pricing-name {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-3);
+}
+
+.pricing-price {
+    font-family: var(--font-display);
+    font-size: var(--text-5xl);
+    margin-bottom: var(--space-3);
+}
+
+.pricing-price.custom .price-value {
+    font-size: var(--text-3xl);
+}
+
+.price-period {
+    font-size: var(--text-lg);
+    color: var(--color-ink-muted);
+    font-family: var(--font-body);
+}
+
+.pricing-description {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+}
+
+.pricing-features {
+    list-style: none;
+    flex: 1;
+    margin-bottom: var(--space-8);
+}
+
+.pricing-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-ink-light);
+    margin-bottom: var(--space-3);
+}
+
+.pricing-feature svg {
+    width: 18px;
+    height: 18px;
+    color: var(--color-success);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.pricing-feature strong {
+    color: var(--color-ink);
+}
+
+.w-full {
+    width: 100%;
+}
+
+/* FAQ */
+.faq {
+    padding: var(--space-20) 0;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+}
+
+.faq-header {
+    text-align: center;
+    margin-bottom: var(--space-12);
+}
+
+.faq-title {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    margin-bottom: var(--space-3);
+}
+
+.faq-subtitle {
+    color: var(--color-ink-muted);
+}
+
+.faq-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    padding: var(--space-6);
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.faq-question {
+    font-size: var(--text-base);
+    font-weight: 600;
+    margin-bottom: var(--space-3);
+}
+
+.faq-answer {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    line-height: 1.7;
+}
+
+@media (max-width: 1024px) {
+    .pricing-grid {
+        grid-template-columns: 1fr;
+        max-width: 450px;
+    }
+
+    .pricing-card.featured {
+        transform: none;
+        order: -1;
+    }
+
+    .pricing-card.featured:hover {
+        transform: translateY(-4px);
+    }
+
+    .faq-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const switchBtn = document.getElementById('billingSwitchBtn');
+    const options = document.querySelectorAll('.billing-option');
+    const prices = document.querySelectorAll('.pricing-price[data-monthly]');
+    let isYearly = false;
+
+    switchBtn.addEventListener('click', function() {
+        isYearly = !isYearly;
+        this.classList.toggle('active', isYearly);
+
+        options.forEach((opt, i) => {
+            opt.classList.toggle('active', (i === 0 && !isYearly) || (i === 1 && isYearly));
+        });
+
+        prices.forEach(price => {
+            const value = isYearly ? price.dataset.yearly : price.dataset.monthly;
+            price.querySelector('.price-value').textContent = value;
+        });
+    });
+});
+</script>
+{% endblock %}

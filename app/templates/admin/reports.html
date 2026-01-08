@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Rapports - CongesFlow{% endblock %}
+{% block page_title %}Rapports{% endblock %}
+
+{% block content %}
+<div class="reports-grid">
+    <div class="card-static">
+        <div class="card-header">
+            <h3 class="card-title">Export des absences</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">Exportez la liste des absences pour une période donnée.</p>
+            <form action="{{ url_for('admin.export_report') }}" method="GET" class="report-form">
+                <input type="hidden" name="type" value="absences">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Date de début</label>
+                        <input type="date" name="start_date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date de fin</label>
+                        <input type="date" name="end_date" class="form-input" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Exporter CSV
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-static">
+        <div class="card-header">
+            <h3 class="card-title">Synthèse des soldes</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">Exportez les soldes de congés de tous les employés.</p>
+            <form action="{{ url_for('admin.export_report') }}" method="GET" class="report-form">
+                <input type="hidden" name="type" value="balances">
+                <div class="form-group">
+                    <label class="form-label">Année</label>
+                    <select name="year" class="form-select">
+                        <option value="2024">2024</option>
+                        <option value="2025" selected>2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Exporter CSV
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-static">
+        <div class="card-header">
+            <h3 class="card-title">Statistiques annuelles</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">Rapport complet des congés par type et par équipe.</p>
+            <form action="{{ url_for('admin.export_report') }}" method="GET" class="report-form">
+                <input type="hidden" name="type" value="annual">
+                <div class="form-group">
+                    <label class="form-label">Année</label>
+                    <select name="year" class="form-select">
+                        <option value="2024">2024</option>
+                        <option value="2025" selected>2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Exporter CSV
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--space-6);
+}
+
+.report-form .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.report-form .form-group {
+    margin-bottom: var(--space-4);
+}
+</style>
+{% endblock %}

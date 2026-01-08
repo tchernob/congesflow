@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Nouvelle équipe - CongesFlow{% endblock %}
+{% block page_title %}Nouvelle équipe{% endblock %}
+
+{% block content %}
+<div class="page-back">
+    <a href="{{ url_for('admin.teams') }}" class="btn btn-ghost">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Retour aux équipes
+    </a>
+</div>
+
+<div class="form-container">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Créer une nouvelle équipe</h2>
+            <p class="card-subtitle">Organisez vos collaborateurs par équipe</p>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.new_team') }}" class="form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label class="form-label" for="name">Nom de l'équipe *</label>
+                    <input type="text" id="name" name="name" class="form-input" placeholder="Ex: Développement, Marketing..." required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea id="description" name="description" class="form-input form-textarea" rows="3" placeholder="Décrivez brièvement cette équipe..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="color">Couleur</label>
+                    <div class="color-picker-group">
+                        <input type="color" id="color" name="color" class="color-input" value="#3B82F6">
+                        <div class="color-presets">
+                            <button type="button" class="color-preset" style="background: #3B82F6;" data-color="#3B82F6"></button>
+                            <button type="button" class="color-preset" style="background: #10B981;" data-color="#10B981"></button>
+                            <button type="button" class="color-preset" style="background: #F59E0B;" data-color="#F59E0B"></button>
+                            <button type="button" class="color-preset" style="background: #EF4444;" data-color="#EF4444"></button>
+                            <button type="button" class="color-preset" style="background: #8B5CF6;" data-color="#8B5CF6"></button>
+                            <button type="button" class="color-preset" style="background: #EC4899;" data-color="#EC4899"></button>
+                            <button type="button" class="color-preset" style="background: #06B6D4;" data-color="#06B6D4"></button>
+                            <button type="button" class="color-preset" style="background: #6366F1;" data-color="#6366F1"></button>
+                        </div>
+                    </div>
+                    <span class="form-hint">Cette couleur sera utilisée pour identifier l'équipe dans le calendrier</span>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{{ url_for('admin.teams') }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Créer l'équipe
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-back {
+    margin-bottom: var(--space-6);
+}
+
+.form-container {
+    max-width: 500px;
+}
+
+.card-header {
+    padding: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.card-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+}
+
+.card-subtitle {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+}
+
+.card-body {
+    padding: var(--space-6);
+}
+
+.form-group {
+    margin-bottom: var(--space-5);
+}
+
+.form-label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+}
+
+.form-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    transition: all 0.15s ease;
+    background: var(--color-bg);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.form-hint {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-2);
+}
+
+.color-picker-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.color-input {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    background: none;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+    padding: 4px;
+}
+
+.color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: var(--radius-sm);
+}
+
+.color-presets {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.color-preset {
+    width: 28px;
+    height: 28px;
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.color-preset:hover {
+    transform: scale(1.1);
+}
+
+.color-preset.active {
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-6);
+}
+</style>
+
+<script>
+document.querySelectorAll('.color-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const color = btn.dataset.color;
+        document.getElementById('color').value = color;
+        document.querySelectorAll('.color-preset').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    });
+});
+</script>
+{% endblock %}

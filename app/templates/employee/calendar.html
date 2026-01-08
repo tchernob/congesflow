@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Mon calendrier - CongesFlow{% endblock %}
+{% block page_title %}Mon calendrier{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="calendar-page">
+    <div class="calendar-toolbar">
+        <div class="calendar-legend">
+            <span class="legend-title">Légende:</span>
+            <div class="legend-items" id="legendItems">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+        <a href="{{ url_for('employee.new_request') }}" class="btn btn-primary">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Nouvelle demande
+        </a>
+    </div>
+
+    <div class="calendar-wrapper card-static">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<style>
+.calendar-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.calendar-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.calendar-legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.legend-title {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-weight: 600;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    border: 2px solid var(--color-ink);
+}
+
+.calendar-wrapper {
+    padding: var(--space-6);
+}
+
+/* FullCalendar Customization */
+#calendar {
+    --fc-border-color: var(--color-ink);
+    --fc-button-bg-color: var(--color-bg-elevated);
+    --fc-button-border-color: var(--color-ink);
+    --fc-button-text-color: var(--color-ink);
+    --fc-button-hover-bg-color: var(--color-bg-sunken);
+    --fc-button-hover-border-color: var(--color-ink);
+    --fc-button-active-bg-color: var(--color-ink);
+    --fc-button-active-border-color: var(--color-ink);
+    --fc-today-bg-color: var(--color-primary-soft);
+    --fc-event-border-color: var(--color-ink);
+    --fc-page-bg-color: var(--color-bg-elevated);
+}
+
+.fc .fc-toolbar-title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--text-2xl);
+}
+
+.fc .fc-button {
+    font-family: var(--font-body);
+    font-weight: 600;
+    text-transform: none;
+    border-width: 2px;
+    padding: var(--space-2) var(--space-4);
+    box-shadow: 2px 2px 0 var(--color-ink);
+}
+
+.fc .fc-button:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--color-ink);
+}
+
+.fc .fc-button:active,
+.fc .fc-button-active {
+    transform: translate(0, 0);
+    box-shadow: none;
+}
+
+.fc .fc-daygrid-day-number {
+    font-weight: 600;
+    padding: var(--space-2);
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background: var(--color-primary-soft);
+}
+
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    color: var(--color-primary);
+}
+
+.fc .fc-event {
+    border-width: 2px;
+    border-radius: 0;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    padding: 2px 4px;
+}
+
+.fc .fc-col-header-cell {
+    background: var(--color-bg-sunken);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: var(--text-xs);
+    letter-spacing: 0.05em;
+}
+
+.fc .fc-scrollgrid {
+    border-width: 2px;
+}
+
+.fc .fc-scrollgrid td,
+.fc .fc-scrollgrid th {
+    border-width: 1px;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load leave types for legend
+    fetch('/api/leave-types')
+        .then(response => response.json())
+        .then(types => {
+            const container = document.getElementById('legendItems');
+            types.forEach(type => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+
+                const dot = document.createElement('span');
+                dot.className = 'legend-dot';
+                dot.style.background = type.color;
+
+                const label = document.createElement('span');
+                label.textContent = type.name;
+
+                item.appendChild(dot);
+                item.appendChild(label);
+                container.appendChild(item);
+            });
+        });
+
+    // Initialize calendar
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'fr',
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listMonth'
+        },
+        buttonText: {
+            today: 'Aujourd\'hui',
+            month: 'Mois',
+            list: 'Liste'
+        },
+        events: '/api/calendar/events',
+        eventClick: function(info) {
+            // Could open a modal with event details
+            console.log('Event clicked:', info.event);
+        },
+        eventDidMount: function(info) {
+            // Could add tooltips here
+        },
+        dayCellDidMount: function(info) {
+            // Weekend styling
+            if (info.date.getDay() === 0 || info.date.getDay() === 6) {
+                info.el.style.background = 'var(--color-bg-sunken)';
+            }
+        }
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion - CongesFlow{% endblock %}
+
+{% block auth_content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <div class="logo-icon">C</div>
+                <span class="logo-text">CongesFlow</span>
+            </div>
+            <h1 class="auth-title">Bon retour</h1>
+            <p class="auth-subtitle">Connectez-vous pour accéder à votre espace</p>
+        </div>
+
+        <form class="auth-form" method="POST" action="{{ url_for('auth.login') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <label class="form-label" for="email">Adresse email</label>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       class="form-input"
+                       placeholder="vous@entreprise.com"
+                       required
+                       autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Mot de passe</label>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       class="form-input"
+                       placeholder="Votre mot de passe"
+                       required>
+            </div>
+
+            <div class="form-group flex justify-between items-center">
+                <label class="form-checkbox">
+                    <input type="checkbox" name="remember">
+                    <span>Se souvenir de moi</span>
+                </label>
+                <a href="{{ url_for('auth.forgot_password') }}" class="text-sm text-primary">Mot de passe oublié ?</a>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-full">
+                Se connecter
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p class="text-sm text-muted">
+                Besoin d'un compte ? Contactez votre service RH
+            </p>
+        </div>
+    </div>
+
+    <div class="auth-visual">
+        <div class="visual-content">
+            <div class="visual-shapes">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+            </div>
+            <div class="visual-text">
+                <div class="visual-icon">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h2>Simplifiez la gestion de vos congés</h2>
+                <p>Demandez, suivez et gérez vos absences en quelques clics</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.auth-container {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.auth-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-12);
+    max-width: 440px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.auth-header {
+    margin-bottom: var(--space-8);
+}
+
+.auth-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-8);
+}
+
+.auth-title {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    margin-bottom: var(--space-2);
+    color: var(--color-ink);
+}
+
+.auth-subtitle {
+    color: var(--color-ink-muted);
+    font-size: var(--text-base);
+}
+
+.auth-form {
+    margin-bottom: var(--space-6);
+}
+
+.auth-form .form-group {
+    margin-bottom: var(--space-5);
+}
+
+.auth-form .btn {
+    margin-top: var(--space-2);
+}
+
+.auth-footer {
+    text-align: center;
+    padding-top: var(--space-6);
+    border-top: var(--border-subtle);
+}
+
+/* Visual Side */
+.auth-visual {
+    background: var(--gradient-primary);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.visual-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: white;
+    padding: var(--space-8);
+}
+
+.visual-shapes {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.shape {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.shape-1 {
+    width: 400px;
+    height: 400px;
+    top: -100px;
+    right: -100px;
+}
+
+.shape-2 {
+    width: 300px;
+    height: 300px;
+    bottom: -80px;
+    left: -80px;
+}
+
+.shape-3 {
+    width: 200px;
+    height: 200px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.visual-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-2xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-6);
+    backdrop-filter: blur(10px);
+}
+
+.visual-text h2 {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    margin-bottom: var(--space-3);
+    color: white;
+}
+
+.visual-text p {
+    opacity: 0.8;
+    font-size: var(--text-base);
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+    .auth-container {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-visual {
+        display: none;
+    }
+
+    .auth-card {
+        padding: var(--space-6);
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock %}

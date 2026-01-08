@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Calendrier équipe - CongesFlow{% endblock %}
+{% block page_title %}Calendrier de l'équipe{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="calendar-page">
+    <div class="calendar-toolbar">
+        <div class="calendar-legend">
+            <span class="legend-title">Membres:</span>
+            <div class="legend-items">
+                {% for member in team_members %}
+                <div class="legend-item">
+                    <span class="legend-avatar">{{ member.initials }}</span>
+                    <span>{{ member.first_name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="calendar-wrapper card-static">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<style>
+.calendar-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.calendar-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.calendar-legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.legend-title {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-weight: 600;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}
+
+.legend-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-xs);
+    font-weight: 700;
+}
+
+.calendar-wrapper {
+    padding: var(--space-6);
+}
+
+/* FullCalendar Customization */
+#calendar {
+    --fc-border-color: var(--color-ink);
+    --fc-button-bg-color: var(--color-bg-elevated);
+    --fc-button-border-color: var(--color-ink);
+    --fc-button-text-color: var(--color-ink);
+    --fc-button-hover-bg-color: var(--color-bg-sunken);
+    --fc-button-hover-border-color: var(--color-ink);
+    --fc-button-active-bg-color: var(--color-ink);
+    --fc-button-active-border-color: var(--color-ink);
+    --fc-today-bg-color: var(--color-primary-soft);
+    --fc-event-border-color: var(--color-ink);
+    --fc-page-bg-color: var(--color-bg-elevated);
+}
+
+.fc .fc-toolbar-title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--text-2xl);
+}
+
+.fc .fc-button {
+    font-family: var(--font-body);
+    font-weight: 600;
+    text-transform: none;
+    border-width: 2px;
+    padding: var(--space-2) var(--space-4);
+    box-shadow: 2px 2px 0 var(--color-ink);
+}
+
+.fc .fc-button:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--color-ink);
+}
+
+.fc .fc-button:active,
+.fc .fc-button-active {
+    transform: translate(0, 0);
+    box-shadow: none;
+}
+
+.fc .fc-daygrid-day-number {
+    font-weight: 600;
+    padding: var(--space-2);
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background: var(--color-primary-soft);
+}
+
+.fc .fc-event {
+    border-width: 2px;
+    border-radius: 0;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    padding: 2px 4px;
+}
+
+.fc .fc-col-header-cell {
+    background: var(--color-bg-sunken);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: var(--text-xs);
+    letter-spacing: 0.05em;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'fr',
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listMonth'
+        },
+        buttonText: {
+            today: 'Aujourd\'hui',
+            month: 'Mois',
+            week: 'Semaine',
+            list: 'Liste'
+        },
+        events: '/api/calendar/events',
+        eventClick: function(info) {
+            console.log('Event clicked:', info.event);
+        },
+        dayCellDidMount: function(info) {
+            if (info.date.getDay() === 0 || info.date.getDay() === 6) {
+                info.el.style.background = 'var(--color-bg-sunken)';
+            }
+        }
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

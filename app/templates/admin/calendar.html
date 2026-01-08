@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Calendrier global - CongesFlow{% endblock %}
+{% block page_title %}Calendrier global{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="calendar-page">
+    <div class="calendar-toolbar">
+        <div class="filters">
+            <select class="form-select" id="teamFilter">
+                <option value="">Toutes les équipes</option>
+                {% for team in teams %}
+                <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="calendar-legend">
+            <span class="legend-title">Types:</span>
+            <div class="legend-items" id="legendItems"></div>
+        </div>
+    </div>
+
+    <div class="calendar-wrapper card-static">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<style>
+.calendar-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.calendar-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.filters .form-select {
+    width: auto;
+    min-width: 200px;
+}
+
+.calendar-legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.legend-title {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-weight: 600;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    border: 2px solid var(--color-ink);
+}
+
+.calendar-wrapper {
+    padding: var(--space-6);
+}
+
+#calendar {
+    --fc-border-color: var(--color-ink);
+    --fc-button-bg-color: var(--color-bg-elevated);
+    --fc-button-border-color: var(--color-ink);
+    --fc-button-text-color: var(--color-ink);
+    --fc-button-hover-bg-color: var(--color-bg-sunken);
+    --fc-button-active-bg-color: var(--color-ink);
+    --fc-today-bg-color: var(--color-primary-soft);
+    --fc-event-border-color: var(--color-ink);
+}
+
+.fc .fc-toolbar-title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--text-2xl);
+}
+
+.fc .fc-button {
+    font-family: var(--font-body);
+    font-weight: 600;
+    border-width: 2px;
+    box-shadow: 2px 2px 0 var(--color-ink);
+}
+
+.fc .fc-event {
+    border-width: 2px;
+    border-radius: 0;
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load legend
+    fetch('/api/leave-types')
+        .then(response => response.json())
+        .then(types => {
+            const container = document.getElementById('legendItems');
+            types.forEach(type => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+
+                const dot = document.createElement('span');
+                dot.className = 'legend-dot';
+                dot.style.background = type.color;
+
+                const label = document.createElement('span');
+                label.textContent = type.name;
+
+                item.appendChild(dot);
+                item.appendChild(label);
+                container.appendChild(item);
+            });
+        });
+
+    // Initialize calendar
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'fr',
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listMonth'
+        },
+        buttonText: {
+            today: 'Aujourd\'hui',
+            month: 'Mois',
+            week: 'Semaine',
+            list: 'Liste'
+        },
+        events: function(info, successCallback, failureCallback) {
+            var teamId = document.getElementById('teamFilter').value;
+            var url = '/api/calendar/events?start=' + info.startStr + '&end=' + info.endStr;
+            if (teamId) {
+                url += '&team_id=' + teamId;
+            }
+            fetch(url)
+                .then(response => response.json())
+                .then(events => successCallback(events))
+                .catch(err => failureCallback(err));
+        },
+        dayCellDidMount: function(info) {
+            if (info.date.getDay() === 0 || info.date.getDay() === 6) {
+                info.el.style.background = 'var(--color-bg-sunken)';
+            }
+        }
+    });
+    calendar.render();
+
+    // Team filter
+    document.getElementById('teamFilter').addEventListener('change', function() {
+        calendar.refetchEvents();
+    });
+});
+</script>
+{% endblock %}

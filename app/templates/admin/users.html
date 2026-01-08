@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Utilisateurs - CongesFlow{% endblock %}
+{% block page_title %}Gestion des utilisateurs{% endblock %}
+
+{% block content %}
+<div class="page-header-actions">
+    <div class="search-box">
+        <input type="text" class="form-input" id="searchInput" placeholder="Rechercher un utilisateur...">
+    </div>
+    {% if current_user.is_admin() %}
+    <a href="{{ url_for('admin.new_user') }}" class="btn btn-primary">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Nouvel utilisateur
+    </a>
+    {% endif %}
+</div>
+
+<div class="card-static">
+    <div class="table-container" style="border: none;">
+        <table class="table" id="usersTable">
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Email</th>
+                    <th>Rôle</th>
+                    <th>Équipe</th>
+                    <th>Manager</th>
+                    <th>Statut</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="user-row">
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <div class="user-avatar-sm">{{ user.initials }}</div>
+                            <span class="font-semibold">{{ user.full_name }}</span>
+                        </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span class="badge badge-secondary">{{ user.role.name }}</span>
+                    </td>
+                    <td>{{ user.team.name if user.team else '-' }}</td>
+                    <td>{{ user.manager.full_name if user.manager else '-' }}</td>
+                    <td>
+                        {% if user.is_active %}
+                        <span class="badge badge-success">Actif</span>
+                        {% else %}
+                        <span class="badge badge-secondary">Inactif</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.view_user', user_id=user.id) }}" class="btn btn-ghost btn-sm">
+                            Voir
+                        </a>
+                        {% if current_user.is_admin() %}
+                        <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-ghost btn-sm">
+                            Modifier
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.page-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+}
+
+.search-box {
+    width: 300px;
+}
+
+.user-avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--text-xs);
+}
+</style>
+
+<script>
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('.user-row');
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

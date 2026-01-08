@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Demandes RH - CongesFlow{% endblock %}
+{% block page_title %}Toutes les demandes{% endblock %}
+
+{% block content %}
+<div class="page-header-actions">
+    <div class="filters">
+        <select class="form-select" id="statusFilter" onchange="applyFilters()">
+            <option value="pending_hr" {% if status_filter == 'pending_hr' %}selected{% endif %}>En attente RH</option>
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Toutes</option>
+            <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approuvées</option>
+            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Refusées</option>
+            <option value="pending_manager" {% if status_filter == 'pending_manager' %}selected{% endif %}>En attente Manager</option>
+        </select>
+        <select class="form-select" id="yearFilter" onchange="applyFilters()">
+            {% for y in range(year_filter - 1, year_filter + 2) %}
+            <option value="{{ y }}" {% if y == year_filter %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+{% if requests %}
+<div class="card-static">
+    <div class="table-container" style="border: none;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Employé</th>
+                    <th>Type</th>
+                    <th>Dates</th>
+                    <th>Durée</th>
+                    <th>Statut</th>
+                    <th>Manager</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <div class="user-avatar-sm" style="background: {{ req.leave_type.color }};">
+                                {{ req.employee.initials }}
+                            </div>
+                            <div>
+                                <div class="font-semibold">{{ req.employee.full_name }}</div>
+                                <div class="text-xs text-muted">{{ req.employee.team.name if req.employee.team else '-' }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <span class="balance-dot" style="background: {{ req.leave_type.color }};"></span>
+                            {{ req.leave_type.name }}
+                        </div>
+                    </td>
+                    <td>
+                        {{ req.start_date.strftime('%d/%m') }} → {{ req.end_date.strftime('%d/%m/%Y') }}
+                    </td>
+                    <td>{{ req.days_count }} j</td>
+                    <td>
+                        <span class="badge badge-{{ req.status_color }}">{{ req.status_label }}</span>
+                    </td>
+                    <td>
+                        {% if req.manager_reviewer %}
+                        {{ req.manager_reviewer.full_name }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if req.status == 'pending_hr' %}
+                        <div class="flex gap-2">
+                            <form action="{{ url_for('admin.approve_request', request_id=req.id) }}" method="POST" style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-accent btn-sm">Approuver</button>
+                            </form>
+                            <a href="{{ url_for('admin.view_request', request_id=req.id) }}" class="btn btn-secondary btn-sm">Détails</a>
+                        </div>
+                        {% else %}
+                        <a href="{{ url_for('admin.view_request', request_id=req.id) }}" class="btn btn-ghost btn-sm">Voir</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card-static">
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+        </div>
+        <h3 class="empty-state-title">Aucune demande</h3>
+        <p class="empty-state-text">Aucune demande ne correspond à ces critères.</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.page-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+}
+
+.filters {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.filters .form-select {
+    width: auto;
+    min-width: 180px;
+}
+
+.user-avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--text-xs);
+}
+</style>
+
+<script>
+function applyFilters() {
+    const status = document.getElementById('statusFilter').value;
+    const year = document.getElementById('yearFilter').value;
+    window.location.href = '{{ url_for("admin.requests") }}?status=' + status + '&year=' + year;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+
+{% block title %}Intégration Slack - CongesFlow{% endblock %}
+{% block page_title %}Intégration Slack{% endblock %}
+
+{% block content %}
+<div class="slack-settings">
+    {% if integration and integration.is_active %}
+    <!-- Connected state -->
+    <div class="card-static">
+        <div class="slack-connected">
+            <div class="slack-status">
+                <div class="slack-logo">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.4 30.4C10.4 32.6091 8.60914 34.4 6.4 34.4C4.19086 34.4 2.4 32.6091 2.4 30.4C2.4 28.1909 4.19086 26.4 6.4 26.4H10.4V30.4Z" fill="#E01E5A"/>
+                        <path d="M12.4 30.4C12.4 28.1909 14.1909 26.4 16.4 26.4C18.6091 26.4 20.4 28.1909 20.4 30.4V41.6C20.4 43.8091 18.6091 45.6 16.4 45.6C14.1909 45.6 12.4 43.8091 12.4 41.6V30.4Z" fill="#E01E5A"/>
+                        <path d="M16.4 10.4C14.1909 10.4 12.4 8.60914 12.4 6.4C12.4 4.19086 14.1909 2.4 16.4 2.4C18.6091 2.4 20.4 4.19086 20.4 6.4V10.4H16.4Z" fill="#36C5F0"/>
+                        <path d="M16.4 12.4C18.6091 12.4 20.4 14.1909 20.4 16.4C20.4 18.6091 18.6091 20.4 16.4 20.4H5.2C2.99086 20.4 1.2 18.6091 1.2 16.4C1.2 14.1909 2.99086 12.4 5.2 12.4H16.4Z" fill="#36C5F0"/>
+                        <path d="M36.4 16.4C36.4 14.1909 38.1909 12.4 40.4 12.4C42.6091 12.4 44.4 14.1909 44.4 16.4C44.4 18.6091 42.6091 20.4 40.4 20.4H36.4V16.4Z" fill="#2EB67D"/>
+                        <path d="M34.4 16.4C34.4 18.6091 32.6091 20.4 30.4 20.4C28.1909 20.4 26.4 18.6091 26.4 16.4V5.2C26.4 2.99086 28.1909 1.2 30.4 1.2C32.6091 1.2 34.4 2.99086 34.4 5.2V16.4Z" fill="#2EB67D"/>
+                        <path d="M30.4 36.4C32.6091 36.4 34.4 38.1909 34.4 40.4C34.4 42.6091 32.6091 44.4 30.4 44.4C28.1909 44.4 26.4 42.6091 26.4 40.4V36.4H30.4Z" fill="#ECB22E"/>
+                        <path d="M30.4 34.4C28.1909 34.4 26.4 32.6091 26.4 30.4C26.4 28.1909 28.1909 26.4 30.4 26.4H41.6C43.8091 26.4 45.6 28.1909 45.6 30.4C45.6 32.6091 43.8091 34.4 41.6 34.4H30.4Z" fill="#ECB22E"/>
+                    </svg>
+                </div>
+                <div class="slack-info">
+                    <h3>Connecté à {{ integration.team_name }}</h3>
+                    <p class="text-muted">Workspace ID: {{ integration.team_id }}</p>
+                </div>
+                <span class="badge badge-success">Actif</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Settings -->
+    <div class="card-static mt-6">
+        <div class="card-header">
+            <h3>Paramètres des notifications</h3>
+        </div>
+        <form method="POST" action="{{ url_for('slack.update_settings') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="card-body">
+                <div class="notification-options">
+                    <label class="toggle-option">
+                        <input type="checkbox" name="notify_new_request" {% if integration.notify_new_request %}checked{% endif %}>
+                        <span class="toggle-label">
+                            <span class="toggle-title">Nouvelle demande</span>
+                            <span class="toggle-desc">Notifier quand un employé soumet une demande de congés</span>
+                        </span>
+                    </label>
+
+                    <label class="toggle-option">
+                        <input type="checkbox" name="notify_approved" {% if integration.notify_request_approved %}checked{% endif %}>
+                        <span class="toggle-label">
+                            <span class="toggle-title">Demande approuvée</span>
+                            <span class="toggle-desc">Notifier l'employé quand sa demande est approuvée</span>
+                        </span>
+                    </label>
+
+                    <label class="toggle-option">
+                        <input type="checkbox" name="notify_rejected" {% if integration.notify_request_rejected %}checked{% endif %}>
+                        <span class="toggle-label">
+                            <span class="toggle-title">Demande refusée</span>
+                            <span class="toggle-desc">Notifier l'employé quand sa demande est refusée</span>
+                        </span>
+                    </label>
+
+                    <label class="toggle-option">
+                        <input type="checkbox" name="notify_manager" {% if integration.notify_manager_pending %}checked{% endif %}>
+                        <span class="toggle-label">
+                            <span class="toggle-title">Rappel manager</span>
+                            <span class="toggle-desc">Rappeler les managers des demandes en attente</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="form-group mt-5">
+                    <label class="form-label">Canal par défaut</label>
+                    <select name="default_channel_id" class="form-select" id="channelSelect" onchange="updateChannelName()">
+                        <option value="">-- Aucun canal (DM uniquement) --</option>
+                        {% for channel in channels %}
+                        <option value="{{ channel.id }}"
+                                data-name="{{ channel.name }}"
+                                {% if integration.default_channel_id == channel.id %}selected{% endif %}>
+                            #{{ channel.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <input type="hidden" name="default_channel_name" id="channelName" value="{{ integration.default_channel_name or '' }}">
+                    <span class="form-hint">Les notifications seront aussi envoyées dans ce canal (en plus des DM aux managers)</span>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Enregistrer les paramètres</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- User Sync -->
+    <div class="card-static mt-6">
+        <div class="card-header">
+            <h3>Comptes liés</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">
+                Les comptes CongesFlow sont liés aux comptes Slack par email.
+                Cela permet aux employés d'utiliser <code>/conges</code> et de recevoir des notifications.
+            </p>
+
+            {% if linked_users %}
+            <div class="linked-users-list">
+                {% for mapping in linked_users %}
+                <div class="linked-user">
+                    <div class="linked-user-info">
+                        <span class="linked-user-name">{{ mapping.user.full_name }}</span>
+                        <span class="linked-user-email">{{ mapping.user.email }}</span>
+                    </div>
+                    <span class="linked-user-slack">@{{ mapping.slack_username }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="text-muted text-sm mt-3">{{ linked_users|length }} compte(s) lié(s)</p>
+            {% else %}
+            <p class="text-muted">Aucun compte lié pour le moment.</p>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('slack.sync_users') }}" class="mt-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Synchroniser les comptes par email
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Disconnect -->
+    <div class="card-static mt-6">
+        <div class="card-body">
+            <div class="disconnect-section">
+                <div>
+                    <h4>Déconnecter Slack</h4>
+                    <p class="text-muted">Les notifications Slack seront désactivées pour votre entreprise.</p>
+                </div>
+                <form method="POST" action="{{ url_for('slack.disconnect') }}" onsubmit="return confirm('Êtes-vous sûr de vouloir déconnecter Slack ?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Déconnecter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Not connected state -->
+    <div class="card-static">
+        <div class="slack-connect">
+            <div class="slack-logo-large">
+                <svg width="80" height="80" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.4 30.4C10.4 32.6091 8.60914 34.4 6.4 34.4C4.19086 34.4 2.4 32.6091 2.4 30.4C2.4 28.1909 4.19086 26.4 6.4 26.4H10.4V30.4Z" fill="#E01E5A"/>
+                    <path d="M12.4 30.4C12.4 28.1909 14.1909 26.4 16.4 26.4C18.6091 26.4 20.4 28.1909 20.4 30.4V41.6C20.4 43.8091 18.6091 45.6 16.4 45.6C14.1909 45.6 12.4 43.8091 12.4 41.6V30.4Z" fill="#E01E5A"/>
+                    <path d="M16.4 10.4C14.1909 10.4 12.4 8.60914 12.4 6.4C12.4 4.19086 14.1909 2.4 16.4 2.4C18.6091 2.4 20.4 4.19086 20.4 6.4V10.4H16.4Z" fill="#36C5F0"/>
+                    <path d="M16.4 12.4C18.6091 12.4 20.4 14.1909 20.4 16.4C20.4 18.6091 18.6091 20.4 16.4 20.4H5.2C2.99086 20.4 1.2 18.6091 1.2 16.4C1.2 14.1909 2.99086 12.4 5.2 12.4H16.4Z" fill="#36C5F0"/>
+                    <path d="M36.4 16.4C36.4 14.1909 38.1909 12.4 40.4 12.4C42.6091 12.4 44.4 14.1909 44.4 16.4C44.4 18.6091 42.6091 20.4 40.4 20.4H36.4V16.4Z" fill="#2EB67D"/>
+                    <path d="M34.4 16.4C34.4 18.6091 32.6091 20.4 30.4 20.4C28.1909 20.4 26.4 18.6091 26.4 16.4V5.2C26.4 2.99086 28.1909 1.2 30.4 1.2C32.6091 1.2 34.4 2.99086 34.4 5.2V16.4Z" fill="#2EB67D"/>
+                    <path d="M30.4 36.4C32.6091 36.4 34.4 38.1909 34.4 40.4C34.4 42.6091 32.6091 44.4 30.4 44.4C28.1909 44.4 26.4 42.6091 26.4 40.4V36.4H30.4Z" fill="#ECB22E"/>
+                    <path d="M30.4 34.4C28.1909 34.4 26.4 32.6091 26.4 30.4C26.4 28.1909 28.1909 26.4 30.4 26.4H41.6C43.8091 26.4 45.6 28.1909 45.6 30.4C45.6 32.6091 43.8091 34.4 41.6 34.4H30.4Z" fill="#ECB22E"/>
+                </svg>
+            </div>
+            <h2>Connectez Slack à CongesFlow</h2>
+            <p class="text-muted">Recevez des notifications instantanées et approuvez les demandes directement depuis Slack.</p>
+
+            <div class="features-list">
+                <div class="feature-item">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Notifications en temps réel des nouvelles demandes</span>
+                </div>
+                <div class="feature-item">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Approuver ou refuser en un clic depuis Slack</span>
+                </div>
+                <div class="feature-item">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Messages personnalisés aux employés et managers</span>
+                </div>
+            </div>
+
+            <a href="{{ url_for('slack.install') }}" class="btn btn-slack">
+                <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.4 30.4C10.4 32.6091 8.60914 34.4 6.4 34.4C4.19086 34.4 2.4 32.6091 2.4 30.4C2.4 28.1909 4.19086 26.4 6.4 26.4H10.4V30.4Z" fill="#E01E5A"/>
+                    <path d="M12.4 30.4C12.4 28.1909 14.1909 26.4 16.4 26.4C18.6091 26.4 20.4 28.1909 20.4 30.4V41.6C20.4 43.8091 18.6091 45.6 16.4 45.6C14.1909 45.6 12.4 43.8091 12.4 41.6V30.4Z" fill="#E01E5A"/>
+                    <path d="M16.4 10.4C14.1909 10.4 12.4 8.60914 12.4 6.4C12.4 4.19086 14.1909 2.4 16.4 2.4C18.6091 2.4 20.4 4.19086 20.4 6.4V10.4H16.4Z" fill="#36C5F0"/>
+                    <path d="M16.4 12.4C18.6091 12.4 20.4 14.1909 20.4 16.4C20.4 18.6091 18.6091 20.4 16.4 20.4H5.2C2.99086 20.4 1.2 18.6091 1.2 16.4C1.2 14.1909 2.99086 12.4 5.2 12.4H16.4Z" fill="#36C5F0"/>
+                    <path d="M36.4 16.4C36.4 14.1909 38.1909 12.4 40.4 12.4C42.6091 12.4 44.4 14.1909 44.4 16.4C44.4 18.6091 42.6091 20.4 40.4 20.4H36.4V16.4Z" fill="#2EB67D"/>
+                    <path d="M34.4 16.4C34.4 18.6091 32.6091 20.4 30.4 20.4C28.1909 20.4 26.4 18.6091 26.4 16.4V5.2C26.4 2.99086 28.1909 1.2 30.4 1.2C32.6091 1.2 34.4 2.99086 34.4 5.2V16.4Z" fill="#2EB67D"/>
+                    <path d="M30.4 36.4C32.6091 36.4 34.4 38.1909 34.4 40.4C34.4 42.6091 32.6091 44.4 30.4 44.4C28.1909 44.4 26.4 42.6091 26.4 40.4V36.4H30.4Z" fill="#ECB22E"/>
+                    <path d="M30.4 34.4C28.1909 34.4 26.4 32.6091 26.4 30.4C26.4 28.1909 28.1909 26.4 30.4 26.4H41.6C43.8091 26.4 45.6 28.1909 45.6 30.4C45.6 32.6091 43.8091 34.4 41.6 34.4H30.4Z" fill="#ECB22E"/>
+                </svg>
+                Ajouter à Slack
+            </a>
+        </div>
+    </div>
+
+    <!-- Setup Instructions -->
+    <div class="card-static mt-6">
+        <div class="card-header">
+            <h3>Configuration requise</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">Pour activer l'intégration Slack, vous devez configurer les variables d'environnement suivantes :</p>
+            <div class="code-block">
+                <code>SLACK_CLIENT_ID=votre_client_id</code><br>
+                <code>SLACK_CLIENT_SECRET=votre_client_secret</code><br>
+                <code>SLACK_SIGNING_SECRET=votre_signing_secret</code>
+            </div>
+            <p class="text-muted mt-4">
+                <a href="https://api.slack.com/apps" target="_blank" class="link">Créer une application Slack</a>
+                pour obtenir ces identifiants.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.slack-settings {
+    max-width: 700px;
+}
+
+.slack-connected {
+    padding: var(--space-5);
+}
+
+.slack-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.slack-logo {
+    flex-shrink: 0;
+}
+
+.slack-info {
+    flex: 1;
+}
+
+.slack-info h3 {
+    margin: 0 0 var(--space-1);
+}
+
+.slack-connect {
+    text-align: center;
+    padding: var(--space-10);
+}
+
+.slack-logo-large {
+    margin-bottom: var(--space-5);
+}
+
+.slack-connect h2 {
+    margin-bottom: var(--space-2);
+}
+
+.slack-connect > p {
+    max-width: 400px;
+    margin: 0 auto var(--space-6);
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+    text-align: left;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-ink-muted);
+}
+
+.feature-item svg {
+    color: #2EB67D;
+    flex-shrink: 0;
+}
+
+.btn-slack {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: #4A154B;
+    color: white;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    transition: background 0.15s ease;
+}
+
+.btn-slack:hover {
+    background: #3a1039;
+    color: white;
+}
+
+.card-header {
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: var(--text-lg);
+}
+
+.card-body {
+    padding: var(--space-5);
+}
+
+.card-footer {
+    padding: var(--space-5);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.notification-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.toggle-option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    cursor: pointer;
+}
+
+.toggle-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--color-accent);
+}
+
+.toggle-label {
+    display: flex;
+    flex-direction: column;
+}
+
+.toggle-title {
+    font-weight: 500;
+}
+
+.toggle-desc {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.form-select {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    background: var(--color-bg);
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.disconnect-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.disconnect-section h4 {
+    margin: 0 0 var(--space-1);
+}
+
+.disconnect-section p {
+    margin: 0;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+.code-block {
+    background: var(--color-surface);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    font-family: monospace;
+    font-size: var(--text-sm);
+}
+
+.link {
+    color: var(--color-accent);
+    text-decoration: underline;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #16a34a;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+
+.mt-5 {
+    margin-top: var(--space-5);
+}
+
+.mt-6 {
+    margin-top: var(--space-6);
+}
+
+.mb-4 {
+    margin-bottom: var(--space-4);
+}
+
+.mt-3 {
+    margin-top: var(--space-3);
+}
+
+.mt-4 {
+    margin-top: var(--space-4);
+}
+
+.text-sm {
+    font-size: var(--text-sm);
+}
+
+/* Linked users list */
+.linked-users-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.linked-user {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.linked-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.linked-user-name {
+    font-weight: 500;
+}
+
+.linked-user-email {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.linked-user-slack {
+    font-size: var(--text-sm);
+    color: #4A154B;
+    font-weight: 500;
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--color-bg);
+    color: var(--color-ink);
+    border: 1px solid var(--color-border);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+    background: var(--color-surface);
+    border-color: var(--color-ink);
+}
+</style>
+
+<script>
+function updateChannelName() {
+    const select = document.getElementById('channelSelect');
+    const nameInput = document.getElementById('channelName');
+    const option = select.options[select.selectedIndex];
+    nameInput.value = option.dataset.name || '';
+}
+</script>
+{% endblock %}

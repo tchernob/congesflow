@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block title %}Soldes - CongesFlow{% endblock %}
+{% block page_title %}Gestion des soldes{% endblock %}
+
+{% block content %}
+<div class="page-header-actions">
+    <div class="filters">
+        <select class="form-select" id="yearFilter" onchange="applyFilters()">
+            {% for y in range(year - 1, year + 2) %}
+            <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div class="card-static">
+    <div class="table-container" style="border: none;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Employé</th>
+                    {% for lt in leave_types %}
+                    <th class="text-center">
+                        <span class="balance-header">
+                            <span class="balance-dot" style="background: {{ lt.color }};"></span>
+                            {{ lt.code }}
+                        </span>
+                    </th>
+                    {% endfor %}
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <div class="user-avatar-sm">{{ user.initials }}</div>
+                            <div>
+                                <div class="font-semibold">{{ user.full_name }}</div>
+                                <div class="text-xs text-muted">{{ user.team.name if user.team else '-' }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    {% for lt in leave_types %}
+                    {% set balance = user.leave_balances.filter_by(leave_type_id=lt.id, year=year).first() %}
+                    <td class="text-center">
+                        {% if balance %}
+                        <button type="button"
+                                class="balance-btn {% if balance.available < 0 %}negative{% elif balance.available < 5 %}warning{% endif %}"
+                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name }}', {{ lt.id }}, '{{ lt.name }}', {{ balance.initial_balance }}, {{ balance.used }}, {{ balance.available }})">
+                            {{ balance.available | round(1) }}
+                        </button>
+                        {% else %}
+                        <button type="button"
+                                class="balance-btn empty"
+                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name }}', {{ lt.id }}, '{{ lt.name }}', 0, 0, 0)">
+                            -
+                        </button>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td>
+                        <a href="{{ url_for('admin.view_user', user_id=user.id) }}" class="btn btn-ghost btn-sm">
+                            Voir
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal d'ajustement -->
+<div id="adjustModal" class="modal">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Ajuster le solde</h3>
+            <button type="button" class="modal-close" onclick="closeModal()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <form id="adjustForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="leave_type_id" id="modal_leave_type_id">
+            <input type="hidden" name="year" value="{{ year }}">
+
+            <div class="modal-body">
+                <div class="modal-info">
+                    <p class="info-user" id="modal_user_name"></p>
+                    <p class="info-type" id="modal_leave_type_name"></p>
+                </div>
+
+                <div class="balance-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Solde initial</span>
+                        <span class="summary-value" id="modal_initial">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Utilisé</span>
+                        <span class="summary-value" id="modal_used">0</span>
+                    </div>
+                    <div class="summary-item highlight">
+                        <span class="summary-label">Disponible</span>
+                        <span class="summary-value" id="modal_available">0</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="adjustment">Ajustement</label>
+                    <div class="adjustment-input-group">
+                        <button type="button" class="adj-btn minus" onclick="adjustValue(-1)">-</button>
+                        <input type="number" id="adjustment" name="adjustment" class="form-input adjustment-input" value="0" step="0.5">
+                        <button type="button" class="adj-btn plus" onclick="adjustValue(1)">+</button>
+                    </div>
+                    <span class="form-hint">Entrez une valeur positive pour ajouter des jours, négative pour en retirer</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reason">Motif</label>
+                    <input type="text" id="reason" name="reason" class="form-input" placeholder="Ex: Régularisation, report année précédente...">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                <button type="submit" class="btn btn-primary">Appliquer l'ajustement</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.page-header-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: var(--space-6);
+}
+
+.filters .form-select {
+    width: auto;
+    min-width: 120px;
+}
+
+.balance-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+.balance-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.user-avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--text-xs);
+}
+
+.balance-btn {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    font-weight: 600;
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 50px;
+}
+
+.balance-btn:hover {
+    background: var(--color-accent-light);
+    border-color: var(--color-accent);
+}
+
+.balance-btn.negative {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+.balance-btn.warning {
+    background: #fffbeb;
+    color: #d97706;
+    border-color: #fde68a;
+}
+
+.balance-btn.empty {
+    color: var(--color-ink-muted);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.open {
+    display: flex;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    position: relative;
+    background: var(--color-bg);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 440px;
+    margin: var(--space-4);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    padding: var(--space-2);
+    cursor: pointer;
+    color: var(--color-ink-muted);
+    border-radius: var(--radius-md);
+}
+
+.modal-close:hover {
+    background: var(--color-surface);
+    color: var(--color-ink);
+}
+
+.modal-body {
+    padding: var(--space-5);
+}
+
+.modal-info {
+    margin-bottom: var(--space-5);
+}
+
+.info-user {
+    font-weight: 600;
+    font-size: var(--text-lg);
+}
+
+.info-type {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+}
+
+.balance-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+}
+
+.summary-item {
+    text-align: center;
+}
+
+.summary-label {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-1);
+}
+
+.summary-value {
+    font-size: var(--text-xl);
+    font-weight: 600;
+}
+
+.summary-item.highlight .summary-value {
+    color: var(--color-accent);
+}
+
+.form-group {
+    margin-bottom: var(--space-4);
+}
+
+.form-label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+}
+
+.form-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.form-hint {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-2);
+}
+
+.adjustment-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.adjustment-input {
+    text-align: center;
+    font-weight: 600;
+    font-size: var(--text-lg);
+}
+
+.adj-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    font-size: var(--text-xl);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.adj-btn:hover {
+    background: var(--color-accent-light);
+    border-color: var(--color-accent);
+}
+
+.adj-btn.minus { color: #dc2626; }
+.adj-btn.plus { color: #16a34a; }
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border-top: 1px solid var(--color-border);
+}
+</style>
+
+<script>
+function applyFilters() {
+    const year = document.getElementById('yearFilter').value;
+    window.location.href = '{{ url_for("admin.balances") }}?year=' + year;
+}
+
+function openAdjustModal(userId, userName, leaveTypeId, leaveTypeName, initial, used, available) {
+    document.getElementById('adjustForm').action = '/admin/balances/' + userId + '/adjust';
+    document.getElementById('modal_user_name').textContent = userName;
+    document.getElementById('modal_leave_type_name').textContent = leaveTypeName;
+    document.getElementById('modal_leave_type_id').value = leaveTypeId;
+    document.getElementById('modal_initial').textContent = initial;
+    document.getElementById('modal_used').textContent = used;
+    document.getElementById('modal_available').textContent = available;
+    document.getElementById('adjustment').value = 0;
+    document.getElementById('reason').value = '';
+    document.getElementById('adjustModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('adjustModal').classList.remove('open');
+}
+
+function adjustValue(delta) {
+    const input = document.getElementById('adjustment');
+    input.value = parseFloat(input.value || 0) + delta;
+}
+
+// Fermer avec Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+});
+</script>
+{% endblock %}

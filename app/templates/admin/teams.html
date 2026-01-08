@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Équipes - CongesFlow{% endblock %}
+{% block page_title %}Gestion des équipes{% endblock %}
+
+{% block content %}
+<div class="page-header-actions">
+    {% if current_user.is_admin() %}
+    <a href="{{ url_for('admin.new_team') }}" class="btn btn-primary">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Nouvelle équipe
+    </a>
+    {% endif %}
+</div>
+
+{% if teams %}
+<div class="teams-grid">
+    {% for team in teams %}
+    <div class="team-card-admin" style="--team-color: {{ team.color }};">
+        <div class="team-card-header-admin">
+            <div class="team-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </div>
+            <div class="team-status-badge {% if team.is_active %}active{% else %}inactive{% endif %}">
+                {{ 'Actif' if team.is_active else 'Inactif' }}
+            </div>
+        </div>
+        <div class="team-card-body-admin">
+            <h3 class="team-name-admin">{{ team.name }}</h3>
+            <p class="team-description">{{ team.description or 'Aucune description' }}</p>
+        </div>
+        <div class="team-card-footer-admin">
+            <div class="team-stats">
+                <span class="team-stat">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    {{ team.member_count }} membre{{ 's' if team.member_count > 1 else '' }}
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-static">
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+        </div>
+        <h3 class="empty-state-title">Aucune équipe</h3>
+        <p class="empty-state-text">Commencez par créer votre première équipe.</p>
+        {% if current_user.is_admin() %}
+        <a href="{{ url_for('admin.new_team') }}" class="btn btn-primary">Créer une équipe</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+.page-header-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-6);
+}
+
+.teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-6);
+}
+
+.team-card-admin {
+    background: var(--color-bg-elevated);
+    border: var(--border-thick);
+    overflow: hidden;
+}
+
+.team-card-header-admin {
+    padding: var(--space-4) var(--space-5);
+    background: var(--team-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.team-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.team-status-badge {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: var(--radius-full);
+}
+
+.team-status-badge.active {
+    background: rgba(255,255,255,0.9);
+    color: var(--color-success);
+}
+
+.team-status-badge.inactive {
+    background: rgba(0,0,0,0.2);
+    color: white;
+}
+
+.team-card-body-admin {
+    padding: var(--space-5);
+}
+
+.team-name-admin {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-style: italic;
+    margin-bottom: var(--space-2);
+}
+
+.team-description {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.team-card-footer-admin {
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-bg-sunken);
+    border-top: var(--border-thin);
+}
+
+.team-stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+</style>
+{% endblock %}

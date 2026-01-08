@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}Demande de {{ request.employee.full_name }} - CongesFlow{% endblock %}
+{% block page_title %}Demande de congés{% endblock %}
+
+{% block content %}
+<div class="request-review-container">
+    <div class="request-review-main">
+        <!-- Employee Info -->
+        <div class="card-static mb-6">
+            <div class="card-body">
+                <div class="employee-header">
+                    <div class="employee-avatar-lg" style="background: {{ request.leave_type.color }};">
+                        {{ request.employee.initials }}
+                    </div>
+                    <div class="employee-details">
+                        <h2 class="employee-name-lg">{{ request.employee.full_name }}</h2>
+                        <div class="employee-meta">
+                            {{ request.employee.team.name if request.employee.team else 'Pas d\'équipe' }}
+                            {% if request.employee.email %}
+                            • {{ request.employee.email }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Details -->
+        <div class="card-static">
+            <div class="card-header">
+                <h3 class="card-title">Détails de la demande</h3>
+                <span class="badge badge-{{ request.status_color }}">{{ request.status_label }}</span>
+            </div>
+            <div class="card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Type de congé</div>
+                        <div class="detail-value flex items-center gap-2">
+                            <span class="balance-dot" style="background: {{ request.leave_type.color }};"></span>
+                            {{ request.leave_type.name }}
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Durée</div>
+                        <div class="detail-value detail-value-lg">{{ request.days_count }} jour{{ 's' if request.days_count > 1 else '' }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Date de début</div>
+                        <div class="detail-value">
+                            {{ request.start_date.strftime('%A %d %B %Y') }}
+                            {% if request.start_half_day %}
+                            <span class="badge badge-secondary">Après-midi</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Date de fin</div>
+                        <div class="detail-value">
+                            {{ request.end_date.strftime('%A %d %B %Y') }}
+                            {% if request.end_half_day %}
+                            <span class="badge badge-secondary">Matin</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if request.reason %}
+                    <div class="detail-item full-width">
+                        <div class="detail-label">Motif</div>
+                        <div class="detail-value">{{ request.reason }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="detail-item">
+                        <div class="detail-label">Date de création</div>
+                        <div class="detail-value">{{ request.created_at.strftime('%d/%m/%Y à %H:%M') }}</div>
+                    </div>
+
+                    {% if request.manager_approved_by %}
+                    <div class="detail-item">
+                        <div class="detail-label">Approuvé par (Manager)</div>
+                        <div class="detail-value">{{ request.manager_approved_by.full_name }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% set can_hr_approve = request.status == 'pending_hr' or (request.status == 'pending_manager' and settings.approval_workflow in ['hr_only', 'manager_or_hr']) %}
+
+                {% if can_hr_approve %}
+                <div class="action-section">
+                    <h4 class="section-title">Votre décision (RH)</h4>
+                    {% if request.status == 'pending_manager' and settings.approval_workflow == 'manager_or_hr' %}
+                    <div class="alert alert-info mb-4">
+                        <div class="alert-content">
+                            <p>Cette demande est en attente du manager, mais vous pouvez aussi l'approuver directement (workflow : Manager ou RH).</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="action-buttons-large">
+                        <form action="{{ url_for('admin.approve_request', request_id=request.id) }}" method="POST" class="action-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-accent btn-lg">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Approuver définitivement
+                            </button>
+                        </form>
+
+                        <button type="button" class="btn btn-danger btn-lg" data-modal="rejectModal">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Refuser
+                        </button>
+                    </div>
+                </div>
+                {% elif request.status == 'pending_manager' %}
+                <div class="alert alert-info mt-6">
+                    <svg class="alert-icon" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="alert-content">
+                        <div class="alert-title">En attente du manager</div>
+                        <p>Cette demande doit d'abord être validée par le manager avant que les RH puissent statuer.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <aside class="request-review-sidebar">
+        <a href="{{ url_for('admin.requests') }}" class="btn btn-secondary w-full mb-6">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Retour aux demandes
+        </a>
+
+        <!-- Employee Balance -->
+        <div class="card-static">
+            <div class="card-header">
+                <h3 class="card-title">Solde employé</h3>
+            </div>
+            <div class="card-body">
+                <div class="balance-sidebar-list" id="employeeBalance">
+                    <p class="text-muted text-sm">Chargement...</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Refuser la demande</h3>
+            <button type="button" class="btn btn-ghost btn-icon" data-modal-close>
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form action="{{ url_for('admin.reject_request', request_id=request.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="reason">Motif du refus (optionnel)</label>
+                    <textarea id="reason" name="reason" class="form-textarea" placeholder="Expliquez pourquoi vous refusez cette demande..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Annuler</button>
+                <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.request-review-container {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--space-6);
+    align-items: start;
+}
+
+.employee-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+}
+
+.employee-avatar-lg {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-full);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--text-2xl);
+    border: var(--border-thick);
+}
+
+.employee-name-lg {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-style: italic;
+    margin-bottom: var(--space-1);
+}
+
+.employee-meta {
+    color: var(--color-ink-muted);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-label {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.detail-value-lg {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-style: italic;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-style: italic;
+    margin-bottom: var(--space-4);
+}
+
+.action-section {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: var(--border-thin);
+}
+
+.action-buttons-large {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.action-form {
+    flex: 1;
+}
+
+.action-form .btn {
+    width: 100%;
+}
+
+.balance-sidebar-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.balance-sidebar-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3);
+    background: var(--color-bg);
+    border: var(--border-thin);
+}
+
+.balance-sidebar-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.balance-sidebar-value {
+    font-weight: 700;
+}
+
+@media (max-width: 1024px) {
+    .request-review-container {
+        grid-template-columns: 1fr;
+    }
+
+    .request-review-sidebar {
+        order: -1;
+    }
+
+    .action-buttons-large {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadEmployeeBalance();
+});
+
+function loadEmployeeBalance() {
+    const container = document.getElementById('employeeBalance');
+    const employeeId = {{ request.employee_id }};
+
+    fetch('/api/user/balances?user_id=' + employeeId)
+        .then(response => response.json())
+        .then(data => {
+            container.textContent = '';
+
+            if (data.error) {
+                const p = document.createElement('p');
+                p.className = 'text-muted text-sm';
+                p.textContent = 'Non autorisé';
+                container.appendChild(p);
+                return;
+            }
+
+            if (data.length === 0) {
+                const p = document.createElement('p');
+                p.className = 'text-muted text-sm';
+                p.textContent = 'Aucun solde';
+                container.appendChild(p);
+                return;
+            }
+
+            data.forEach(balance => {
+                const item = document.createElement('div');
+                item.className = 'balance-sidebar-item';
+
+                const info = document.createElement('div');
+                info.className = 'balance-sidebar-info';
+
+                const dot = document.createElement('span');
+                dot.className = 'balance-dot';
+                dot.style.background = balance.color;
+
+                const name = document.createElement('span');
+                name.textContent = balance.leave_type_code;
+
+                info.appendChild(dot);
+                info.appendChild(name);
+
+                const value = document.createElement('span');
+                value.className = 'balance-sidebar-value';
+                value.textContent = balance.available + ' j';
+
+                item.appendChild(info);
+                item.appendChild(value);
+                container.appendChild(item);
+            });
+        })
+        .catch(err => {
+            container.textContent = '';
+            const p = document.createElement('p');
+            p.className = 'text-muted text-sm';
+            p.textContent = 'Erreur de chargement';
+            container.appendChild(p);
+        });
+}
+</script>
+{% endblock %}

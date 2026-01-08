@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Nouvelle demande - CongesFlow{% endblock %}
+{% block page_title %}Nouvelle demande de congés{% endblock %}
+
+{% block content %}
+<div class="request-form-container">
+    <div class="card-static">
+        <div class="card-header">
+            <h3 class="card-title">Créer une demande</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('employee.new_request') }}" id="requestForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <!-- Leave Type Selection -->
+                <div class="form-group">
+                    <label class="form-label form-label-required">Type de congé</label>
+                    <div class="leave-type-grid">
+                        {% for lt in leave_types %}
+                        <label class="leave-type-option">
+                            <input type="radio" name="leave_type_id" value="{{ lt.id }}" required>
+                            <div class="leave-type-card">
+                                <div class="leave-type-dot" style="background: {{ lt.color }};"></div>
+                                <div class="leave-type-name">{{ lt.name }}</div>
+                                <div class="leave-type-code">{{ lt.code }}</div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Date Selection -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label form-label-required" for="start_date">Date de début</label>
+                        <input type="date"
+                               id="start_date"
+                               name="start_date"
+                               class="form-input"
+                               min="{{ today }}"
+                               required>
+                        <label class="form-checkbox mt-2">
+                            <input type="checkbox" name="start_half_day">
+                            <span>Demi-journée (après-midi)</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label form-label-required" for="end_date">Date de fin</label>
+                        <input type="date"
+                               id="end_date"
+                               name="end_date"
+                               class="form-input"
+                               min="{{ today }}"
+                               required>
+                        <label class="form-checkbox mt-2">
+                            <input type="checkbox" name="end_half_day">
+                            <span>Demi-journée (matin)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Days Count Display -->
+                <div class="days-count-display">
+                    <div class="days-count-label">Durée estimée</div>
+                    <div class="days-count-value" id="days_count">-- jours</div>
+                </div>
+
+                <!-- Conflict Checker -->
+                <div id="conflict_checker"></div>
+
+                <!-- Reason -->
+                <div class="form-group">
+                    <label class="form-label" for="reason">Motif (optionnel)</label>
+                    <textarea id="reason"
+                              name="reason"
+                              class="form-textarea"
+                              placeholder="Décrivez brièvement le motif de votre demande..."
+                              rows="3"></textarea>
+                </div>
+
+                <!-- Submit -->
+                <div class="form-actions">
+                    <a href="{{ url_for('employee.dashboard') }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                        Soumettre la demande
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Side Info -->
+    <aside class="request-side-info">
+        <div class="card-static">
+            <div class="card-header">
+                <h3 class="card-title">Mes soldes</h3>
+            </div>
+            <div class="card-body">
+                <div class="balance-mini-list" id="balanceList">
+                    <p class="text-muted text-sm">Chargement...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-static mt-6">
+            <div class="card-header">
+                <h3 class="card-title">Informations</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-list">
+                    <div class="info-item">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Les weekends sont automatiquement exclus du décompte</span>
+                    </div>
+                    <div class="info-item">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Votre manager sera notifié de votre demande</span>
+                    </div>
+                    <div class="info-item">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Validation en 2 étapes : Manager puis RH</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<style>
+.request-form-container {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--space-6);
+    align-items: start;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+}
+
+/* Leave Type Grid */
+.leave-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-3);
+}
+
+.leave-type-option {
+    cursor: pointer;
+}
+
+.leave-type-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.leave-type-card {
+    padding: var(--space-4);
+    border: var(--border-thick);
+    background: var(--color-bg);
+    text-align: center;
+    transition: var(--transition-fast);
+}
+
+.leave-type-option input:checked + .leave-type-card {
+    background: var(--color-ink);
+    color: white;
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.leave-type-option:hover .leave-type-card {
+    background: var(--color-bg-sunken);
+}
+
+.leave-type-option input:checked + .leave-type-card:hover {
+    background: var(--color-ink);
+}
+
+.leave-type-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    margin: 0 auto var(--space-2);
+    border: 2px solid currentColor;
+}
+
+.leave-type-name {
+    font-weight: 600;
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-1);
+}
+
+.leave-type-code {
+    font-size: var(--text-xs);
+    opacity: 0.7;
+}
+
+/* Days Count Display */
+.days-count-display {
+    background: var(--color-bg-sunken);
+    border: var(--border-thick);
+    padding: var(--space-5);
+    text-align: center;
+    margin-bottom: var(--space-6);
+}
+
+.days-count-label {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-2);
+}
+
+.days-count-value {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-style: italic;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-4);
+    padding-top: var(--space-6);
+    border-top: var(--border-thin);
+}
+
+/* Side Info */
+.balance-mini-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.balance-mini-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3);
+    background: var(--color-bg);
+    border: var(--border-thin);
+}
+
+.balance-mini-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.balance-mini-value {
+    font-weight: 700;
+}
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.info-item {
+    display: flex;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.info-item svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+@media (max-width: 1024px) {
+    .request-form-container {
+        grid-template-columns: 1fr;
+    }
+
+    .request-side-info {
+        order: -1;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadBalances();
+});
+
+function loadBalances() {
+    const container = document.getElementById('balanceList');
+
+    fetch('/api/user/balances')
+        .then(response => response.json())
+        .then(data => {
+            container.textContent = '';
+
+            if (data.length === 0) {
+                const p = document.createElement('p');
+                p.className = 'text-muted text-sm';
+                p.textContent = 'Aucun solde disponible';
+                container.appendChild(p);
+                return;
+            }
+
+            data.forEach(balance => {
+                const item = document.createElement('div');
+                item.className = 'balance-mini-item';
+
+                const info = document.createElement('div');
+                info.className = 'balance-mini-info';
+
+                const dot = document.createElement('span');
+                dot.className = 'balance-dot';
+                dot.style.background = balance.color;
+
+                const name = document.createElement('span');
+                name.textContent = balance.leave_type_code;
+
+                info.appendChild(dot);
+                info.appendChild(name);
+
+                const value = document.createElement('span');
+                value.className = 'balance-mini-value';
+                value.textContent = balance.available + ' j';
+
+                item.appendChild(info);
+                item.appendChild(value);
+                container.appendChild(item);
+            });
+        })
+        .catch(err => {
+            container.textContent = '';
+            const p = document.createElement('p');
+            p.className = 'text-muted text-sm';
+            p.textContent = 'Erreur de chargement';
+            container.appendChild(p);
+        });
+}
+</script>
+{% endblock %}

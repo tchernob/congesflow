@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Demande #{{ request.id }} - CongesFlow{% endblock %}
+{% block page_title %}Détails de la demande{% endblock %}
+
+{% block content %}
+<div class="request-detail-container">
+    <div class="card-static">
+        <div class="card-header">
+            <div class="flex items-center gap-4">
+                <div class="request-type-badge-lg" style="background: {{ request.leave_type.color }};">
+                    {{ request.leave_type.code }}
+                </div>
+                <div>
+                    <h3 class="card-title">{{ request.leave_type.name }}</h3>
+                    <span class="badge badge-{{ request.status_color }}">{{ request.status_label }}</span>
+                </div>
+            </div>
+            {% if request.can_cancel %}
+            <form action="{{ url_for('employee.cancel_request', request_id=request.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette demande ?')">
+                    Annuler la demande
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Date de début</div>
+                    <div class="detail-value">
+                        {{ request.start_date.strftime('%A %d %B %Y') }}
+                        {% if request.start_half_day %}
+                        <span class="badge badge-secondary">Après-midi</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label">Date de fin</div>
+                    <div class="detail-value">
+                        {{ request.end_date.strftime('%A %d %B %Y') }}
+                        {% if request.end_half_day %}
+                        <span class="badge badge-secondary">Matin</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label">Durée</div>
+                    <div class="detail-value detail-value-lg">{{ request.days_count }} jour{{ 's' if request.days_count > 1 else '' }}</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label">Date de création</div>
+                    <div class="detail-value">{{ request.created_at.strftime('%d/%m/%Y à %H:%M') }}</div>
+                </div>
+
+                {% if request.reason %}
+                <div class="detail-item full-width">
+                    <div class="detail-label">Motif</div>
+                    <div class="detail-value">{{ request.reason }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Workflow Status -->
+            <div class="workflow-section">
+                <h4 class="section-title">Processus de validation</h4>
+                <div class="workflow-steps">
+                    <div class="workflow-step {% if request.status != 'pending_manager' %}completed{% elif request.status == 'pending_manager' %}current{% endif %}">
+                        <div class="step-icon">
+                            {% if request.status == 'pending_manager' %}
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% else %}
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">Validation Manager</div>
+                            {% if request.manager_reviewer %}
+                            <div class="step-meta">
+                                Validé par {{ request.manager_reviewer.full_name }}
+                                <br>{{ request.manager_decision_date.strftime('%d/%m/%Y') }}
+                            </div>
+                            {% elif request.status == 'pending_manager' %}
+                            <div class="step-meta">En attente</div>
+                            {% elif request.status == 'rejected' and not request.hr_reviewer %}
+                            <div class="step-meta text-danger">Refusé</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="workflow-connector"></div>
+
+                    <div class="workflow-step {% if request.status == 'approved' %}completed{% elif request.status == 'pending_hr' %}current{% elif request.status == 'rejected' and request.hr_reviewer %}rejected{% endif %}">
+                        <div class="step-icon">
+                            {% if request.status == 'approved' %}
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            {% elif request.status == 'rejected' and request.hr_reviewer %}
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            {% else %}
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">Validation RH</div>
+                            {% if request.hr_reviewer %}
+                            <div class="step-meta">
+                                {% if request.status == 'approved' %}Approuvé{% else %}Refusé{% endif %} par {{ request.hr_reviewer.full_name }}
+                                <br>{{ request.hr_decision_date.strftime('%d/%m/%Y') }}
+                            </div>
+                            {% elif request.status == 'pending_hr' %}
+                            <div class="step-meta">En attente</div>
+                            {% else %}
+                            <div class="step-meta">-</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if request.rejection_reason %}
+                <div class="rejection-reason">
+                    <strong>Motif du refus :</strong> {{ request.rejection_reason }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="back-link">
+        <a href="{{ url_for('employee.requests') }}" class="btn btn-secondary">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Retour aux demandes
+        </a>
+    </div>
+</div>
+
+<style>
+.request-detail-container {
+    max-width: 800px;
+}
+
+.request-type-badge-lg {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: var(--text-xl);
+    border: var(--border-thick);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+    margin-bottom: var(--space-8);
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-label {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.detail-value {
+    font-size: var(--text-base);
+}
+
+.detail-value-lg {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-style: italic;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-style: italic;
+    margin-bottom: var(--space-4);
+}
+
+/* Workflow */
+.workflow-section {
+    padding-top: var(--space-6);
+    border-top: var(--border-thin);
+}
+
+.workflow-steps {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+}
+
+.workflow-step {
+    flex: 1;
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-bg-sunken);
+    border: var(--border-thin);
+}
+
+.workflow-step.completed {
+    background: var(--color-success-soft);
+    border-color: var(--color-success);
+}
+
+.workflow-step.current {
+    background: var(--color-warning-soft);
+    border-color: var(--color-warning);
+}
+
+.workflow-step.rejected {
+    background: var(--color-danger-soft);
+    border-color: var(--color-danger);
+}
+
+.step-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-elevated);
+    border: var(--border-thick);
+    flex-shrink: 0;
+}
+
+.workflow-step.completed .step-icon {
+    background: var(--color-success);
+    color: white;
+}
+
+.workflow-step.current .step-icon {
+    background: var(--color-warning);
+    color: white;
+}
+
+.workflow-step.rejected .step-icon {
+    background: var(--color-danger);
+    color: white;
+}
+
+.step-title {
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+}
+
+.step-meta {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.workflow-connector {
+    width: 40px;
+    height: 2px;
+    background: var(--color-ink);
+    align-self: center;
+    flex-shrink: 0;
+}
+
+.rejection-reason {
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-danger-soft);
+    border: 1px solid var(--color-danger);
+}
+
+.back-link {
+    margin-top: var(--space-6);
+}
+
+@media (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .workflow-steps {
+        flex-direction: column;
+    }
+
+    .workflow-connector {
+        width: 2px;
+        height: 20px;
+        margin-left: 19px;
+    }
+}
+</style>
+{% endblock %}

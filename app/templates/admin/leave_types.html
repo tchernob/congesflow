@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Types de congés - CongesFlow{% endblock %}
+{% block page_title %}Types de congés{% endblock %}
+
+{% block content %}
+<div class="page-header-actions">
+    {% if current_user.is_admin() %}
+    <a href="{{ url_for('admin.new_leave_type') }}" class="btn btn-primary">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Nouveau type
+    </a>
+    {% endif %}
+</div>
+
+{% if leave_types %}
+<div class="leave-types-grid">
+    {% for lt in leave_types %}
+    <div class="leave-type-card" style="--type-color: {{ lt.color }};">
+        <div class="leave-type-header">
+            <div class="leave-type-color" style="background: {{ lt.color }};"></div>
+            <div class="leave-type-status {% if lt.is_active %}active{% else %}inactive{% endif %}">
+                {{ 'Actif' if lt.is_active else 'Inactif' }}
+            </div>
+        </div>
+        <div class="leave-type-body">
+            <div class="leave-type-code">{{ lt.code }}</div>
+            <h3 class="leave-type-name">{{ lt.name }}</h3>
+            <p class="leave-type-description">{{ lt.description or 'Aucune description' }}</p>
+        </div>
+        <div class="leave-type-footer">
+            <div class="leave-type-info">
+                <span class="info-item">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    {{ lt.default_days }} jours/an
+                </span>
+                {% if lt.requires_justification %}
+                <span class="info-item warning">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Justificatif requis
+                </span>
+                {% endif %}
+                {% if lt.is_paid %}
+                <span class="info-item success">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Payé
+                </span>
+                {% else %}
+                <span class="info-item muted">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Non payé
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-static">
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        <h3 class="empty-state-title">Aucun type de congés</h3>
+        <p class="empty-state-text">Créez vos premiers types de congés pour commencer.</p>
+        {% if current_user.is_admin() %}
+        <a href="{{ url_for('admin.new_leave_type') }}" class="btn btn-primary">Créer un type</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+.page-header-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-6);
+}
+
+.leave-types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-6);
+}
+
+.leave-type-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.leave-type-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.leave-type-header {
+    padding: var(--space-4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.leave-type-color {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-md);
+}
+
+.leave-type-status {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    border-radius: var(--radius-full);
+}
+
+.leave-type-status.active {
+    background: var(--color-success-light, #dcfce7);
+    color: var(--color-success, #16a34a);
+}
+
+.leave-type-status.inactive {
+    background: var(--color-surface);
+    color: var(--color-ink-muted);
+}
+
+.leave-type-body {
+    padding: var(--space-5);
+}
+
+.leave-type-code {
+    display: inline-block;
+    padding: var(--space-1) var(--space-2);
+    background: var(--color-surface);
+    font-family: monospace;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-2);
+}
+
+.leave-type-name {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.leave-type-description {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    line-height: 1.5;
+}
+
+.leave-type-footer {
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+}
+
+.leave-type-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+}
+
+.info-item.success {
+    color: var(--color-success, #16a34a);
+}
+
+.info-item.warning {
+    color: var(--color-warning, #d97706);
+}
+
+.info-item.muted {
+    color: var(--color-ink-muted);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--space-12);
+}
+
+.empty-state-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--color-surface);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-4);
+    color: var(--color-ink-muted);
+}
+
+.empty-state-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.empty-state-text {
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-6);
+}
+</style>
+{% endblock %}

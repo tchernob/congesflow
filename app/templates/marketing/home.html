@@ -1,0 +1,925 @@
+{% extends "marketing/base_marketing.html" %}
+
+{% block title %}CongesFlow - Gestion des congés simplifiée pour votre entreprise{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="gradient-orb"></div>
+    <div class="container">
+        <div class="hero-grid">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <div class="badge">
+                        <span class="badge-dot"></span>
+                        Nouveau : Intégration Slack
+                    </div>
+                </div>
+
+                <h1 class="hero-title">
+                    Gérez vos congés<br>
+                    <span class="gradient-text">sans friction</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    CongesFlow automatise les demandes, validations et plannings de votre équipe.
+                    Fini les emails perdus et les tableurs.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="{{ url_for('marketing.signup') }}" class="btn btn-primary btn-lg">
+                        Commencer gratuitement
+                        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                    <a href="{{ url_for('marketing.demo') }}" class="btn btn-secondary btn-lg">
+                        Voir la démo
+                    </a>
+                </div>
+
+                <div class="hero-social-proof">
+                    <div class="hero-avatars">
+                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face" alt="Utilisatrice" class="hero-avatar">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" alt="Utilisateur" class="hero-avatar">
+                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face" alt="Utilisatrice" class="hero-avatar">
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" alt="Utilisateur" class="hero-avatar">
+                        <div class="hero-avatar-more">+500</div>
+                    </div>
+                    <p class="hero-social-text">Rejoignez <strong>500+ équipes</strong> qui simplifient leurs congés</p>
+                </div>
+            </div>
+
+            <div class="hero-image">
+                <div class="hero-image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=700&fit=crop" alt="Équipe travaillant ensemble" class="hero-photo">
+                    <div class="hero-floating-card card-1">
+                        <div class="floating-icon success">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div class="floating-text">
+                            <span class="floating-title">Congés approuvés</span>
+                            <span class="floating-subtitle">15-19 janvier</span>
+                        </div>
+                    </div>
+                    <div class="hero-floating-card card-2">
+                        <div class="floating-icon primary">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div class="floating-text">
+                            <span class="floating-title">18 CP restants</span>
+                            <span class="floating-subtitle">Solde à jour</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-16);
+    align-items: center;
+}
+
+.hero-content {
+    text-align: left;
+}
+
+.hero-social-proof {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-10);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--color-border);
+}
+
+.hero-avatars {
+    display: flex;
+    align-items: center;
+}
+
+.hero-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid white;
+    margin-left: -12px;
+    object-fit: cover;
+}
+
+.hero-avatar:first-child {
+    margin-left: 0;
+}
+
+.hero-avatar-more {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid white;
+    margin-left: -12px;
+    background: var(--color-primary);
+    color: white;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-social-text {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+.hero-social-text strong {
+    color: var(--color-text);
+}
+
+.hero-image {
+    position: relative;
+}
+
+.hero-image-wrapper {
+    position: relative;
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.hero-photo {
+    width: 100%;
+    height: 500px;
+    object-fit: cover;
+    display: block;
+}
+
+.hero-floating-card {
+    position: absolute;
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    box-shadow: var(--shadow-lg);
+    animation: float 3s ease-in-out infinite;
+}
+
+.hero-floating-card.card-1 {
+    bottom: 80px;
+    left: -20px;
+    animation-delay: 0s;
+}
+
+.hero-floating-card.card-2 {
+    top: 60px;
+    right: -20px;
+    animation-delay: 1.5s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.floating-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floating-icon.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--color-success);
+}
+
+.floating-icon.primary {
+    background: var(--color-primary-dim);
+    color: var(--color-primary);
+}
+
+.floating-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.floating-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.floating-subtitle {
+    font-size: var(--text-xs);
+    color: var(--color-text-dim);
+}
+
+@media (max-width: 1024px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .hero-content {
+        text-align: center;
+    }
+
+    .hero-social-proof {
+        justify-content: center;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .hero-image {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .hero-floating-card.card-1 {
+        left: 10px;
+    }
+
+    .hero-floating-card.card-2 {
+        right: 10px;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero-floating-card {
+        display: none;
+    }
+
+    .hero-photo {
+        height: 350px;
+    }
+}
+</style>
+
+<!-- Slack Integration Highlight -->
+<section class="slack-highlight">
+    <div class="container">
+        <div class="slack-highlight-grid">
+            <div class="slack-highlight-content">
+                <div class="slack-badge">
+                    <svg class="slack-logo-small" width="20" height="20" viewBox="0 0 48 48" fill="none">
+                        <path d="M10.4 30.4C10.4 32.6 8.6 34.4 6.4 34.4C4.2 34.4 2.4 32.6 2.4 30.4C2.4 28.2 4.2 26.4 6.4 26.4H10.4V30.4Z" fill="#E01E5A"/>
+                        <path d="M12.4 30.4C12.4 28.2 14.2 26.4 16.4 26.4C18.6 26.4 20.4 28.2 20.4 30.4V41.6C20.4 43.8 18.6 45.6 16.4 45.6C14.2 45.6 12.4 43.8 12.4 41.6V30.4Z" fill="#E01E5A"/>
+                        <path d="M16.4 10.4C14.2 10.4 12.4 8.6 12.4 6.4C12.4 4.2 14.2 2.4 16.4 2.4C18.6 2.4 20.4 4.2 20.4 6.4V10.4H16.4Z" fill="#36C5F0"/>
+                        <path d="M16.4 12.4C18.6 12.4 20.4 14.2 20.4 16.4C20.4 18.6 18.6 20.4 16.4 20.4H5.2C3 20.4 1.2 18.6 1.2 16.4C1.2 14.2 3 12.4 5.2 12.4H16.4Z" fill="#36C5F0"/>
+                        <path d="M36.4 16.4C36.4 14.2 38.2 12.4 40.4 12.4C42.6 12.4 44.4 14.2 44.4 16.4C44.4 18.6 42.6 20.4 40.4 20.4H36.4V16.4Z" fill="#2EB67D"/>
+                        <path d="M34.4 16.4C34.4 18.6 32.6 20.4 30.4 20.4C28.2 20.4 26.4 18.6 26.4 16.4V5.2C26.4 3 28.2 1.2 30.4 1.2C32.6 1.2 34.4 3 34.4 5.2V16.4Z" fill="#2EB67D"/>
+                        <path d="M30.4 36.4C32.6 36.4 34.4 38.2 34.4 40.4C34.4 42.6 32.6 44.4 30.4 44.4C28.2 44.4 26.4 42.6 26.4 40.4V36.4H30.4Z" fill="#ECB22E"/>
+                        <path d="M30.4 34.4C28.2 34.4 26.4 32.6 26.4 30.4C26.4 28.2 28.2 26.4 30.4 26.4H41.6C43.8 26.4 45.6 28.2 45.6 30.4C45.6 32.6 43.8 34.4 41.6 34.4H30.4Z" fill="#ECB22E"/>
+                    </svg>
+                    Intégration native
+                </div>
+                <h2 class="slack-highlight-title">
+                    Gérez vos congés<br>
+                    <span class="gradient-text">sans quitter Slack</span>
+                </h2>
+                <p class="slack-highlight-subtitle">
+                    Tapez <code>/conges</code> pour demander vos congés. Les managers approuvent en un clic.
+                    Tout se passe dans Slack, là où votre équipe travaille déjà.
+                </p>
+                <ul class="slack-features-list">
+                    <li>
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <strong>/conges</strong> - Demandez vos congés directement depuis Slack
+                    </li>
+                    <li>
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Notifications instantanées aux managers
+                    </li>
+                    <li>
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Boutons d'action intégrés (Approuver / Refuser)
+                    </li>
+                    <li>
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Confirmation automatique à l'employé
+                    </li>
+                </ul>
+            </div>
+            <div class="slack-highlight-demo">
+                <div class="slack-message-demo">
+                    <div class="slack-demo-header">
+                        <div class="slack-demo-channel"># rh-conges</div>
+                    </div>
+                    <div class="slack-demo-message">
+                        <div class="slack-demo-avatar">
+                            <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+                                <rect width="48" height="48" rx="8" fill="#4A154B"/>
+                                <path d="M24 14L32 28H16L24 14Z" fill="white"/>
+                            </svg>
+                        </div>
+                        <div class="slack-demo-content">
+                            <div class="slack-demo-author">
+                                <span class="slack-demo-name">CongesFlow</span>
+                                <span class="slack-demo-app">APP</span>
+                                <span class="slack-demo-time">10:42</span>
+                            </div>
+                            <div class="slack-demo-card">
+                                <div class="slack-demo-card-header">Nouvelle demande de congés</div>
+                                <div class="slack-demo-card-body">
+                                    <div class="slack-demo-field">
+                                        <span class="slack-demo-label">Employé</span>
+                                        <span class="slack-demo-value">Marie Dupont</span>
+                                    </div>
+                                    <div class="slack-demo-field">
+                                        <span class="slack-demo-label">Type</span>
+                                        <span class="slack-demo-value">Congés payés</span>
+                                    </div>
+                                    <div class="slack-demo-field">
+                                        <span class="slack-demo-label">Dates</span>
+                                        <span class="slack-demo-value">15 - 19 janvier 2025</span>
+                                    </div>
+                                    <div class="slack-demo-field">
+                                        <span class="slack-demo-label">Durée</span>
+                                        <span class="slack-demo-value">5 jours</span>
+                                    </div>
+                                </div>
+                                <div class="slack-demo-actions">
+                                    <button class="slack-btn slack-btn-approve">Approuver</button>
+                                    <button class="slack-btn slack-btn-reject">Refuser</button>
+                                    <button class="slack-btn slack-btn-view">Voir détails</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.slack-highlight {
+    padding: var(--space-20) 0;
+    background: linear-gradient(180deg, var(--color-bg) 0%, #faf5ff 50%, var(--color-bg) 100%);
+}
+
+.slack-highlight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-16);
+    align-items: center;
+}
+
+.slack-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: white;
+    border: 1px solid var(--color-border);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: #4A154B;
+    margin-bottom: var(--space-6);
+}
+
+.slack-highlight-title {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--space-5);
+}
+
+.slack-highlight-subtitle {
+    font-size: var(--text-lg);
+    color: var(--color-text-muted);
+    line-height: 1.7;
+    margin-bottom: var(--space-8);
+}
+
+.slack-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.slack-features-list li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-base);
+}
+
+.slack-features-list svg {
+    color: #2EB67D;
+    flex-shrink: 0;
+}
+
+/* Slack Demo Message */
+.slack-message-demo {
+    background: white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+}
+
+.slack-demo-header {
+    background: #4A154B;
+    padding: var(--space-3) var(--space-4);
+}
+
+.slack-demo-channel {
+    color: white;
+    font-weight: 600;
+    font-size: var(--text-sm);
+}
+
+.slack-demo-message {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-4);
+}
+
+.slack-demo-avatar {
+    flex-shrink: 0;
+}
+
+.slack-demo-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.slack-demo-author {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+
+.slack-demo-name {
+    font-weight: 700;
+    font-size: var(--text-sm);
+}
+
+.slack-demo-app {
+    background: #f0f0f0;
+    color: #666;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.slack-demo-time {
+    color: var(--color-text-dim);
+    font-size: var(--text-xs);
+}
+
+.slack-demo-card {
+    background: #f8f8f8;
+    border-left: 4px solid var(--color-primary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    overflow: hidden;
+}
+
+.slack-demo-card-header {
+    background: white;
+    padding: var(--space-3) var(--space-4);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.slack-demo-card-body {
+    padding: var(--space-3) var(--space-4);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2) var(--space-4);
+}
+
+.slack-demo-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.slack-demo-label {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.slack-demo-value {
+    font-size: var(--text-sm);
+}
+
+.slack-demo-actions {
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    gap: var(--space-2);
+    border-top: 1px solid #e0e0e0;
+    background: white;
+}
+
+.slack-btn {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.slack-btn-approve {
+    background: #2EB67D;
+    color: white;
+    border-color: #2EB67D;
+}
+
+.slack-btn-reject {
+    background: #E01E5A;
+    color: white;
+    border-color: #E01E5A;
+}
+
+.slack-btn-view {
+    background: white;
+    color: #333;
+    border-color: #ddd;
+}
+
+@media (max-width: 1024px) {
+    .slack-highlight-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-10);
+    }
+
+    .slack-highlight-content {
+        text-align: center;
+    }
+
+    .slack-features-list {
+        align-items: center;
+    }
+
+    .slack-message-demo {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .slack-highlight-title {
+        font-size: var(--text-3xl);
+    }
+
+    .slack-demo-card-body {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<!-- Logos -->
+<section class="logos">
+    <div class="container">
+        <p class="logos-title">Ils nous font confiance</p>
+        <div class="logos-grid">
+            <span class="logo-item">Startup.io</span>
+            <span class="logo-item">TechCorp</span>
+            <span class="logo-item">InnoLab</span>
+            <span class="logo-item">CloudSoft</span>
+            <span class="logo-item">DataFlow</span>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">
+                <div class="badge">Fonctionnalités</div>
+            </div>
+            <h2 class="section-title">Tout ce dont vous avez besoin</h2>
+            <p class="section-subtitle">
+                Une plateforme complète pour gérer les congés de votre équipe, du dépôt de demande à l'export RH.
+            </p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Demandes en 30 secondes</h3>
+                <p class="feature-description">
+                    Interface intuitive pour soumettre une demande en quelques clics. Sélectionnez vos dates, c'est envoyé.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Workflow automatisé</h3>
+                <p class="feature-description">
+                    Validation en cascade Manager → RH avec notifications à chaque étape. Rien ne passe entre les mailles.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Planning d'équipe</h3>
+                <p class="feature-description">
+                    Vue calendrier partagée pour visualiser les absences. Évitez les conflits de planning.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Soldes temps réel</h3>
+                <p class="feature-description">
+                    CP, RTT, exceptionnels... Tous les compteurs sont calculés et mis à jour automatiquement.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Notifications intelligentes</h3>
+                <p class="feature-description">
+                    Alertes par email et Slack au bon moment. Soyez informé sans être spammé.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Configuration flexible</h3>
+                <p class="feature-description">
+                    Types de congés, règles de validation, quotas... Adaptez tout à votre organisation.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="how-it-works">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">
+                <div class="badge">Comment ça marche</div>
+            </div>
+            <h2 class="section-title">Opérationnel en 5 minutes</h2>
+            <p class="section-subtitle">
+                Pas de formation nécessaire. Votre équipe sera autonome immédiatement.
+            </p>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3 class="step-title">Créez votre espace</h3>
+                <p class="step-description">
+                    Inscrivez votre entreprise et invitez vos collaborateurs en quelques clics.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3 class="step-title">Configurez vos règles</h3>
+                <p class="step-description">
+                    Définissez les types de congés et le workflow de validation adapté à votre structure.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3 class="step-title">C'est parti</h3>
+                <p class="step-description">
+                    Vos employés font leurs demandes, les managers valident, les RH supervisent.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Preview -->
+<section class="pricing">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">
+                <div class="badge">Tarifs</div>
+            </div>
+            <h2 class="section-title">Simple et transparent</h2>
+            <p class="section-subtitle">
+                Commencez gratuitement, évoluez selon vos besoins.
+            </p>
+        </div>
+
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="pricing-name">Starter</div>
+                <div class="pricing-price">29€ <span>/mois</span></div>
+                <p class="pricing-description">Pour les petites équipes</p>
+                <ul class="pricing-features">
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Jusqu'à 25 employés
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Tous les types de congés
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Calendrier d'équipe
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Support email
+                    </li>
+                </ul>
+                <a href="{{ url_for('marketing.signup') }}" class="btn btn-secondary btn-lg" style="width: 100%;">Commencer</a>
+            </div>
+
+            <div class="pricing-card featured">
+                <div class="pricing-badge">Populaire</div>
+                <div class="pricing-name">Pro</div>
+                <div class="pricing-price">79€ <span>/mois</span></div>
+                <p class="pricing-description">Pour les équipes en croissance</p>
+                <ul class="pricing-features">
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Jusqu'à 100 employés
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Tout Starter +
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Rapports avancés
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Intégrations Slack / Teams
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Support prioritaire
+                    </li>
+                </ul>
+                <a href="{{ url_for('marketing.signup') }}" class="btn btn-primary btn-lg" style="width: 100%;">Commencer</a>
+            </div>
+
+            <div class="pricing-card">
+                <div class="pricing-name">Enterprise</div>
+                <div class="pricing-price">Sur mesure</div>
+                <p class="pricing-description">Pour les grandes organisations</p>
+                <ul class="pricing-features">
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Employés illimités
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Tout Pro +
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        SSO / SAML
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        API personnalisée
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Account manager dédié
+                    </li>
+                </ul>
+                <a href="{{ url_for('marketing.contact') }}" class="btn btn-secondary btn-lg" style="width: 100%;">Nous contacter</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">
+                <div class="badge">Témoignages</div>
+            </div>
+            <h2 class="section-title">Ce qu'en pensent nos clients</h2>
+        </div>
+
+        <div class="testimonials-grid">
+            <div class="testimonial">
+                <p class="testimonial-quote">
+                    "On a migré depuis un tableur Excel et c'est le jour et la nuit. L'équipe a adopté CongesFlow en moins d'une journée."
+                </p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">SL</div>
+                    <div>
+                        <div class="testimonial-name">Sophie Laurent</div>
+                        <div class="testimonial-role">DRH, TechStartup (45 employés)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial">
+                <p class="testimonial-quote">
+                    "Le calendrier partagé a changé notre façon de planifier. Plus de conflits d'absences, tout est visible en un coup d'œil."
+                </p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">MB</div>
+                    <div>
+                        <div class="testimonial-name">Marc Bertrand</div>
+                        <div class="testimonial-role">CTO, Agence Digitale</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial">
+                <p class="testimonial-quote">
+                    "L'intégration Slack est un game-changer. Les validations se font directement depuis notre canal, sans changer de contexte."
+                </p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">CD</div>
+                    <div>
+                        <div class="testimonial-name">Claire Dubois</div>
+                        <div class="testimonial-role">Office Manager, SaaS B2B</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta">
+    <div class="gradient-orb"></div>
+    <div class="container">
+        <div class="cta-inner">
+            <h2 class="cta-title">Prêt à simplifier vos congés ?</h2>
+            <p class="cta-subtitle">
+                Essai gratuit de 14 jours. Aucune carte bancaire requise.
+            </p>
+            <div class="cta-actions">
+                <a href="{{ url_for('marketing.signup') }}" class="btn btn-primary btn-lg">
+                    Démarrer l'essai gratuit
+                    <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </a>
+                <a href="{{ url_for('marketing.demo') }}" class="btn btn-secondary btn-lg">
+                    Demander une démo
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

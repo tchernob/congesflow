@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier {{ user.full_name }} - CongesFlow{% endblock %}
+{% block page_title %}Modifier l'utilisateur{% endblock %}
+
+{% block content %}
+<div class="page-back">
+    <a href="{{ url_for('admin.view_user', user_id=user.id) }}" class="btn btn-ghost">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Retour au profil
+    </a>
+</div>
+
+<div class="form-container">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-content">
+                <div class="user-avatar-sm">{{ user.initials }}</div>
+                <div>
+                    <h2 class="card-title">{{ user.full_name }}</h2>
+                    <p class="card-subtitle">{{ user.email }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.edit_user', user_id=user.id) }}" class="form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Informations personnelles</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="first_name">Prénom *</label>
+                            <input type="text" id="first_name" name="first_name" class="form-input" value="{{ user.first_name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="last_name">Nom *</label>
+                            <input type="text" id="last_name" name="last_name" class="form-input" value="{{ user.last_name }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Rôle et accès</h3>
+
+                    <div class="form-group">
+                        <label class="form-label" for="role_id">Rôle *</label>
+                        <select id="role_id" name="role_id" class="form-input" required>
+                            {% for role in roles %}
+                            <option value="{{ role.id }}" {% if user.role_id == role.id %}selected{% endif %}>
+                                {{ role.name | capitalize }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" name="is_active" {% if user.is_active %}checked{% endif %}>
+                            <span>Compte actif</span>
+                        </label>
+                        <span class="form-hint">Désactivez pour empêcher l'utilisateur de se connecter</span>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Organisation</h3>
+
+                    <div class="form-group">
+                        <label class="form-label" for="team_id">Équipe</label>
+                        <select id="team_id" name="team_id" class="form-input">
+                            <option value="">Aucune équipe</option>
+                            {% for team in teams %}
+                            <option value="{{ team.id }}" {% if user.team_id == team.id %}selected{% endif %}>
+                                {{ team.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="manager_id">Manager</label>
+                        <select id="manager_id" name="manager_id" class="form-input">
+                            <option value="">Aucun manager</option>
+                            {% for manager in managers %}
+                            {% if manager.id != user.id %}
+                            <option value="{{ manager.id }}" {% if user.manager_id == manager.id %}selected{% endif %}>
+                                {{ manager.full_name }}
+                            </option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{{ url_for('admin.view_user', user_id=user.id) }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-back {
+    margin-bottom: var(--space-6);
+}
+
+.form-container {
+    max-width: 600px;
+}
+
+.card-header {
+    padding: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.card-header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.user-avatar-sm {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: var(--gradient-primary, linear-gradient(135deg, var(--color-accent) 0%, #a855f7 100%));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-lg);
+    font-weight: 700;
+}
+
+.card-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+}
+
+.card-subtitle {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+}
+
+.card-body {
+    padding: var(--space-6);
+}
+
+.form-section {
+    margin-bottom: var(--space-8);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: var(--space-6);
+}
+
+.form-section-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-4);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+.form-group {
+    margin-bottom: var(--space-4);
+}
+
+.form-label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+}
+
+.form-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    transition: all 0.15s ease;
+    background: var(--color-bg);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+}
+
+.form-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-accent);
+}
+
+.form-hint {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-1);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 640px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

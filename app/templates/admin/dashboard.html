@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard RH - CongesFlow{% endblock %}
+{% block page_title %}Administration{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Stats Cards -->
+    <section class="stats-grid animate-slide-up">
+        <div class="stat-card" style="--stat-color: var(--color-warning);">
+            <div class="stat-value">{{ stats.pending_hr }}</div>
+            <div class="stat-label">Demandes en attente RH</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--color-accent);">
+            <div class="stat-value">{{ stats.active_employees }}</div>
+            <div class="stat-label">Employés actifs</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--color-primary);">
+            <div class="stat-value">{{ stats.absent_today }}</div>
+            <div class="stat-label">Absents aujourd'hui</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--color-info);">
+            <div class="stat-value">{{ stats.requests_this_month }}</div>
+            <div class="stat-label">Demandes ce mois</div>
+        </div>
+    </section>
+
+    <div class="content-grid-admin">
+        <!-- Pending HR Requests -->
+        <section class="card-static full-width animate-slide-up stagger-1">
+            <div class="card-header">
+                <h3 class="card-title">Demandes en attente de validation RH</h3>
+                <a href="{{ url_for('admin.requests') }}" class="btn btn-ghost btn-sm">Voir tout</a>
+            </div>
+            <div class="card-body p-0">
+                {% if pending_requests %}
+                <div class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Employé</th>
+                                <th>Type</th>
+                                <th>Dates</th>
+                                <th>Durée</th>
+                                <th>Validé par</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in pending_requests %}
+                            <tr>
+                                <td>
+                                    <div class="flex items-center gap-3">
+                                        <div class="user-avatar-sm">{{ req.employee.initials }}</div>
+                                        <div>
+                                            <div class="font-semibold">{{ req.employee.full_name }}</div>
+                                            <div class="text-xs text-muted">{{ req.employee.team.name if req.employee.team else '-' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="balance-dot" style="background: {{ req.leave_type.color }};"></span>
+                                    {{ req.leave_type.name }}
+                                </td>
+                                <td>
+                                    {{ req.start_date.strftime('%d/%m') }} → {{ req.end_date.strftime('%d/%m/%Y') }}
+                                </td>
+                                <td>{{ req.days_count }} j</td>
+                                <td>
+                                    {% if req.manager_reviewer %}
+                                    <span class="text-success">{{ req.manager_reviewer.full_name }}</span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <form action="{{ url_for('admin.approve_request', request_id=req.id) }}" method="POST" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-accent btn-sm">Approuver</button>
+                                        </form>
+                                        <a href="{{ url_for('admin.view_request', request_id=req.id) }}" class="btn btn-secondary btn-sm">Détails</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state p-8">
+                    <div class="empty-state-icon">
+                        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <p class="empty-state-text">Aucune demande en attente</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="card-static animate-slide-up stagger-2">
+            <div class="card-header">
+                <h3 class="card-title">Actions rapides</h3>
+            </div>
+            <div class="card-body">
+                <div class="admin-quick-actions">
+                    <a href="{{ url_for('admin.users') }}" class="admin-action-link">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        Gérer les utilisateurs
+                    </a>
+                    <a href="{{ url_for('admin.teams') }}" class="admin-action-link">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Gérer les équipes
+                    </a>
+                    <a href="{{ url_for('admin.balances') }}" class="admin-action-link">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Ajuster les soldes
+                    </a>
+                    <a href="{{ url_for('admin.calendar') }}" class="admin-action-link">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Voir le calendrier
+                    </a>
+                    <a href="{{ url_for('admin.reports') }}" class="admin-action-link">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Générer un rapport
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Activity -->
+        <section class="card-static animate-slide-up stagger-3">
+            <div class="card-header">
+                <h3 class="card-title">Activité récente</h3>
+            </div>
+            <div class="card-body">
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon success">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div class="activity-content">
+                            <p>Système initialisé</p>
+                            <span class="activity-time">Prêt à l'emploi</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.content-grid-admin {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+}
+
+.content-grid-admin .full-width {
+    grid-column: 1 / -1;
+}
+
+.user-avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--text-xs);
+}
+
+/* Admin Quick Actions */
+.admin-quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.admin-action-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-ink);
+    border: var(--border-thin);
+    background: var(--color-bg);
+    transition: var(--transition-fast);
+}
+
+.admin-action-link:hover {
+    background: var(--color-bg-sunken);
+    transform: translateX(4px);
+    color: var(--color-ink);
+}
+
+/* Activity List */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.activity-item {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.activity-icon.success {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+}
+
+.activity-icon.warning {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+}
+
+.activity-icon.info {
+    background: var(--color-info-soft);
+    color: var(--color-info);
+}
+
+.activity-content p {
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-1);
+}
+
+.activity-time {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+}
+
+@media (max-width: 1024px) {
+    .content-grid-admin {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

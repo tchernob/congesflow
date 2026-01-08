@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Mes demandes - CongesFlow{% endblock %}
+{% block page_title %}Mes demandes{% endblock %}
+
+{% block content %}
+<div class="page-header-actions">
+    <div class="filters">
+        <select class="form-select" id="statusFilter" onchange="applyFilters()">
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Tous les statuts</option>
+            <option value="pending_manager" {% if status_filter == 'pending_manager' %}selected{% endif %}>En attente (Manager)</option>
+            <option value="pending_hr" {% if status_filter == 'pending_hr' %}selected{% endif %}>En attente (RH)</option>
+            <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approuvés</option>
+            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Refusés</option>
+            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Annulés</option>
+        </select>
+        <select class="form-select" id="yearFilter" onchange="applyFilters()">
+            {% for y in range(year_filter - 1, year_filter + 2) %}
+            <option value="{{ y }}" {% if y == year_filter %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <a href="{{ url_for('employee.new_request') }}" class="btn btn-primary">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Nouvelle demande
+    </a>
+</div>
+
+{% if requests %}
+<div class="request-list">
+    {% for req in requests %}
+    <div class="request-card animate-slide-up" style="animation-delay: {{ loop.index * 0.05 }}s;">
+        <div class="request-type-badge" style="background: {{ req.leave_type.color }}20; color: {{ req.leave_type.color }};">
+            {{ req.leave_type.code }}
+        </div>
+        <div class="request-info">
+            <div class="request-dates">
+                {{ req.start_date.strftime('%d %b') }} → {{ req.end_date.strftime('%d %b %Y') }}
+            </div>
+            <div class="request-meta">
+                {{ req.leave_type.name }} • {{ req.days_count }} jour{{ 's' if req.days_count > 1 else '' }}
+                {% if req.reason %}
+                <span class="text-muted">• {{ req.reason[:50] }}{{ '...' if req.reason|length > 50 else '' }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="request-status">
+            <span class="badge badge-{{ req.status_color }}">{{ req.status_label }}</span>
+            <div class="request-actions mt-2">
+                <a href="{{ url_for('employee.view_request', request_id=req.id) }}" class="btn btn-ghost btn-sm">
+                    Détails
+                </a>
+                {% if req.can_cancel %}
+                <form action="{{ url_for('employee.cancel_request', request_id=req.id) }}" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-ghost btn-sm text-danger" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette demande ?')">
+                        Annuler
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-static">
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+        </div>
+        <h3 class="empty-state-title">Aucune demande</h3>
+        <p class="empty-state-text">Vous n'avez pas encore de demande de congés pour cette période.</p>
+        <a href="{{ url_for('employee.new_request') }}" class="btn btn-primary">Créer une demande</a>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.page-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+}
+
+.filters {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.filters .form-select {
+    width: auto;
+    min-width: 180px;
+}
+
+.request-actions {
+    display: flex;
+    gap: var(--space-2);
+}
+</style>
+
+<script>
+function applyFilters() {
+    const status = document.getElementById('statusFilter').value;
+    const year = document.getElementById('yearFilter').value;
+    window.location.href = '{{ url_for("employee.requests") }}?status=' + status + '&year=' + year;
+}
+</script>
+{% endblock %}

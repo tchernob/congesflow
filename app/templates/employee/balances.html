@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Mes soldes - CongesFlow{% endblock %}
+{% block page_title %}Mes soldes de congés{% endblock %}
+
+{% block content %}
+<div class="balances-header">
+    <div class="year-display">
+        <span class="year-label">Période</span>
+        <span class="year-value">{{ period_label if period_label else year }}</span>
+    </div>
+</div>
+
+{% if balances %}
+<div class="balance-grid">
+    {% for balance in balances %}
+    <div class="balance-card-detailed animate-slide-up" style="animation-delay: {{ loop.index * 0.1 }}s;">
+        <div class="balance-card-header" style="background: {{ balance.leave_type.color }};">
+            <div class="balance-type-name">{{ balance.leave_type.name }}</div>
+            <div class="balance-type-code">{{ balance.leave_type.code }}</div>
+        </div>
+        <div class="balance-card-body">
+            <!-- Alerte d'expiration -->
+            {% if balance.days_expiring_soon > 0 %}
+            <div class="expiry-alert">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>
+                    <strong>{{ balance.days_expiring_soon }} jour(s)</strong> expirent le
+                    {{ balance.carried_over_expires_at.strftime('%d/%m/%Y') }}
+                </span>
+            </div>
+            {% endif %}
+
+            <div class="balance-main">
+                <div class="balance-available">
+                    <span class="balance-number">{{ balance.available | round(1) }}</span>
+                    <span class="balance-unit">jours disponibles</span>
+                </div>
+            </div>
+
+            <div class="balance-details">
+                <div class="balance-detail-row">
+                    <span>Solde initial</span>
+                    <span class="font-semibold">{{ balance.initial_balance }}</span>
+                </div>
+                {% if balance.carried_over_available > 0 %}
+                <div class="balance-detail-row carryover-row">
+                    <span>
+                        Report N-1
+                        {% if balance.carried_over_expires_at %}
+                        <small class="expiry-date">(exp. {{ balance.carried_over_expires_at.strftime('%d/%m') }})</small>
+                        {% endif %}
+                    </span>
+                    <span class="font-semibold text-info">+{{ balance.carried_over_available }}</span>
+                </div>
+                {% endif %}
+                {% if balance.carried_over_expired > 0 %}
+                <div class="balance-detail-row expired-row">
+                    <span>Report expiré</span>
+                    <span class="font-semibold text-danger">-{{ balance.carried_over_expired }}</span>
+                </div>
+                {% endif %}
+                {% if balance.adjusted != 0 %}
+                <div class="balance-detail-row">
+                    <span>Ajustements</span>
+                    <span class="font-semibold {% if balance.adjusted > 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ '%+.1f' | format(balance.adjusted) }}
+                    </span>
+                </div>
+                {% endif %}
+                <div class="balance-detail-row">
+                    <span>Utilisés</span>
+                    <span class="font-semibold">{{ balance.used + balance.carried_over_used }}</span>
+                </div>
+                {% if balance.pending > 0 %}
+                <div class="balance-detail-row">
+                    <span>En attente</span>
+                    <span class="font-semibold text-warning">{{ balance.pending }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="balance-progress">
+                <div class="progress-bar">
+                    {% set total_with_carryover = balance.initial_balance + balance.adjusted + balance.carried_over %}
+                    {% set used_total = balance.used + balance.carried_over_used %}
+                    <div class="progress-used" style="width: {{ (used_total / total_with_carryover * 100) if total_with_carryover > 0 else 0 }}%; background: {{ balance.leave_type.color }};"></div>
+                    <div class="progress-pending" style="width: {{ (balance.pending / total_with_carryover * 100) if total_with_carryover > 0 else 0 }}%; background: {{ balance.leave_type.color }}; opacity: 0.4;"></div>
+                </div>
+                <div class="progress-labels">
+                    <span>{{ ((used_total + balance.pending) / total_with_carryover * 100) | round(0) if total_with_carryover > 0 else 0 }}% utilisé</span>
+                    <span>Total: {{ balance.total | round(1) }} j</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-static">
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <h3 class="empty-state-title">Aucun solde configuré</h3>
+        <p class="empty-state-text">Contactez votre service RH pour configurer vos soldes de congés.</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.balances-header {
+    margin-bottom: var(--space-8);
+}
+
+.year-display {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    background: var(--color-bg-elevated);
+    border: var(--border-thick);
+}
+
+.year-label {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.year-value {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-style: italic;
+}
+
+.balance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-6);
+}
+
+.balance-card-detailed {
+    background: var(--color-bg-elevated);
+    border: var(--border-thick);
+    overflow: hidden;
+}
+
+.balance-card-header {
+    padding: var(--space-4) var(--space-5);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.balance-type-name {
+    font-weight: 600;
+}
+
+.balance-type-code {
+    font-size: var(--text-sm);
+    opacity: 0.8;
+}
+
+.balance-card-body {
+    padding: var(--space-5);
+}
+
+.balance-main {
+    text-align: center;
+    padding: var(--space-4) 0;
+    margin-bottom: var(--space-4);
+}
+
+.balance-available {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.balance-number {
+    font-family: var(--font-display);
+    font-size: var(--text-5xl);
+    font-style: italic;
+    line-height: 1;
+}
+
+.balance-unit {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-2);
+}
+
+.balance-details {
+    padding: var(--space-4);
+    background: var(--color-bg-sunken);
+    margin-bottom: var(--space-4);
+}
+
+.balance-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+    font-size: var(--text-sm);
+}
+
+.balance-detail-row:not(:last-child) {
+    border-bottom: var(--border-subtle);
+}
+
+.balance-progress {
+    margin-top: var(--space-4);
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--color-bg-sunken);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    display: flex;
+}
+
+.progress-used,
+.progress-pending {
+    height: 100%;
+    transition: width var(--transition-slow);
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-2);
+}
+
+/* Alertes d'expiration */
+.expiry-alert {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    background: #FEF3C7;
+    border: 1px solid #F59E0B;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-4);
+    font-size: var(--text-sm);
+    color: #92400E;
+}
+
+.expiry-alert svg {
+    flex-shrink: 0;
+    color: #F59E0B;
+}
+
+/* Report rows */
+.carryover-row {
+    background: rgba(59, 130, 246, 0.05);
+    margin: 0 calc(var(--space-4) * -1);
+    padding-left: var(--space-4) !important;
+    padding-right: var(--space-4) !important;
+}
+
+.expired-row {
+    background: rgba(239, 68, 68, 0.05);
+    margin: 0 calc(var(--space-4) * -1);
+    padding-left: var(--space-4) !important;
+    padding-right: var(--space-4) !important;
+}
+
+.expiry-date {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    display: block;
+}
+
+.text-info {
+    color: #3B82F6;
+}
+</style>
+{% endblock %}

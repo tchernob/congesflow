@@ -1,0 +1,590 @@
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask_login import login_required, current_user
+from datetime import datetime, date
+from functools import wraps
+from app import db
+from app.models.user import User, Role
+from app.models.leave import LeaveRequest, LeaveType, LeaveBalance, CompanyLeaveSettings
+from app.models.team import Team
+from app.models.notification import Notification
+
+bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+
+def hr_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_hr():
+            flash('Accès réservé aux RH', 'error')
+            return redirect(url_for('main.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_admin():
+            flash('Accès réservé aux administrateurs', 'error')
+            return redirect(url_for('main.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@bp.route('/dashboard')
+@login_required
+@hr_required
+def dashboard():
+    # Statistiques globales
+    today = date.today()
+    current_year = today.year
+
+    # Demandes en attente RH
+    pending_hr = LeaveRequest.query.filter_by(
+        status=LeaveRequest.STATUS_PENDING_HR
+    ).count()
+
+    # Employés actifs
+    active_employees = User.query.filter_by(is_active=True).count()
+
+    # Absences aujourd'hui
+    absent_today = LeaveRequest.query.filter(
+        LeaveRequest.status == 'approved',
+        LeaveRequest.start_date <= today,
+        LeaveRequest.end_date >= today
+    ).count()
+
+    # Demandes ce mois
+    month_start = today.replace(day=1)
+    requests_this_month = LeaveRequest.query.filter(
+        LeaveRequest.created_at >= month_start
+    ).count()
+
+    stats = {
+        'pending_hr': pending_hr,
+        'active_employees': active_employees,
+        'absent_today': absent_today,
+        'requests_this_month': requests_this_month
+    }
+
+    # Demandes récentes en attente
+    pending_requests = LeaveRequest.query.filter_by(
+        status=LeaveRequest.STATUS_PENDING_HR
+    ).order_by(LeaveRequest.created_at.desc()).limit(10).all()
+
+    return render_template('admin/dashboard.html',
+                           stats=stats,
+                           pending_requests=pending_requests)
+
+
+@bp.route('/requests')
+@login_required
+@hr_required
+def requests():
+    status_filter = request.args.get('status', 'pending_hr')
+    year_filter = request.args.get('year', date.today().year, type=int)
+
+    query = LeaveRequest.query
+
+    if status_filter == 'pending_hr':
+        query = query.filter_by(status=LeaveRequest.STATUS_PENDING_HR)
+    elif status_filter != 'all':
+        query = query.filter_by(status=status_filter)
+
+    query = query.filter(
+        db.extract('year', LeaveRequest.start_date) == year_filter
+    )
+
+    requests_list = query.order_by(LeaveRequest.created_at.desc()).all()
+
+    return render_template('admin/requests.html',
+                           requests=requests_list,
+                           status_filter=status_filter,
+                           year_filter=year_filter)
+
+
+@bp.route('/requests/<int:request_id>')
+@login_required
+@hr_required
+def view_request(request_id):
+    leave_request = LeaveRequest.query.get_or_404(request_id)
+    settings = CompanyLeaveSettings.get_or_create_for_company(current_user.company_id)
+    return render_template('admin/view_request.html', request=leave_request, settings=settings)
+
+
+@bp.route('/requests/<int:request_id>/approve', methods=['POST'])
+@login_required
+@hr_required
+def approve_request(request_id):
+    leave_request = LeaveRequest.query.get_or_404(request_id)
+    settings = CompanyLeaveSettings.get_or_create_for_company(current_user.company_id)
+
+    # Vérifier si les RH peuvent approuver selon le workflow
+    can_approve = False
+    if leave_request.status == LeaveRequest.STATUS_PENDING_HR:
+        can_approve = True
+    elif leave_request.status == LeaveRequest.STATUS_PENDING_MANAGER:
+        # Les RH peuvent approuver si workflow = hr_only ou manager_or_hr
+        if settings.approval_workflow in ['hr_only', 'manager_or_hr']:
+            can_approve = True
+
+    if not can_approve:
+        flash('Cette demande ne peut pas être approuvée', 'error')
+        return redirect(url_for('admin.view_request', request_id=request_id))
+
+    leave_request.approve_by_hr(current_user)
+    Notification.notify_leave_request_approved(leave_request, current_user)
+    db.session.commit()
+
+    # Notification Slack
+    from app.services.slack_service import notify_slack_approved
+    notify_slack_approved(leave_request, current_user)
+
+    flash('Demande approuvée', 'success')
+    return redirect(url_for('admin.requests'))
+
+
+@bp.route('/requests/<int:request_id>/reject', methods=['POST'])
+@login_required
+@hr_required
+def reject_request(request_id):
+    leave_request = LeaveRequest.query.get_or_404(request_id)
+    settings = CompanyLeaveSettings.get_or_create_for_company(current_user.company_id)
+
+    # Vérifier si les RH peuvent refuser selon le workflow
+    can_reject = False
+    if leave_request.status == LeaveRequest.STATUS_PENDING_HR:
+        can_reject = True
+    elif leave_request.status == LeaveRequest.STATUS_PENDING_MANAGER:
+        if settings.approval_workflow in ['hr_only', 'manager_or_hr']:
+            can_reject = True
+
+    if not can_reject:
+        flash('Cette demande ne peut pas être refusée', 'error')
+        return redirect(url_for('admin.view_request', request_id=request_id))
+
+    reason = request.form.get('reason', '')
+    leave_request.reject(current_user, reason)
+    Notification.notify_leave_request_rejected(leave_request, current_user)
+    db.session.commit()
+
+    # Notification Slack
+    from app.services.slack_service import notify_slack_rejected
+    notify_slack_rejected(leave_request, current_user, reason)
+
+    flash('Demande refusée', 'success')
+    return redirect(url_for('admin.requests'))
+
+
+# Gestion des utilisateurs
+@bp.route('/users')
+@login_required
+@hr_required
+def users():
+    users_list = User.query.order_by(User.last_name).all()
+    teams = Team.query.filter_by(is_active=True).all()
+    roles = Role.query.all()
+    return render_template('admin/users.html',
+                           users=users_list,
+                           teams=teams,
+                           roles=roles)
+
+
+@bp.route('/users/new', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def new_user():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        role_id = request.form.get('role_id', type=int)
+        team_id = request.form.get('team_id', type=int)
+        manager_id = request.form.get('manager_id', type=int)
+
+        # Check for existing user with same email in same company
+        existing_user = User.query.filter_by(
+            email=email,
+            company_id=current_user.company_id
+        ).first()
+        if existing_user:
+            flash('Un utilisateur avec cet email existe déjà', 'error')
+            return redirect(url_for('admin.new_user'))
+
+        user = User(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            role_id=role_id,
+            team_id=team_id if team_id else None,
+            manager_id=manager_id if manager_id else None,
+            company_id=current_user.company_id
+        )
+        # Set a temporary random password - user will set their own via invitation
+        import secrets
+        user.set_password(secrets.token_urlsafe(32))
+
+        # Generate invitation token
+        token = user.generate_invitation_token()
+
+        db.session.add(user)
+        db.session.commit()
+
+        # Créer les soldes de congés initiaux
+        current_year = date.today().year
+        leave_types = LeaveType.query.filter_by(is_active=True, company_id=current_user.company_id).all()
+        for lt in leave_types:
+            balance = LeaveBalance(
+                user_id=user.id,
+                leave_type_id=lt.id,
+                year=current_year,
+                initial_balance=lt.default_days
+            )
+            db.session.add(balance)
+        db.session.commit()
+
+        # TODO: Send invitation email with token
+        # For now, we'll show the invitation link to the admin
+        from flask import url_for as flask_url_for
+        invitation_url = flask_url_for('auth.setup_password', token=token, _external=True)
+
+        flash(f'Utilisateur créé. Lien d\'invitation (valide 7 jours) : {invitation_url}', 'success')
+        return redirect(url_for('admin.users'))
+
+    teams = Team.query.filter_by(is_active=True).all()
+    roles = Role.query.all()
+    managers = User.query.filter(User.role_id.in_(
+        [r.id for r in Role.query.filter(Role.name.in_(['manager', 'hr', 'admin'])).all()]
+    )).all()
+
+    return render_template('admin/new_user.html',
+                           teams=teams,
+                           roles=roles,
+                           managers=managers)
+
+
+@bp.route('/users/<int:user_id>')
+@login_required
+@hr_required
+def view_user(user_id):
+    user = User.query.get_or_404(user_id)
+    current_year = date.today().year
+    balances = LeaveBalance.query.filter_by(user_id=user.id, year=current_year).all()
+    recent_requests = LeaveRequest.query.filter_by(
+        employee_id=user.id
+    ).order_by(LeaveRequest.created_at.desc()).limit(10).all()
+
+    return render_template('admin/view_user.html',
+                           user=user,
+                           balances=balances,
+                           requests=recent_requests)
+
+
+@bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if request.method == 'POST':
+        user.first_name = request.form.get('first_name')
+        user.last_name = request.form.get('last_name')
+        user.role_id = request.form.get('role_id', type=int)
+        user.team_id = request.form.get('team_id', type=int) or None
+        user.manager_id = request.form.get('manager_id', type=int) or None
+        user.is_active = request.form.get('is_active') == 'on'
+
+        new_password = request.form.get('password')
+        if new_password:
+            user.set_password(new_password)
+
+        db.session.commit()
+        flash('Utilisateur mis à jour', 'success')
+        return redirect(url_for('admin.view_user', user_id=user_id))
+
+    teams = Team.query.filter_by(is_active=True).all()
+    roles = Role.query.all()
+    managers = User.query.filter(User.role_id.in_(
+        [r.id for r in Role.query.filter(Role.name.in_(['manager', 'hr', 'admin'])).all()]
+    )).all()
+
+    return render_template('admin/edit_user.html',
+                           user=user,
+                           teams=teams,
+                           roles=roles,
+                           managers=managers)
+
+
+# Gestion des équipes
+@bp.route('/teams')
+@login_required
+@hr_required
+def teams():
+    teams_list = Team.query.all()
+    return render_template('admin/teams.html', teams=teams_list)
+
+
+@bp.route('/teams/new', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def new_team():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        color = request.form.get('color', '#3B82F6')
+
+        if Team.query.filter_by(name=name).first():
+            flash('Une équipe avec ce nom existe déjà', 'error')
+            return redirect(url_for('admin.new_team'))
+
+        team = Team(name=name, description=description, color=color)
+        db.session.add(team)
+        db.session.commit()
+
+        flash('Équipe créée avec succès', 'success')
+        return redirect(url_for('admin.teams'))
+
+    return render_template('admin/new_team.html')
+
+
+# Gestion des types de congés
+@bp.route('/leave-types')
+@login_required
+@admin_required
+def leave_types():
+    types = LeaveType.query.filter_by(company_id=current_user.company_id).all()
+    return render_template('admin/leave_types.html', leave_types=types)
+
+
+@bp.route('/leave-types/new', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def new_leave_type():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        code = request.form.get('code').upper()
+        description = request.form.get('description')
+        color = request.form.get('color', '#3B82F6')
+        requires_justification = request.form.get('requires_justification') == 'on'
+        max_days = request.form.get('max_consecutive_days', type=int)
+        is_paid = request.form.get('is_paid') == 'on'
+
+        if LeaveType.query.filter_by(code=code).first():
+            flash('Un type de congé avec ce code existe déjà', 'error')
+            return redirect(url_for('admin.new_leave_type'))
+
+        leave_type = LeaveType(
+            name=name,
+            code=code,
+            description=description,
+            color=color,
+            requires_justification=requires_justification,
+            max_consecutive_days=max_days,
+            is_paid=is_paid
+        )
+        db.session.add(leave_type)
+        db.session.commit()
+
+        flash('Type de congé créé avec succès', 'success')
+        return redirect(url_for('admin.leave_types'))
+
+    return render_template('admin/new_leave_type.html')
+
+
+# Rapports
+@bp.route('/reports')
+@login_required
+@hr_required
+def reports():
+    return render_template('admin/reports.html')
+
+
+@bp.route('/reports/export')
+@login_required
+@hr_required
+def export_report():
+    report_type = request.args.get('type', 'absences')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    # TODO: Implémenter l'export CSV/Excel
+    flash('Export en cours de développement', 'info')
+    return redirect(url_for('admin.reports'))
+
+
+# Calendrier global
+@bp.route('/calendar')
+@login_required
+@hr_required
+def calendar():
+    teams = Team.query.filter_by(is_active=True).all()
+    return render_template('admin/calendar.html', teams=teams)
+
+
+# Gestion des soldes
+@bp.route('/balances')
+@login_required
+@hr_required
+def balances():
+    year = request.args.get('year', date.today().year, type=int)
+    users = User.query.filter_by(is_active=True, company_id=current_user.company_id).order_by(User.last_name).all()
+    leave_types = LeaveType.query.filter_by(is_active=True, company_id=current_user.company_id).all()
+
+    return render_template('admin/balances.html',
+                           users=users,
+                           leave_types=leave_types,
+                           year=year)
+
+
+@bp.route('/balances/<int:user_id>/adjust', methods=['POST'])
+@login_required
+@hr_required
+def adjust_balance(user_id):
+    leave_type_id = request.form.get('leave_type_id', type=int)
+    year = request.form.get('year', date.today().year, type=int)
+    adjustment = request.form.get('adjustment', 0, type=float)
+    reason = request.form.get('reason', '')
+
+    balance = LeaveBalance.query.filter_by(
+        user_id=user_id,
+        leave_type_id=leave_type_id,
+        year=year
+    ).first()
+
+    if not balance:
+        balance = LeaveBalance(
+            user_id=user_id,
+            leave_type_id=leave_type_id,
+            year=year,
+            initial_balance=0
+        )
+        db.session.add(balance)
+
+    balance.adjusted += adjustment
+    db.session.commit()
+
+    flash(f'Solde ajusté de {adjustment:+.1f} jours', 'success')
+    return redirect(url_for('admin.balances', year=year))
+
+
+# Intégration Slack
+@bp.route('/slack')
+@login_required
+@admin_required
+def slack_settings():
+    from app.models.slack import SlackIntegration, SlackUserMapping
+    from app.services.slack_service import SlackService
+
+    integration = SlackIntegration.query.filter_by(
+        company_id=current_user.company_id
+    ).first()
+
+    channels = []
+    linked_users = []
+
+    if integration and integration.is_active:
+        service = SlackService(integration)
+        channels = service.list_channels()
+
+        # Récupérer les utilisateurs liés
+        linked_users = SlackUserMapping.query.join(User).filter(
+            User.company_id == current_user.company_id
+        ).all()
+
+    return render_template('admin/slack_settings.html',
+                           integration=integration,
+                           channels=channels,
+                           linked_users=linked_users)
+
+
+# Paramètres des congés (périodes, reports, etc.)
+@bp.route('/leave-settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def leave_settings():
+    from app.services.leave_period_service import LeavePeriodService
+
+    settings = CompanyLeaveSettings.get_or_create_for_company(current_user.company_id)
+    service = LeavePeriodService(current_user.company_id)
+
+    if request.method == 'POST':
+        # Période de référence
+        settings.reference_period_type = request.form.get('reference_period_type', 'legal')
+        if settings.reference_period_type == 'custom':
+            settings.custom_period_start_day = request.form.get('custom_period_start_day', 1, type=int)
+            settings.custom_period_start_month = request.form.get('custom_period_start_month', 6, type=int)
+
+        # Règles de report CP
+        settings.cp_carryover_enabled = request.form.get('cp_carryover_enabled') == 'on'
+        settings.cp_carryover_max_days = request.form.get('cp_carryover_max_days', 5, type=float)
+        settings.cp_carryover_deadline_months = request.form.get('cp_carryover_deadline_months', 3, type=int)
+
+        # Règles de report RTT
+        settings.rtt_carryover_enabled = request.form.get('rtt_carryover_enabled') == 'on'
+        settings.rtt_carryover_max_days = request.form.get('rtt_carryover_max_days', 0, type=float)
+        settings.rtt_carryover_deadline_months = request.form.get('rtt_carryover_deadline_months', 1, type=int)
+
+        # Règles générales
+        settings.allow_negative_balance = request.form.get('allow_negative_balance') == 'on'
+        settings.max_negative_days = request.form.get('max_negative_days', 0, type=float)
+        settings.monthly_acquisition_rate = request.form.get('monthly_acquisition_rate', 2.08, type=float)
+
+        # Alertes
+        settings.alert_days_before_expiry = request.form.get('alert_days_before_expiry', 30, type=int)
+        settings.alert_low_balance_threshold = request.form.get('alert_low_balance_threshold', 5, type=float)
+
+        # Workflow de validation
+        settings.approval_workflow = request.form.get('approval_workflow', 'manager_then_hr')
+
+        db.session.commit()
+        flash('Paramètres des congés mis à jour', 'success')
+        return redirect(url_for('admin.leave_settings'))
+
+    # Calculer les dates de la période actuelle pour l'affichage
+    current_period = service.get_current_period()
+    period_label = service.get_period_label()
+
+    # Vérifier les congés qui expirent bientôt
+    expiring_soon = service.check_expiring_balances()
+
+    return render_template('admin/leave_settings.html',
+                           settings=settings,
+                           current_period=current_period,
+                           period_label=period_label,
+                           expiring_soon=expiring_soon)
+
+
+@bp.route('/leave-settings/process-rollover', methods=['POST'])
+@login_required
+@admin_required
+def process_rollover():
+    """Traite manuellement les reports de congés."""
+    from app.services.leave_period_service import LeavePeriodService
+
+    service = LeavePeriodService(current_user.company_id)
+    results = service.process_all_rollovers_for_company()
+
+    if results:
+        flash(f'{len(results)} report(s) traité(s) avec succès', 'success')
+    else:
+        flash('Aucun report à traiter', 'info')
+
+    return redirect(url_for('admin.leave_settings'))
+
+
+@bp.route('/leave-settings/send-expiry-alerts', methods=['POST'])
+@login_required
+@admin_required
+def send_expiry_alerts():
+    """Envoie les alertes d'expiration manuellement."""
+    from app.services.leave_period_service import LeavePeriodService
+
+    service = LeavePeriodService(current_user.company_id)
+    count = service.send_expiry_alerts()
+
+    if count > 0:
+        flash(f'{count} alerte(s) envoyée(s)', 'success')
+    else:
+        flash('Aucune alerte à envoyer', 'info')
+
+    return redirect(url_for('admin.leave_settings'))

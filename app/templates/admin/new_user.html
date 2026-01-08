@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Nouvel utilisateur - CongesFlow{% endblock %}
+{% block page_title %}Nouvel utilisateur{% endblock %}
+
+{% block content %}
+<div class="page-back">
+    <a href="{{ url_for('admin.users') }}" class="btn btn-ghost">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Retour aux utilisateurs
+    </a>
+</div>
+
+<div class="form-container">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Créer un nouvel utilisateur</h2>
+            <p class="card-subtitle">Ajoutez un membre à votre équipe</p>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.new_user') }}" class="form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Informations personnelles</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="first_name">Prénom *</label>
+                            <input type="text" id="first_name" name="first_name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="last_name">Nom *</label>
+                            <input type="text" id="last_name" name="last_name" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email *</label>
+                        <input type="email" id="email" name="email" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Accès et rôle</h3>
+
+                    <div class="form-group">
+                        <label class="form-label" for="role_id">Rôle *</label>
+                        <select id="role_id" name="role_id" class="form-input" required>
+                            <option value="">Sélectionner un rôle</option>
+                            {% for role in roles %}
+                            <option value="{{ role.id }}">{{ role.name | capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="info-box">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p>L'utilisateur recevra un lien d'invitation pour définir son mot de passe lui-même.</p>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Organisation</h3>
+
+                    <div class="form-group">
+                        <label class="form-label" for="team_id">Équipe</label>
+                        <select id="team_id" name="team_id" class="form-input">
+                            <option value="">Aucune équipe</option>
+                            {% for team in teams %}
+                            <option value="{{ team.id }}">{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="manager_id">Manager</label>
+                        <select id="manager_id" name="manager_id" class="form-input">
+                            <option value="">Aucun manager</option>
+                            {% for manager in managers %}
+                            <option value="{{ manager.id }}">{{ manager.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Inviter l'utilisateur
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-back {
+    margin-bottom: var(--space-6);
+}
+
+.form-container {
+    max-width: 600px;
+}
+
+.card-header {
+    padding: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.card-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+}
+
+.card-subtitle {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.card-body {
+    padding: var(--space-6);
+}
+
+.form-section {
+    margin-bottom: var(--space-8);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: var(--space-6);
+}
+
+.form-section-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-4);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+.form-group {
+    margin-bottom: var(--space-4);
+}
+
+.form-label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+}
+
+.form-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    transition: all 0.15s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.form-hint {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-top: var(--space-1);
+}
+
+.info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-accent-light, #eef2ff);
+    border: 1px solid var(--color-accent, #6366f1);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--color-accent, #6366f1);
+}
+
+.info-box svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.info-box p {
+    margin: 0;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 640px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

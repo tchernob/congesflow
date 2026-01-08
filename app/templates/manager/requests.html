@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Demandes équipe - CongesFlow{% endblock %}
+{% block page_title %}Demandes de l'équipe{% endblock %}
+
+{% block content %}
+<div class="page-header-actions">
+    <div class="filters">
+        <select class="form-select" id="statusFilter" onchange="applyFilters()">
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>En attente</option>
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Toutes</option>
+            <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approuvées</option>
+            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Refusées</option>
+        </select>
+    </div>
+</div>
+
+{% if requests %}
+<div class="request-list">
+    {% for req in requests %}
+    <div class="request-card-manager animate-slide-up" style="animation-delay: {{ loop.index * 0.05 }}s;">
+        <div class="request-employee">
+            <div class="employee-avatar" style="background: {{ req.leave_type.color }};">
+                {{ req.employee.initials }}
+            </div>
+            <div class="employee-info">
+                <div class="employee-name">{{ req.employee.full_name }}</div>
+                <div class="employee-team">{{ req.employee.team.name if req.employee.team else 'Pas d\'équipe' }}</div>
+            </div>
+        </div>
+
+        <div class="request-details">
+            <div class="request-type-badge" style="background: {{ req.leave_type.color }}20; color: {{ req.leave_type.color }};">
+                {{ req.leave_type.name }}
+            </div>
+            <div class="request-dates-manager">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                {{ req.start_date.strftime('%d/%m') }} → {{ req.end_date.strftime('%d/%m/%Y') }}
+            </div>
+            <div class="request-days-manager">
+                {{ req.days_count }} jour{{ 's' if req.days_count > 1 else '' }}
+            </div>
+        </div>
+
+        <div class="request-status-actions">
+            <span class="badge badge-{{ req.status_color }}">{{ req.status_label }}</span>
+
+            {% if req.status == 'pending_manager' %}
+            <div class="action-buttons">
+                <form action="{{ url_for('manager.approve_request', request_id=req.id) }}" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-accent btn-sm">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Approuver
+                    </button>
+                </form>
+                <a href="{{ url_for('manager.view_request', request_id=req.id) }}" class="btn btn-secondary btn-sm">
+                    Détails
+                </a>
+            </div>
+            {% else %}
+            <a href="{{ url_for('manager.view_request', request_id=req.id) }}" class="btn btn-ghost btn-sm">
+                Voir détails
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-static">
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+        </div>
+        <h3 class="empty-state-title">Aucune demande</h3>
+        <p class="empty-state-text">Il n'y a pas de demandes correspondant à ces critères.</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.page-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+}
+
+.filters {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.filters .form-select {
+    width: auto;
+    min-width: 180px;
+}
+
+.request-card-manager {
+    background: var(--color-bg-elevated);
+    border: var(--border-thick);
+    display: grid;
+    grid-template-columns: 250px 1fr auto;
+    gap: var(--space-6);
+    padding: var(--space-5);
+    margin-bottom: var(--space-4);
+    transition: var(--transition-base);
+}
+
+.request-card-manager:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-md);
+}
+
+.request-employee {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.employee-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border: var(--border-thick);
+}
+
+.employee-name {
+    font-weight: 600;
+}
+
+.employee-team {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.request-details {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.request-type-badge {
+    padding: var(--space-2) var(--space-3);
+    font-weight: 600;
+    font-size: var(--text-sm);
+    border: var(--border-thick);
+}
+
+.request-dates-manager {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+}
+
+.request-days-manager {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--text-lg);
+}
+
+.request-status-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-3);
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--space-2);
+}
+
+@media (max-width: 1024px) {
+    .request-card-manager {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+
+    .request-status-actions {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+</style>
+
+<script>
+function applyFilters() {
+    const status = document.getElementById('statusFilter').value;
+    window.location.href = '{{ url_for("manager.requests") }}?status=' + status;
+}
+</script>
+{% endblock %}

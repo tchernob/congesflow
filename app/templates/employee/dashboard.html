@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Mon tableau de bord - CongesFlow{% endblock %}
+{% block page_title %}Mon tableau de bord{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Stats Cards -->
+    <section class="stats-grid animate-slide-up">
+        {% for balance in balances %}
+        <div class="stat-card" style="--stat-color: {{ balance.leave_type.color }};">
+            <div class="stat-value">{{ balance.available | round(1) }}</div>
+            <div class="stat-label">{{ balance.leave_type.name }} disponibles</div>
+            <div class="balance-bar">
+                <div class="balance-bar-fill"
+                     style="width: {{ (balance.used / balance.total * 100) if balance.total > 0 else 0 }}%; background: {{ balance.leave_type.color }};"></div>
+            </div>
+            <div class="text-xs text-muted mt-2">
+                {{ balance.used }} utilisés sur {{ balance.total }}
+            </div>
+        </div>
+        {% else %}
+        <div class="stat-card">
+            <div class="stat-value">--</div>
+            <div class="stat-label">Aucun solde configuré</div>
+        </div>
+        {% endfor %}
+    </section>
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+        <!-- Quick Actions -->
+        <section class="card-static animate-slide-up stagger-1">
+            <div class="card-header">
+                <h3 class="card-title">Actions rapides</h3>
+            </div>
+            <div class="card-body">
+                <div class="quick-actions">
+                    <a href="{{ url_for('employee.new_request') }}" class="quick-action-btn">
+                        <div class="quick-action-icon" style="background: var(--color-primary-soft); color: var(--color-primary);">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </div>
+                        <span>Nouvelle demande</span>
+                    </a>
+                    <a href="{{ url_for('employee.calendar') }}" class="quick-action-btn">
+                        <div class="quick-action-icon" style="background: var(--color-accent-soft); color: var(--color-accent);">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <span>Voir calendrier</span>
+                    </a>
+                    <a href="{{ url_for('employee.balances') }}" class="quick-action-btn">
+                        <div class="quick-action-icon" style="background: var(--color-info-soft); color: var(--color-info);">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <span>Mes soldes</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Upcoming Leaves -->
+        <section class="card-static animate-slide-up stagger-2">
+            <div class="card-header">
+                <h3 class="card-title">Prochains congés</h3>
+                <a href="{{ url_for('employee.requests') }}" class="btn btn-ghost btn-sm">Voir tout</a>
+            </div>
+            <div class="card-body">
+                {% if upcoming %}
+                <div class="upcoming-list">
+                    {% for leave in upcoming %}
+                    <div class="upcoming-item">
+                        <div class="upcoming-date">
+                            <div class="upcoming-day">{{ leave.start_date.strftime('%d') }}</div>
+                            <div class="upcoming-month">{{ leave.start_date.strftime('%b') }}</div>
+                        </div>
+                        <div class="upcoming-info">
+                            <div class="upcoming-type" style="color: {{ leave.leave_type.color }};">
+                                {{ leave.leave_type.name }}
+                            </div>
+                            <div class="upcoming-dates">
+                                {{ leave.start_date.strftime('%d/%m') }} - {{ leave.end_date.strftime('%d/%m/%Y') }}
+                            </div>
+                            <div class="upcoming-days">{{ leave.days_count }} jour{{ 's' if leave.days_count > 1 else '' }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <p class="empty-state-text">Aucun congé à venir</p>
+                    <a href="{{ url_for('employee.new_request') }}" class="btn btn-primary btn-sm">Faire une demande</a>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Recent Requests -->
+        <section class="card-static full-width animate-slide-up stagger-3">
+            <div class="card-header">
+                <h3 class="card-title">Demandes récentes</h3>
+                <a href="{{ url_for('employee.requests') }}" class="btn btn-ghost btn-sm">Voir tout</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_requests %}
+                <div class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Dates</th>
+                                <th>Durée</th>
+                                <th>Statut</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in recent_requests %}
+                            <tr>
+                                <td>
+                                    <div class="flex items-center gap-2">
+                                        <span class="balance-dot" style="background: {{ req.leave_type.color }};"></span>
+                                        {{ req.leave_type.name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-medium">{{ req.start_date.strftime('%d/%m') }}</span>
+                                    <span class="text-muted">→</span>
+                                    <span class="font-medium">{{ req.end_date.strftime('%d/%m/%Y') }}</span>
+                                </td>
+                                <td>{{ req.days_count }} j</td>
+                                <td>
+                                    <span class="badge badge-{{ req.status_color }}">{{ req.status_label }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('employee.view_request', request_id=req.id) }}" class="btn btn-ghost btn-sm">
+                                        Détails
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                    </div>
+                    <p class="empty-state-text">Aucune demande pour le moment</p>
+                    <a href="{{ url_for('employee.new_request') }}" class="btn btn-primary btn-sm">Créer une demande</a>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+}
+
+.content-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+}
+
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border: var(--border-thick);
+    background: var(--color-bg);
+    color: var(--color-ink);
+    text-align: center;
+    font-weight: 500;
+    font-size: var(--text-sm);
+    transition: var(--transition-fast);
+}
+
+.quick-action-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-sm);
+    color: var(--color-ink);
+}
+
+.quick-action-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+}
+
+/* Upcoming List */
+.upcoming-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.upcoming-item {
+    display: flex;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-bg);
+    border: var(--border-thin);
+}
+
+.upcoming-date {
+    width: 48px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.upcoming-day {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-style: italic;
+    line-height: 1;
+}
+
+.upcoming-month {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    font-weight: 600;
+}
+
+.upcoming-info {
+    flex: 1;
+}
+
+.upcoming-type {
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+}
+
+.upcoming-dates {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.upcoming-days {
+    font-size: var(--text-xs);
+    color: var(--color-ink-subtle);
+    margin-top: var(--space-1);
+}
+
+@media (max-width: 1024px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
