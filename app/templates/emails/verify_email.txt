@@ -1,0 +1,14 @@
+TimeOff - Confirmez votre adresse email
+
+Bonjour {{ user.first_name }},
+
+Merci de vous être inscrit sur TimeOff ! Pour activer votre compte et commencer à gérer vos congés, veuillez confirmer votre adresse email en cliquant sur le lien ci-dessous :
+
+{{ verification_url }}
+
+Ce lien expire dans 24 heures.
+
+Si vous n'avez pas créé de compte sur TimeOff, vous pouvez ignorer cet email.
+
+---
+TimeOff - Gestion des congés simplifiée

@@ -64,6 +64,11 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Email verification
+    email_verified = db.Column(db.Boolean, default=False)
+    email_verification_token = db.Column(db.String(100), unique=True, nullable=True)
+    email_verification_expires = db.Column(db.DateTime, nullable=True)
+
     # Invitation token for password setup
     invitation_token = db.Column(db.String(100), unique=True, nullable=True)
     invitation_token_expires = db.Column(db.DateTime, nullable=True)
@@ -108,6 +113,24 @@ class User(UserMixin, db.Model):
         """Clear the invitation token after password is set."""
         self.invitation_token = None
         self.invitation_token_expires = None
+
+    def generate_email_verification_token(self):
+        """Generate a secure email verification token valid for 24 hours."""
+        self.email_verification_token = secrets.token_urlsafe(32)
+        self.email_verification_expires = datetime.utcnow() + timedelta(hours=24)
+        return self.email_verification_token
+
+    def verify_email_token(self):
+        """Check if the email verification token is still valid."""
+        if not self.email_verification_token or not self.email_verification_expires:
+            return False
+        return datetime.utcnow() < self.email_verification_expires
+
+    def confirm_email(self):
+        """Mark email as verified and clear the token."""
+        self.email_verified = True
+        self.email_verification_token = None
+        self.email_verification_expires = None
 
     @property
     def is_pending_invitation(self):

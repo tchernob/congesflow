@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitation à rejoindre TimeOff</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #2563eb;
+            margin: 0;
+            font-size: 28px;
+        }
+        h2 {
+            color: #1f2937;
+            margin-top: 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #2563eb;
+            color: white !important;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .highlight {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .code {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            word-break: break-all;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>TimeOff</h1>
+        </div>
+
+        <h2>Vous êtes invité(e) !</h2>
+
+        <p>Bonjour {{ user.first_name }},</p>
+
+        <div class="highlight">
+            <strong>{{ inviter.full_name }}</strong> vous invite à rejoindre <strong>{{ user.company.name }}</strong> sur TimeOff, la plateforme de gestion des congés.
+        </div>
+
+        <p>Pour créer votre compte et commencer à utiliser TimeOff, cliquez sur le bouton ci-dessous :</p>
+
+        <p style="text-align: center;">
+            <a href="{{ setup_url }}" class="button">Créer mon mot de passe</a>
+        </p>
+
+        <p>Ou copiez ce lien dans votre navigateur :</p>
+        <p class="code">{{ setup_url }}</p>
+
+        <p><strong>Ce lien expire dans 7 jours.</strong></p>
+
+        <div class="footer">
+            <p>Si vous n'attendiez pas cette invitation, vous pouvez ignorer cet email.</p>
+            <p>&copy; TimeOff - Gestion des congés simplifiée</p>
+        </div>
+    </div>
+</body>
+</html>

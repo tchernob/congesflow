@@ -3,6 +3,7 @@ from flask_login import current_user
 from datetime import datetime, timedelta
 from app import db
 from app.models import Company, User, Role, LeaveType
+from app.services.email_service import send_verification_email
 
 bp = Blueprint('marketing', __name__)
 
@@ -83,16 +84,21 @@ def signup():
         # Ensure roles exist
         Role.insert_roles()
 
-        # Create admin user for this company
+        # Create admin user for this company (not yet verified)
         admin_role = Role.query.filter_by(name='admin').first()
         admin_user = User(
             company_id=company.id,
             email=email,
             first_name=first_name or 'Admin',
             last_name=last_name or company_name,
-            role_id=admin_role.id
+            role_id=admin_role.id,
+            email_verified=False
         )
         admin_user.set_password(password)
+
+        # Generate email verification token
+        token = admin_user.generate_email_verification_token()
+
         db.session.add(admin_user)
 
         # Create default leave types for this company
@@ -100,10 +106,45 @@ def signup():
 
         db.session.commit()
 
-        flash('Votre compte a été créé ! Vous pouvez maintenant vous connecter.', 'success')
-        return redirect(url_for('auth.login'))
+        # Send verification email
+        send_verification_email(admin_user, token)
+
+        flash('Un email de confirmation a été envoyé à votre adresse. Veuillez vérifier votre boîte de réception.', 'success')
+        return redirect(url_for('marketing.verification_sent', email=email))
 
     return render_template('marketing/signup.html')
+
+
+@bp.route('/verification-sent')
+def verification_sent():
+    email = request.args.get('email', '')
+    return render_template('marketing/verification_sent.html', email=email)
+
+
+@bp.route('/resend-verification', methods=['POST'])
+def resend_verification():
+    email = request.form.get('email', '').strip()
+
+    if not email:
+        flash('Email requis', 'error')
+        return redirect(url_for('auth.login'))
+
+    user = User.query.filter_by(email=email).first()
+
+    if user and not user.email_verified:
+        # Generate new token
+        token = user.generate_email_verification_token()
+        db.session.commit()
+
+        # Send verification email
+        send_verification_email(user, token)
+
+        flash('Un nouvel email de confirmation a été envoyé.', 'success')
+    else:
+        # Don't reveal if email exists or not
+        flash('Si un compte non vérifié existe avec cet email, un nouvel email de confirmation a été envoyé.', 'info')
+
+    return redirect(url_for('marketing.verification_sent', email=email))
 
 
 @bp.route('/contact', methods=['GET', 'POST'])

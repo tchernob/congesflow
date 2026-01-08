@@ -1,0 +1,68 @@
+{% extends "marketing/base.html" %}
+
+{% block title %}Vérifiez votre email - TimeOff{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <h1 class="text-center text-3xl font-bold text-blue-600">TimeOff</h1>
+        <h2 class="mt-6 text-center text-2xl font-bold text-gray-900">
+            Vérifiez votre email
+        </h2>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-4 rounded-md {% if category == 'error' %}bg-red-50 text-red-800{% elif category == 'success' %}bg-green-50 text-green-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-6">
+                    <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+
+                <p class="text-gray-600 mb-4">
+                    Nous avons envoyé un email de confirmation à :
+                </p>
+
+                <p class="font-semibold text-gray-900 mb-6">
+                    {{ email }}
+                </p>
+
+                <p class="text-gray-600 mb-6">
+                    Cliquez sur le lien dans l'email pour activer votre compte. Le lien expire dans 24 heures.
+                </p>
+
+                <div class="border-t border-gray-200 pt-6">
+                    <p class="text-sm text-gray-500 mb-4">
+                        Vous n'avez pas reçu l'email ?
+                    </p>
+
+                    <form action="{{ url_for('marketing.resend_verification') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="email" value="{{ email }}">
+                        <button type="submit" class="text-blue-600 hover:text-blue-500 font-medium">
+                            Renvoyer l'email de confirmation
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-6">
+                    <a href="{{ url_for('auth.login') }}" class="text-gray-500 hover:text-gray-700 text-sm">
+                        Retour à la connexion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

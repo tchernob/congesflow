@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
+from app.services.email_service import send_welcome_email
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -25,6 +26,10 @@ def login():
         if not user.is_active:
             flash('Votre compte a été désactivé', 'error')
             return redirect(url_for('auth.login'))
+
+        if not user.email_verified:
+            flash('Veuillez vérifier votre adresse email avant de vous connecter.', 'error')
+            return redirect(url_for('marketing.verification_sent', email=email))
 
         login_user(user, remember=remember)
         next_page = request.args.get('next')
@@ -93,3 +98,30 @@ def setup_password(token):
         return redirect(url_for('auth.login'))
 
     return render_template('auth/setup_password.html', user=user, token=token)
+
+
+@bp.route('/verify-email/<token>')
+def verify_email(token):
+    """Verify email address from signup."""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+
+    user = User.query.filter_by(email_verification_token=token).first()
+
+    if not user:
+        flash('Lien de vérification invalide', 'error')
+        return redirect(url_for('auth.login'))
+
+    if not user.verify_email_token():
+        flash('Ce lien de vérification a expiré. Veuillez demander un nouveau lien.', 'error')
+        return redirect(url_for('marketing.verification_sent', email=user.email))
+
+    # Mark email as verified
+    user.confirm_email()
+    db.session.commit()
+
+    # Send welcome email
+    send_welcome_email(user)
+
+    flash('Votre email a été vérifié ! Vous pouvez maintenant vous connecter.', 'success')
+    return redirect(url_for('auth.login'))
