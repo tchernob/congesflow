@@ -12,6 +12,12 @@
             {% endfor %}
         </select>
     </div>
+    <p class="hint-text">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Cliquez sur un solde pour l'ajuster
+    </p>
 </div>
 
 <div class="card-static">
@@ -140,8 +146,17 @@
 <style>
 .page-header-actions {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: var(--space-6);
+}
+
+.hint-text {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
 }
 
 .filters .form-select {
