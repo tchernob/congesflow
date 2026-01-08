@@ -233,7 +233,8 @@ def new_user():
             role_id=role_id,
             team_id=team_id if team_id else None,
             manager_id=manager_id if manager_id else None,
-            company_id=current_user.company_id
+            company_id=current_user.company_id,
+            email_verified=True  # Invitation = email vérifié
         )
         # Set a temporary random password - user will set their own via invitation
         import secrets
@@ -258,12 +259,11 @@ def new_user():
             db.session.add(balance)
         db.session.commit()
 
-        # TODO: Send invitation email with token
-        # For now, we'll show the invitation link to the admin
-        from flask import url_for as flask_url_for
-        invitation_url = flask_url_for('auth.setup_password', token=token, _external=True)
+        # Send invitation email
+        from app.services.email_service import send_invitation_email
+        send_invitation_email(user, token, current_user)
 
-        flash(f'Utilisateur créé. Lien d\'invitation (valide 7 jours) : {invitation_url}', 'success')
+        flash(f'Utilisateur créé. Un email d\'invitation a été envoyé à {email}.', 'success')
         return redirect(url_for('admin.users'))
 
     teams = Team.query.filter_by(is_active=True, company_id=current_user.company_id).all()
