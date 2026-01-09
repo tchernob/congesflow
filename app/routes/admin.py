@@ -573,7 +573,7 @@ def slack_settings():
 # Paramètres des congés (périodes, reports, etc.)
 @bp.route('/leave-settings', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@hr_required
 def leave_settings():
     from app.services.leave_period_service import LeavePeriodService
 
@@ -629,7 +629,7 @@ def leave_settings():
 
 @bp.route('/leave-settings/process-rollover', methods=['POST'])
 @login_required
-@admin_required
+@hr_required
 def process_rollover():
     """Traite manuellement les reports de congés."""
     from app.services.leave_period_service import LeavePeriodService
@@ -647,7 +647,7 @@ def process_rollover():
 
 @bp.route('/leave-settings/send-expiry-alerts', methods=['POST'])
 @login_required
-@admin_required
+@hr_required
 def send_expiry_alerts():
     """Envoie les alertes d'expiration manuellement."""
     from app.services.leave_period_service import LeavePeriodService
