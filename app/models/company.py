@@ -15,10 +15,16 @@ class Company(db.Model):
     logo_url = db.Column(db.String(200))
 
     # Subscription info
-    plan = db.Column(db.String(20), default='trial')  # trial, starter, pro, enterprise
-    max_employees = db.Column(db.Integer, default=10)
+    plan = db.Column(db.String(20), default='free')  # free, pro, business, enterprise
+    max_employees = db.Column(db.Integer, default=5)
     trial_ends_at = db.Column(db.DateTime)
     subscription_ends_at = db.Column(db.DateTime)
+    billing_cycle = db.Column(db.String(20), default='monthly')  # monthly, yearly
+
+    # Stripe integration
+    stripe_customer_id = db.Column(db.String(100), unique=True, nullable=True, index=True)
+    stripe_subscription_id = db.Column(db.String(100), unique=True, nullable=True)
+    stripe_subscription_status = db.Column(db.String(50), nullable=True)  # active, past_due, canceled, etc.
 
     # Settings
     timezone = db.Column(db.String(50), default='Europe/Paris')

@@ -20,10 +20,42 @@
                     {% endif %}
                 </p>
             </div>
-            {% if company.plan != 'enterprise' %}
-            <a href="#plans" class="btn btn-primary">Changer de plan</a>
+            <div class="plan-actions">
+                {% if company.stripe_subscription_id %}
+                <a href="{{ url_for('billing.portal') }}" class="btn btn-secondary">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    Gérer la facturation
+                </a>
+                {% endif %}
+                {% if company.plan != 'enterprise' %}
+                <a href="#plans" class="btn btn-primary">Changer de plan</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Subscription status -->
+        {% if company.stripe_subscription_status %}
+        <div class="subscription-status {% if company.stripe_subscription_status == 'active' %}status-active{% elif company.stripe_subscription_status == 'past_due' %}status-warning{% else %}status-inactive{% endif %}">
+            {% if company.stripe_subscription_status == 'active' %}
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Abonnement actif
+            {% elif company.stripe_subscription_status == 'past_due' %}
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            Paiement en retard - <a href="{{ url_for('billing.portal') }}">Mettre à jour le paiement</a>
+            {% elif company.stripe_subscription_status == 'canceled' %}
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Abonnement annulé
             {% endif %}
         </div>
+        {% endif %}
 
         <div class="usage-section">
             <div class="usage-header">
@@ -71,6 +103,14 @@
     <!-- Grille de plans -->
     <div id="plans" class="plans-section">
         <h3>Changer de plan</h3>
+
+        <!-- Billing toggle -->
+        <div class="billing-toggle">
+            <button class="toggle-btn active" data-billing="monthly">Mensuel</button>
+            <button class="toggle-btn" data-billing="yearly">Annuel</button>
+            <span class="toggle-badge">2 mois offerts</span>
+        </div>
+
         <div class="plans-grid">
             {% for plan in plans %}
             <div class="plan-card {% if plan.id == company.plan %}current{% endif %} {% if plan.id == 'pro' %}popular{% endif %}">
@@ -85,8 +125,10 @@
                     <div class="plan-card-name">{{ plan.name }}</div>
                     <div class="plan-card-price">
                         {% if plan.price_monthly is not none %}
-                        <span class="price-amount">{{ plan.price_monthly }}€</span>
-                        <span class="price-period">/mois</span>
+                        <span class="price-amount price-monthly">{{ plan.price_monthly }}€</span>
+                        <span class="price-amount price-yearly" style="display: none;">{{ plan.price_yearly }}€</span>
+                        <span class="price-period price-monthly">/mois</span>
+                        <span class="price-period price-yearly" style="display: none;">/an</span>
                         {% else %}
                         <span class="price-amount">Sur mesure</span>
                         {% endif %}
@@ -111,16 +153,25 @@
                     <button class="btn btn-secondary" disabled>Plan actuel</button>
                     {% elif plan.id == 'enterprise' %}
                     <a href="mailto:contact@timeoff.fr?subject=TimeOff Enterprise - {{ company.name }}" class="btn btn-secondary">Nous contacter</a>
-                    {% elif plan.id == 'free' and company.employee_count > 5 %}
-                    <button class="btn btn-secondary" disabled title="Trop d'utilisateurs pour ce plan">Non disponible</button>
-                    {% else %}
-                    <a href="mailto:contact@timeoff.fr?subject=Changement de plan - {{ company.name }} vers {{ plan.name }}" class="btn {% if plan.id == 'pro' %}btn-primary{% else %}btn-secondary{% endif %}">
-                        {% if company.PLAN_LIMITS.get(plan.id, 0) > company.PLAN_LIMITS.get(company.plan, 0) %}
-                        Passer à {{ plan.name }}
+                    {% elif plan.id == 'free' %}
+                        {% if company.employee_count > 5 %}
+                        <button class="btn btn-secondary" disabled title="Trop d'utilisateurs pour ce plan">Non disponible</button>
+                        {% elif company.stripe_subscription_id %}
+                        <a href="{{ url_for('billing.portal') }}" class="btn btn-secondary">Rétrograder</a>
                         {% else %}
-                        Rétrograder
+                        <button class="btn btn-secondary" disabled>Plan actuel</button>
                         {% endif %}
-                    </a>
+                    {% else %}
+                        <!-- Pro or Business plan -->
+                        {% if company.plan == 'free' or (company.PLAN_LIMITS.get(plan.id, 0) > company.PLAN_LIMITS.get(company.plan, 0)) %}
+                        <a href="{{ url_for('billing.checkout', plan=plan.id, billing_cycle='monthly') }}"
+                           class="btn {% if plan.id == 'pro' %}btn-primary{% else %}btn-secondary{% endif %} checkout-btn"
+                           data-plan="{{ plan.id }}">
+                            Passer à {{ plan.name }}
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('billing.portal') }}" class="btn btn-secondary">Modifier</a>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -130,8 +181,29 @@
 
     <!-- Infos facturation -->
     <div class="billing-section card-static">
-        <h3>Besoin d'aide ?</h3>
-        <p>Pour toute question concernant votre abonnement, contactez-nous à <a href="mailto:contact@timeoff.fr">contact@timeoff.fr</a></p>
+        <h3>Facturation & Paiement</h3>
+        <div class="billing-info">
+            <p>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                Paiement sécurisé par Stripe. Vos données bancaires ne transitent pas par nos serveurs.
+            </p>
+            {% if company.stripe_subscription_id %}
+            <p>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <a href="{{ url_for('billing.portal') }}">Accéder à vos factures et moyens de paiement</a>
+            </p>
+            {% endif %}
+            <p>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                Questions ? <a href="mailto:contact@timeoff.fr">contact@timeoff.fr</a>
+            </p>
+        </div>
     </div>
 </div>
 
@@ -149,7 +221,12 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-4);
+}
+
+.plan-actions {
+    display: flex;
+    gap: var(--space-2);
 }
 
 .plan-name {
@@ -160,6 +237,36 @@
 
 .plan-description {
     color: var(--color-ink-muted);
+}
+
+.subscription-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-4);
+}
+
+.subscription-status.status-active {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.subscription-status.status-warning {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.subscription-status.status-inactive {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.subscription-status a {
+    color: inherit;
+    font-weight: 600;
 }
 
 .usage-section {
@@ -263,6 +370,39 @@
     flex-shrink: 0;
 }
 
+/* Billing toggle */
+.billing-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.toggle-btn {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    background: white;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.toggle-btn.active {
+    background: var(--color-ink);
+    color: white;
+    border-color: var(--color-ink);
+}
+
+.toggle-badge {
+    background: #DCFCE7;
+    color: #166534;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+
 /* Plans grid */
 .plans-section {
     margin-bottom: var(--space-6);
@@ -284,6 +424,17 @@
     }
     .feature-list {
         grid-template-columns: 1fr;
+    }
+    .plan-header {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    .plan-actions {
+        width: 100%;
+    }
+    .plan-actions .btn {
+        flex: 1;
+        justify-content: center;
     }
 }
 
@@ -392,22 +543,69 @@
     justify-content: center;
 }
 
-/* Billing */
+/* Billing info */
 .billing-section {
     padding: var(--space-6);
 }
 
 .billing-section h3 {
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-4);
 }
 
-.billing-section p {
+.billing-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.billing-info p {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
     color: var(--color-ink-muted);
     font-size: var(--text-sm);
 }
 
-.billing-section a {
+.billing-info svg {
+    flex-shrink: 0;
+    color: var(--color-ink-muted);
+}
+
+.billing-info a {
     color: var(--color-accent);
 }
 </style>
+
+<script>
+// Toggle billing period
+const toggleBtns = document.querySelectorAll('.toggle-btn');
+const monthlyElements = document.querySelectorAll('.price-monthly');
+const yearlyElements = document.querySelectorAll('.price-yearly');
+const checkoutBtns = document.querySelectorAll('.checkout-btn');
+
+let currentBilling = 'monthly';
+
+toggleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        toggleBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        currentBilling = btn.dataset.billing;
+        const isYearly = currentBilling === 'yearly';
+
+        monthlyElements.forEach(el => {
+            el.style.display = isYearly ? 'none' : '';
+        });
+        yearlyElements.forEach(el => {
+            el.style.display = isYearly ? '' : 'none';
+        });
+
+        // Update checkout button URLs
+        checkoutBtns.forEach(checkoutBtn => {
+            const plan = checkoutBtn.dataset.plan;
+            checkoutBtn.href = `/billing/checkout/${plan}/${currentBilling}`;
+        });
+    });
+});
+</script>
 {% endblock %}
