@@ -55,13 +55,21 @@
                         {% if balance %}
                         <button type="button"
                                 class="balance-btn {% if balance.available < 0 %}negative{% elif balance.available < 5 %}warning{% endif %}"
-                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name | e }}', {{ lt.id }}, '{{ lt.name | e }}', {{ balance.initial_balance }}, {{ balance.used }}, {{ balance.available }})">
+                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name | e }}', {{ lt.id }}, '{{ lt.name | e }}', {{ balance.initial_balance }}, {{ balance.used }}, {{ balance.available }}, {{ balance.carried_over_available }}, {{ balance.available_current_year }})">
+                            {% if lt.code == 'CP' and balance.carried_over > 0 %}
+                            <span class="balance-dual">
+                                <span class="balance-n1" title="CP N-1">{{ balance.carried_over_available | round(1) }}</span>
+                                <span class="balance-sep">+</span>
+                                <span class="balance-n" title="CP N">{{ balance.available_current_year | round(1) }}</span>
+                            </span>
+                            {% else %}
                             {{ balance.available | round(1) }}
+                            {% endif %}
                         </button>
                         {% else %}
                         <button type="button"
                                 class="balance-btn empty"
-                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name | e }}', {{ lt.id }}, '{{ lt.name | e }}', 0, 0, 0)">
+                                onclick="openAdjustModal({{ user.id }}, '{{ user.full_name | e }}', {{ lt.id }}, '{{ lt.name | e }}', 0, 0, 0, 0, 0)">
                             -
                         </button>
                         {% endif %}
@@ -106,7 +114,7 @@
 
                 <div class="balance-summary">
                     <div class="summary-item">
-                        <span class="summary-label">Solde initial</span>
+                        <span class="summary-label">Solde année N</span>
                         <span class="summary-value" id="modal_initial">0</span>
                     </div>
                     <div class="summary-item">
@@ -114,8 +122,23 @@
                         <span class="summary-value" id="modal_used">0</span>
                     </div>
                     <div class="summary-item highlight">
-                        <span class="summary-label">Disponible</span>
+                        <span class="summary-label">Disponible total</span>
                         <span class="summary-value" id="modal_available">0</span>
+                    </div>
+                </div>
+
+                <!-- Détail CP N-1 / N si applicable -->
+                <div id="modal_dual_counter" class="modal-dual-counter" style="display: none;">
+                    <div class="modal-counter modal-counter-n1">
+                        <span class="modal-counter-label">CP N-1</span>
+                        <span class="modal-counter-value" id="modal_n1">0</span>
+                        <span class="modal-counter-hint">Utilisés en priorité</span>
+                    </div>
+                    <div class="modal-counter-arrow">→</div>
+                    <div class="modal-counter modal-counter-n">
+                        <span class="modal-counter-label">CP N</span>
+                        <span class="modal-counter-value" id="modal_n">0</span>
+                        <span class="modal-counter-hint">Après épuisement N-1</span>
                     </div>
                 </div>
 
@@ -398,6 +421,93 @@
 .adj-btn.minus { color: #dc2626; }
 .adj-btn.plus { color: #16a34a; }
 
+/* Affichage dual N-1 / N dans le tableau */
+.balance-dual {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: var(--text-xs);
+}
+
+.balance-n1 {
+    color: #B45309;
+    font-weight: 600;
+}
+
+.balance-sep {
+    color: var(--color-ink-muted);
+    font-size: 10px;
+}
+
+.balance-n {
+    color: #059669;
+    font-weight: 600;
+}
+
+/* Dual counter dans la modale */
+.modal-dual-counter {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+    padding: var(--space-4);
+    background: #F9FAFB;
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--color-border);
+}
+
+.modal-counter {
+    flex: 1;
+    text-align: center;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+}
+
+.modal-counter-n1 {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%);
+    border: 1px solid #F59E0B;
+}
+
+.modal-counter-n {
+    background: linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 100%);
+    border: 1px solid #10B981;
+}
+
+.modal-counter-label {
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-muted);
+}
+
+.modal-counter-value {
+    display: block;
+    font-size: var(--text-xl);
+    font-weight: 700;
+    margin: var(--space-1) 0;
+}
+
+.modal-counter-n1 .modal-counter-value {
+    color: #B45309;
+}
+
+.modal-counter-n .modal-counter-value {
+    color: #059669;
+}
+
+.modal-counter-hint {
+    display: block;
+    font-size: 10px;
+    color: var(--color-ink-muted);
+}
+
+.modal-counter-arrow {
+    color: var(--color-ink-muted);
+    font-size: var(--text-lg);
+}
+
 .modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -415,7 +525,7 @@ function applyFilters() {
     window.location.href = '{{ url_for("admin.balances") }}?year=' + year;
 }
 
-function openAdjustModal(userId, userName, leaveTypeId, leaveTypeName, initial, used, available) {
+function openAdjustModal(userId, userName, leaveTypeId, leaveTypeName, initial, used, available, carriedOver, currentYear) {
     console.log('Opening modal for:', userName, leaveTypeName, leaveTypeId);
     document.getElementById('adjustForm').action = '/admin/balances/' + userId + '/adjust';
     document.getElementById('modal_user_name').textContent = userName;
@@ -426,6 +536,16 @@ function openAdjustModal(userId, userName, leaveTypeId, leaveTypeName, initial, 
     document.getElementById('modal_available').textContent = available;
     document.getElementById('adjustment').value = 0;
     document.getElementById('reason').value = '';
+
+    // Afficher le dual counter si c'est un CP avec report
+    var dualCounter = document.getElementById('modal_dual_counter');
+    if (carriedOver > 0 || (carriedOver === 0 && currentYear !== undefined && leaveTypeName === 'Congés payés')) {
+        document.getElementById('modal_n1').textContent = carriedOver;
+        document.getElementById('modal_n').textContent = currentYear;
+        dualCounter.style.display = 'flex';
+    } else {
+        dualCounter.style.display = 'none';
+    }
 
     var modal = document.getElementById('adjustModal');
     modal.classList.add('open');

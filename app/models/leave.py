@@ -495,7 +495,8 @@ class LeaveRequest(db.Model):
         ).first()
         if balance:
             balance.pending -= self.days_count
-            balance.used += self.days_count
+            # Utiliser la méthode FIFO qui décompte d'abord les reports N-1
+            balance.use_days(self.days_count)
 
     def _update_balance_on_rejection(self):
         balance = LeaveBalance.query.filter_by(
@@ -507,13 +508,27 @@ class LeaveRequest(db.Model):
             balance.pending -= self.days_count
 
     def _restore_balance(self):
+        """Restaure les jours lors d'une annulation (inverse de use_days)."""
         balance = LeaveBalance.query.filter_by(
             user_id=self.employee_id,
             leave_type_id=self.leave_type_id,
             year=self.start_date.year
         ).first()
         if balance:
-            balance.used -= self.days_count
+            # Restaurer en priorité dans le compteur courant, puis dans carried_over
+            remaining = self.days_count
+
+            # D'abord restaurer dans 'used' (compteur année N)
+            if balance.used > 0 and remaining > 0:
+                restore_used = min(balance.used, remaining)
+                balance.used -= restore_used
+                remaining -= restore_used
+
+            # Ensuite restaurer dans 'carried_over_used' (compteur N-1)
+            if balance.carried_over_used > 0 and remaining > 0:
+                restore_carried = min(balance.carried_over_used, remaining)
+                balance.carried_over_used -= restore_carried
+                remaining -= restore_carried
 
     def __repr__(self):
         return f'<LeaveRequest {self.id} - {self.employee_id}>'
