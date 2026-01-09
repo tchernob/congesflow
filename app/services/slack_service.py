@@ -348,3 +348,55 @@ def notify_slack_rejected(leave_request, rejected_by, reason=None):
             service.notify_request_rejected(leave_request, rejected_by, reason)
         except Exception as e:
             current_app.logger.error(f'Failed to send Slack notification: {e}')
+
+
+def link_user_to_slack(user):
+    """
+    Tente de lier automatiquement un utilisateur TimeOff à son compte Slack par email.
+    Appelé automatiquement à la création d'un utilisateur.
+    """
+    from app import db
+
+    service = get_slack_service(user.company_id)
+    if not service:
+        return False
+
+    # Vérifier si l'utilisateur n'a pas déjà un mapping
+    existing = SlackUserMapping.query.filter_by(user_id=user.id).first()
+    if existing:
+        return True
+
+    try:
+        # Récupérer la liste des utilisateurs Slack
+        slack_users = service.list_users()
+
+        for slack_user in slack_users:
+            if slack_user.get('is_bot') or slack_user.get('deleted'):
+                continue
+
+            profile = slack_user.get('profile', {})
+            slack_email = profile.get('email', '').lower()
+
+            if slack_email and slack_email == user.email.lower():
+                slack_user_id = slack_user.get('id')
+
+                # Vérifier que ce compte Slack n'est pas déjà lié
+                existing_mapping = SlackUserMapping.query.filter_by(slack_user_id=slack_user_id).first()
+                if existing_mapping:
+                    return False
+
+                # Créer le mapping
+                mapping = SlackUserMapping(
+                    user_id=user.id,
+                    slack_user_id=slack_user_id,
+                    slack_username=slack_user.get('name', '')
+                )
+                db.session.add(mapping)
+                db.session.commit()
+                current_app.logger.info(f'User {user.email} linked to Slack user {slack_user_id}')
+                return True
+
+        return False
+    except Exception as e:
+        current_app.logger.error(f'Failed to link user to Slack: {e}')
+        return False

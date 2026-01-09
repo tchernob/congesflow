@@ -286,7 +286,14 @@ def new_user():
         from app.services.email_service import send_invitation_email
         send_invitation_email(user, token, current_user)
 
-        flash(f'Utilisateur créé. Un email d\'invitation a été envoyé à {email}.', 'success')
+        # Lier automatiquement le compte Slack si l'intégration est active
+        from app.services.slack_service import link_user_to_slack
+        slack_linked = link_user_to_slack(user)
+
+        if slack_linked:
+            flash(f'Utilisateur créé et lié à Slack. Un email d\'invitation a été envoyé à {email}.', 'success')
+        else:
+            flash(f'Utilisateur créé. Un email d\'invitation a été envoyé à {email}.', 'success')
         return redirect(url_for('admin.users'))
 
     teams = Team.query.filter_by(is_active=True, company_id=current_user.company_id).all()
