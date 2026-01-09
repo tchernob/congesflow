@@ -416,7 +416,7 @@ def new_team():
 # Gestion des types de congés
 @bp.route('/leave-types')
 @login_required
-@admin_required
+@hr_required
 def leave_types():
     types = LeaveType.query.filter_by(company_id=current_user.company_id).all()
     return render_template('admin/leave_types.html', leave_types=types)
@@ -433,6 +433,7 @@ def new_leave_type():
         color = request.form.get('color', '#3B82F6')
         requires_justification = request.form.get('requires_justification') == 'on'
         max_days = request.form.get('max_consecutive_days', type=int)
+        default_days = request.form.get('default_days', 0, type=float)
         is_paid = request.form.get('is_paid') == 'on'
 
         if LeaveType.query.filter_by(code=code, company_id=current_user.company_id).first():
@@ -446,6 +447,7 @@ def new_leave_type():
             color=color,
             requires_justification=requires_justification,
             max_consecutive_days=max_days,
+            default_days=default_days,
             is_paid=is_paid,
             company_id=current_user.company_id
         )
@@ -456,6 +458,66 @@ def new_leave_type():
         return redirect(url_for('admin.leave_types'))
 
     return render_template('admin/new_leave_type.html')
+
+
+@bp.route('/leave-types/<int:type_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_leave_type(type_id):
+    """Modifier un type de congés."""
+    leave_type = LeaveType.query.filter_by(
+        id=type_id,
+        company_id=current_user.company_id
+    ).first_or_404()
+
+    # Types protégés (code non modifiable)
+    protected_codes = ['CP', 'RTT']
+    is_protected = leave_type.code in protected_codes
+
+    if request.method == 'POST':
+        leave_type.name = request.form.get('name')
+        leave_type.description = request.form.get('description')
+        leave_type.color = request.form.get('color', '#3B82F6')
+        leave_type.requires_justification = request.form.get('requires_justification') == 'on'
+        leave_type.max_consecutive_days = request.form.get('max_consecutive_days', type=int)
+        leave_type.default_days = request.form.get('default_days', 0, type=float)
+        leave_type.is_paid = request.form.get('is_paid') == 'on'
+
+        # Ne pas permettre la désactivation des types protégés
+        if not is_protected:
+            leave_type.is_active = request.form.get('is_active') == 'on'
+
+        db.session.commit()
+        flash('Type de congé mis à jour', 'success')
+        return redirect(url_for('admin.leave_types'))
+
+    return render_template('admin/edit_leave_type.html',
+                           leave_type=leave_type,
+                           is_protected=is_protected)
+
+
+@bp.route('/leave-types/<int:type_id>/toggle', methods=['POST'])
+@login_required
+@admin_required
+def toggle_leave_type(type_id):
+    """Activer/désactiver un type de congés."""
+    leave_type = LeaveType.query.filter_by(
+        id=type_id,
+        company_id=current_user.company_id
+    ).first_or_404()
+
+    # Types protégés ne peuvent pas être désactivés
+    protected_codes = ['CP', 'RTT']
+    if leave_type.code in protected_codes:
+        flash(f'Le type {leave_type.code} ne peut pas être désactivé', 'error')
+        return redirect(url_for('admin.leave_types'))
+
+    leave_type.is_active = not leave_type.is_active
+    db.session.commit()
+
+    status = 'activé' if leave_type.is_active else 'désactivé'
+    flash(f'Type "{leave_type.name}" {status}', 'success')
+    return redirect(url_for('admin.leave_types'))
 
 
 # Rapports
