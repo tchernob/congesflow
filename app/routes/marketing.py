@@ -155,8 +155,3 @@ def contact():
         return redirect(url_for('marketing.contact'))
 
     return render_template('marketing/contact.html')
-
-
-@bp.route('/demo')
-def demo():
-    return render_template('marketing/demo.html')
