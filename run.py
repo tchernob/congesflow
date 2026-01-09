@@ -430,6 +430,57 @@ def init_year_balances(year, company_id):
     print(f"\n{created_count} solde(s) créé(s) pour {year}")
 
 
+@app.cli.command('process-trials')
+@click.option('--dry-run', is_flag=True, help='Simuler sans envoyer d\'emails ni modifier la base')
+def process_trials(dry_run):
+    """
+    Traite les rappels d'essai et expire les essais terminés.
+
+    Cette commande doit être exécutée quotidiennement via CRON.
+    Elle envoie les rappels à J-7, J-3, J-1, J0 et passe les comptes
+    expirés en plan Free.
+
+    Exemple CRON (tous les jours à 9h00):
+        0 9 * * * cd /home/tcher/timeoff && source venv/bin/activate && flask process-trials
+    """
+    from app.services.trial_service import process_trial_reminders, REMINDER_DAYS
+
+    print("=== Traitement des périodes d'essai ===")
+    if dry_run:
+        print("MODE SIMULATION - Aucune modification ne sera effectuée\n")
+
+    if dry_run:
+        # En mode dry-run, juste afficher ce qui serait fait
+        from app.services.trial_service import get_companies_needing_reminder, get_expired_trials
+
+        for days in REMINDER_DAYS:
+            companies = get_companies_needing_reminder(days)
+            if companies:
+                print(f"\nRappels à envoyer (J-{days}):")
+                for company in companies:
+                    print(f"  - {company.name} ({company.email})")
+
+        expired = get_expired_trials()
+        if expired:
+            print(f"\nEssais à expirer:")
+            for company in expired:
+                print(f"  - {company.name} -> passage en plan Free")
+
+        if not any([get_companies_needing_reminder(d) for d in REMINDER_DAYS]) and not expired:
+            print("Aucune action à effectuer aujourd'hui.")
+    else:
+        stats = process_trial_reminders()
+
+        print(f"\nRésumé:")
+        print(f"  Rappels envoyés: {stats['reminders_sent']}")
+        print(f"  Essais expirés:  {stats['trials_expired']}")
+
+        if stats['errors']:
+            print(f"\nErreurs ({len(stats['errors'])}):")
+            for error in stats['errors']:
+                print(f"  - {error}")
+
+
 @app.cli.command('create-superadmin')
 @click.argument('email')
 @click.argument('password')

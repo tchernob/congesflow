@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import db
 import secrets
 
@@ -140,20 +140,49 @@ class Company(db.Model):
         return self.employee_count < self.max_employees
 
     @property
-    def is_trial_expired(self):
-        if self.plan != self.PLAN_TRIAL:
+    def is_in_trial(self):
+        """Vérifie si l'entreprise est en période d'essai."""
+        if not self.trial_ends_at:
             return False
+        return datetime.utcnow() <= self.trial_ends_at
+
+    @property
+    def is_trial_expired(self):
+        """Vérifie si l'essai est terminé."""
         if not self.trial_ends_at:
             return False
         return datetime.utcnow() > self.trial_ends_at
 
     @property
+    def trial_days_remaining(self):
+        """Nombre de jours restants dans l'essai."""
+        if not self.trial_ends_at:
+            return 0
+        delta = self.trial_ends_at - datetime.utcnow()
+        return max(0, delta.days)
+
+    @property
     def is_subscription_active(self):
-        if self.plan == self.PLAN_TRIAL:
-            return not self.is_trial_expired
-        if not self.subscription_ends_at:
+        """Vérifie si l'abonnement est actif."""
+        # Si en essai, l'abonnement est "actif" pendant l'essai
+        if self.is_in_trial:
             return True
-        return datetime.utcnow() <= self.subscription_ends_at
+        # Si plan payant avec Stripe
+        if self.stripe_subscription_status in ['active', 'trialing']:
+            return True
+        # Si plan gratuit, toujours actif
+        if self.plan == self.PLAN_FREE:
+            return True
+        # Vérifier la date de fin d'abonnement
+        if self.subscription_ends_at:
+            return datetime.utcnow() <= self.subscription_ends_at
+        return False
+
+    def expire_trial(self):
+        """Passe l'entreprise en plan Free après fin d'essai."""
+        self.plan = self.PLAN_FREE
+        self.max_employees = self.PLAN_LIMITS[self.PLAN_FREE]
+        # Garder trial_ends_at pour l'historique
 
     def upgrade_plan(self, new_plan):
         self.plan = new_plan

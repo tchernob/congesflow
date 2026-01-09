@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plus que 3 jours d'essai</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #2563eb;
+            margin: 0;
+            font-size: 28px;
+        }
+        h2 {
+            color: #1f2937;
+            margin-top: 0;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+            border: 1px solid #F59E0B;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        .days-remaining {
+            font-size: 48px;
+            font-weight: 700;
+            color: #D97706;
+        }
+        .days-label {
+            color: #B45309;
+            font-weight: 500;
+        }
+        .button {
+            display: inline-block;
+            background-color: #2563eb;
+            color: white !important;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .stats-box {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .stats-box h3 {
+            margin-top: 0;
+            color: #374151;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>TimeOff</h1>
+        </div>
+
+        <h2>Votre essai se termine bientôt</h2>
+
+        <p>Bonjour {{ admin.first_name }},</p>
+
+        <p>Il ne reste plus que quelques jours avant la fin de votre essai gratuit pour <strong>{{ company.name }}</strong>.</p>
+
+        <div class="highlight-box">
+            <div class="days-remaining">3</div>
+            <div class="days-label">jours restants</div>
+        </div>
+
+        <p>Passez à un plan payant maintenant pour continuer à utiliser toutes les fonctionnalités sans interruption.</p>
+
+        <p style="text-align: center;">
+            <a href="{{ subscription_url }}" class="button">Passer au plan Pro - 39€/mois</a>
+        </p>
+
+        <div class="stats-box">
+            <h3>Après votre essai, sans abonnement :</h3>
+            <p>Votre compte passera automatiquement au <strong>plan Gratuit</strong> avec :</p>
+            <ul>
+                <li>Maximum 5 utilisateurs</li>
+                <li>Fonctionnalités de base uniquement</li>
+                <li>Vos données restent accessibles</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>Besoin d'aide pour choisir ? Répondez à cet email, nous sommes là pour vous aider.</p>
+            <p>&copy; TimeOff - Gestion des congés simplifiée</p>
+        </div>
+    </div>
+</body>
+</html>

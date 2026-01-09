@@ -17,6 +17,25 @@
         </a>
     </div>
     {% endif %}
+    {% if current_user.is_authenticated and current_user.company and current_user.company.is_in_trial %}
+    {% set days_left = current_user.company.trial_days_remaining %}
+    <div class="trial-banner {% if days_left <= 3 %}urgent{% elif days_left <= 7 %}warning{% endif %}">
+        <div class="trial-banner-content">
+            <span class="trial-banner-text">
+                {% if days_left == 0 %}
+                    <strong>Dernier jour d'essai !</strong> Passez à un plan payant pour continuer.
+                {% elif days_left == 1 %}
+                    <strong>Plus qu'1 jour d'essai</strong> - Choisissez votre plan maintenant
+                {% else %}
+                    <strong>{{ days_left }} jours d'essai restants</strong> - Découvrez nos offres
+                {% endif %}
+            </span>
+            {% if current_user.is_admin() %}
+            <a href="{{ url_for('admin.subscription') }}" class="trial-banner-btn">Voir les plans</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
     {% if current_user.is_authenticated %}
     <div class="app-container">
         <!-- Sidebar -->
