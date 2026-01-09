@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarifs - TimeOff</title>
+    <meta name="description" content="Des tarifs simples et transparents pour gérer les congés de votre équipe. Gratuit jusqu'à 5 utilisateurs.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #FAFAF9;
+            --color-surface: #FFFFFF;
+            --color-border: #E7E5E4;
+            --color-ink: #1C1917;
+            --color-ink-muted: #78716C;
+            --color-accent: #2563EB;
+            --color-accent-light: #DBEAFE;
+            --color-success: #16A34A;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-display: 'Fraunces', Georgia, serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-bg);
+            color: var(--color-ink);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--color-ink);
+            text-decoration: none;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .header-nav a {
+            color: var(--color-ink-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+
+        .header-nav a:hover {
+            color: var(--color-ink);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.15s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1D4ED8;
+        }
+
+        .btn-secondary {
+            background: var(--color-surface);
+            color: var(--color-ink);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-bg);
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--color-ink-muted);
+            margin-bottom: 2rem;
+        }
+
+        /* Toggle */
+        .billing-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            align-items: center;
+        }
+
+        .toggle-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            font-size: 0.9rem;
+            color: var(--color-ink-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .toggle-btn.active {
+            background: var(--color-ink);
+            color: white;
+        }
+
+        .toggle-badge {
+            background: #DCFCE7;
+            color: var(--color-success);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Pricing Grid */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        @media (max-width: 1000px) {
+            .pricing-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .pricing-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .pricing-card:hover {
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .pricing-card.popular {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 1px var(--color-accent);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-accent);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .plan-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-description {
+            font-size: 0.875rem;
+            color: var(--color-ink-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-price {
+            margin-bottom: 1.5rem;
+        }
+
+        .price-amount {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .price-amount.contact {
+            font-size: 1.5rem;
+        }
+
+        .price-period {
+            color: var(--color-ink-muted);
+            font-size: 0.875rem;
+        }
+
+        .price-yearly {
+            font-size: 0.8rem;
+            color: var(--color-ink-muted);
+            margin-top: 0.25rem;
+        }
+
+        .plan-cta {
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-features {
+            list-style: none;
+            flex-grow: 1;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+            color: var(--color-ink-muted);
+        }
+
+        .plan-features li svg {
+            flex-shrink: 0;
+            color: var(--color-success);
+            margin-top: 2px;
+        }
+
+        /* FAQ */
+        .faq-section {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .faq-section h2 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--color-border);
+            padding: 1.5rem 0;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-answer {
+            color: var(--color-ink-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--color-ink);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .footer a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="{{ url_for('main.index') }}" class="logo">TimeOff</a>
+            <nav class="header-nav">
+                <a href="{{ url_for('main.pricing') }}">Tarifs</a>
+                <a href="{{ url_for('auth.login') }}">Connexion</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Essai gratuit</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Des tarifs simples et transparents</h1>
+        <p>Commencez gratuitement, évoluez selon vos besoins. Pas de surprise, pas de frais cachés.</p>
+    </section>
+
+    <div class="billing-toggle">
+        <button class="toggle-btn active" data-billing="monthly">Mensuel</button>
+        <button class="toggle-btn" data-billing="yearly">Annuel</button>
+        <span class="toggle-badge">2 mois offerts</span>
+    </div>
+
+    <div class="pricing-grid">
+        {% for plan in plans %}
+        <div class="pricing-card {% if plan.id == 'pro' %}popular{% endif %}">
+            {% if plan.id == 'pro' %}
+            <span class="popular-badge">Le plus populaire</span>
+            {% endif %}
+
+            <div class="plan-name">{{ plan.name }}</div>
+            <div class="plan-description">
+                {% if plan.id == 'free' %}Pour démarrer et tester{% endif %}
+                {% if plan.id == 'pro' %}Pour les petites équipes{% endif %}
+                {% if plan.id == 'business' %}Pour les PME{% endif %}
+                {% if plan.id == 'enterprise' %}Pour les grandes structures{% endif %}
+            </div>
+
+            <div class="plan-price">
+                {% if plan.price_monthly is not none %}
+                <div class="price-amount">
+                    <span class="price-monthly">{{ plan.price_monthly }}€</span>
+                    <span class="price-yearly" style="display:none;">{{ plan.price_yearly }}€</span>
+                </div>
+                <div class="price-period">
+                    <span class="period-monthly">par mois</span>
+                    <span class="period-yearly" style="display:none;">par an</span>
+                </div>
+                {% if plan.price_yearly and plan.price_monthly > 0 %}
+                <div class="price-yearly-note period-monthly">soit {{ plan.price_yearly }}€/an</div>
+                <div class="price-yearly-note period-yearly" style="display:none;">soit {{ (plan.price_yearly / 12)|round(0)|int }}€/mois</div>
+                {% endif %}
+                {% else %}
+                <div class="price-amount contact">Sur mesure</div>
+                <div class="price-period">Contactez-nous</div>
+                {% endif %}
+            </div>
+
+            {% if plan.id == 'enterprise' %}
+            <a href="mailto:contact@timeoff.fr?subject=TimeOff Enterprise" class="btn btn-secondary plan-cta">Nous contacter</a>
+            {% elif plan.id == 'free' %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary plan-cta">Commencer gratuitement</a>
+            {% else %}
+            <a href="{{ url_for('auth.register') }}?plan={{ plan.id }}" class="btn {% if plan.id == 'pro' %}btn-primary{% else %}btn-secondary{% endif %} plan-cta">Essayer 14 jours</a>
+            {% endif %}
+
+            <ul class="plan-features">
+                {% for feature in plan.features %}
+                <li>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {{ feature }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+
+    <section class="faq-section">
+        <h2>Questions fréquentes</h2>
+
+        <div class="faq-item">
+            <div class="faq-question">Puis-je changer de plan à tout moment ?</div>
+            <div class="faq-answer">Oui, vous pouvez upgrader ou downgrader votre plan à tout moment. Le changement prend effet immédiatement et la facturation est ajustée au prorata.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Comment fonctionne l'essai gratuit ?</div>
+            <div class="faq-answer">Le plan Gratuit est gratuit pour toujours, sans limite de temps, jusqu'à 5 utilisateurs. Pour les plans payants, vous bénéficiez de 14 jours d'essai sans engagement.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Quels moyens de paiement acceptez-vous ?</div>
+            <div class="faq-answer">Nous acceptons les cartes bancaires (Visa, Mastercard, American Express) et le prélèvement SEPA pour les paiements annuels.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Que se passe-t-il si je dépasse la limite d'utilisateurs ?</div>
+            <div class="faq-answer">Vous recevrez une notification vous invitant à passer au plan supérieur. Vos utilisateurs existants ne seront pas impactés, mais vous ne pourrez pas en ajouter de nouveaux.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Proposez-vous des réductions pour les associations ?</div>
+            <div class="faq-answer">Oui, nous offrons 30% de réduction aux associations et ONG. Contactez-nous avec un justificatif.</div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; {{ now().year if now is defined else 2024 }} TimeOff. <a href="mailto:contact@timeoff.fr">contact@timeoff.fr</a></p>
+    </footer>
+
+    <script>
+        // Toggle billing period
+        const toggleBtns = document.querySelectorAll('.toggle-btn');
+        const monthlyElements = document.querySelectorAll('.price-monthly, .period-monthly');
+        const yearlyElements = document.querySelectorAll('.price-yearly, .period-yearly');
+
+        toggleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                toggleBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const isYearly = btn.dataset.billing === 'yearly';
+
+                monthlyElements.forEach(el => {
+                    el.style.display = isYearly ? 'none' : '';
+                });
+                yearlyElements.forEach(el => {
+                    el.style.display = isYearly ? '' : 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

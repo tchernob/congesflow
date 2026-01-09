@@ -1,0 +1,137 @@
+{% extends "root/base_root.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-label">Entreprises</span>
+            <div class="stat-card-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="stat-card-value">{{ total_companies }}</div>
+        <div class="stat-card-sub">
+            {% for plan, count in companies_by_plan.items() %}
+            {{ count }} {{ plan }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-label">Utilisateurs</span>
+            <div class="stat-card-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="stat-card-value">{{ total_users }}</div>
+        <div class="stat-card-sub">{{ active_users }} actifs</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-label">MRR</span>
+            <div class="stat-card-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="stat-card-value">{{ mrr }}€</div>
+        <div class="stat-card-sub">Revenu mensuel récurrent</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-label">Demandes (30j)</span>
+            <div class="stat-card-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="stat-card-value">{{ recent_requests }}</div>
+        <div class="stat-card-sub">Derniers 30 jours</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6);">
+    <!-- Recent companies -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+            <h2 style="font-size: var(--text-lg); font-weight: 600;">Dernières inscriptions</h2>
+            <a href="{{ url_for('root.companies') }}" class="btn btn-secondary btn-sm">Voir tout</a>
+        </div>
+
+        <table class="root-table">
+            <thead>
+                <tr>
+                    <th>Entreprise</th>
+                    <th>Plan</th>
+                    <th>Utilisateurs</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for company in recent_companies %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('root.view_company', company_id=company.id) }}" class="company-name" style="color: var(--color-ink); text-decoration: none;">
+                            {{ company.name }}
+                        </a>
+                    </td>
+                    <td><span class="plan-badge {{ company.plan }}">{{ company.plan_label }}</span></td>
+                    <td>{{ company.employee_count }} / {{ company.max_employees }}</td>
+                    <td class="company-created">{{ company.created_at.strftime('%d/%m/%Y') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--color-ink-muted);">Aucune entreprise</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Companies near limit -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">
+            Proches de la limite
+        </h2>
+
+        {% if companies_near_limit %}
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+            {% for company in companies_near_limit[:5] %}
+            <a href="{{ url_for('root.view_company', company_id=company.id) }}" style="text-decoration: none; color: inherit;">
+                <div style="padding: var(--space-3); background: var(--color-bg-sunken); border-radius: var(--radius-md);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-2);">
+                        <span style="font-weight: 500;">{{ company.name }}</span>
+                        <span class="plan-badge {{ company.plan }}">{{ company.plan_label }}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                        <div style="flex: 1; height: 6px; background: var(--color-border); border-radius: 3px; overflow: hidden;">
+                            <div style="width: {{ company.usage_percent }}%; height: 100%; background: {% if company.usage_percent >= 90 %}#EF4444{% else %}#F59E0B{% endif %};"></div>
+                        </div>
+                        <span style="font-size: var(--text-xs); color: var(--color-ink-muted);">
+                            {{ company.employee_count }}/{{ company.max_employees }}
+                        </span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: var(--color-ink-muted); font-size: var(--text-sm);">
+            Aucune entreprise proche de sa limite.
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

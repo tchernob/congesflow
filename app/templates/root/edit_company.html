@@ -1,0 +1,101 @@
+{% extends "root/base_root.html" %}
+
+{% block title %}Modifier {{ company.name }}{% endblock %}
+{% block page_title %}Modifier {{ company.name }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-4);">
+    <a href="{{ url_for('root.view_company', company_id=company.id) }}" class="btn btn-secondary btn-sm">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Retour
+    </a>
+</div>
+
+<form method="post" style="max-width: 600px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Basic info -->
+    <div class="card-static" style="padding: var(--space-5); margin-bottom: var(--space-4);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Informations générales</h2>
+
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+            <label class="form-label">Nom de l'entreprise</label>
+            <input type="text" name="name" class="form-input" value="{{ company.name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" style="display: flex; align-items: center; gap: var(--space-2);">
+                <input type="checkbox" name="is_active" {% if company.is_active %}checked{% endif %}>
+                Entreprise active
+            </label>
+            <p style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-top: 4px;">
+                Si désactivée, les utilisateurs ne pourront plus se connecter.
+            </p>
+        </div>
+    </div>
+
+    <!-- Subscription -->
+    <div class="card-static" style="padding: var(--space-5); margin-bottom: var(--space-4);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Abonnement</h2>
+
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+            <label class="form-label">Plan</label>
+            <select name="plan" class="form-input">
+                {% for plan_id, plan_name in plans.items() %}
+                <option value="{{ plan_id }}" {% if company.plan == plan_id %}selected{% endif %}>
+                    {{ plan_name }} ({{ plan_limits.get(plan_id, '?') }} utilisateurs)
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+            <label class="form-label">Limite d'utilisateurs personnalisée (optionnel)</label>
+            <input type="number" name="max_employees_override" class="form-input"
+                   value="{{ company.max_employees }}" min="1" max="10000">
+            <p style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-top: 4px;">
+                Laissez vide pour utiliser la limite par défaut du plan. Actuellement : {{ company.employee_count }} utilisateur(s).
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Date de fin d'abonnement</label>
+            <input type="date" name="subscription_ends_at" class="form-input"
+                   value="{{ company.subscription_ends_at.strftime('%Y-%m-%d') if company.subscription_ends_at else '' }}">
+            <p style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-top: 4px;">
+                Laissez vide si pas de date d'expiration (plan gratuit ou abonnement perpétuel).
+            </p>
+        </div>
+    </div>
+
+    <!-- Current state -->
+    <div class="card-static" style="padding: var(--space-5); margin-bottom: var(--space-4); background: var(--color-bg-sunken);">
+        <h3 style="font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-3);">État actuel</h3>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); font-size: var(--text-sm);">
+            <div>
+                <span style="color: var(--color-ink-muted);">Plan actuel :</span>
+                <span class="plan-badge {{ company.plan }}" style="margin-left: var(--space-2);">{{ company.plan_label }}</span>
+            </div>
+            <div>
+                <span style="color: var(--color-ink-muted);">Utilisateurs :</span>
+                <strong>{{ company.employee_count }} / {{ company.max_employees }}</strong>
+            </div>
+            <div>
+                <span style="color: var(--color-ink-muted);">Utilisation :</span>
+                <strong>{{ company.usage_percent }}%</strong>
+            </div>
+            <div>
+                <span style="color: var(--color-ink-muted);">Créée le :</span>
+                <strong>{{ company.created_at.strftime('%d/%m/%Y') }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: var(--space-3);">
+        <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+        <a href="{{ url_for('root.view_company', company_id=company.id) }}" class="btn btn-secondary">Annuler</a>
+    </div>
+</form>
+{% endblock %}

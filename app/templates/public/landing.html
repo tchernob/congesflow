@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeOff - Gestion des congés simplifiée</title>
+    <meta name="description" content="Gérez les congés de votre équipe en toute simplicité. Demandes, validations, calendrier partagé. Gratuit jusqu'à 5 utilisateurs.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #FAFAF9;
+            --color-surface: #FFFFFF;
+            --color-border: #E7E5E4;
+            --color-ink: #1C1917;
+            --color-ink-muted: #78716C;
+            --color-accent: #2563EB;
+            --color-accent-light: #DBEAFE;
+            --color-success: #16A34A;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-display: 'Fraunces', Georgia, serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-bg);
+            color: var(--color-ink);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--color-ink);
+            text-decoration: none;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .header-nav a {
+            color: var(--color-ink-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+
+        .header-nav a:hover {
+            color: var(--color-ink);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.15s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1D4ED8;
+        }
+
+        .btn-lg {
+            padding: 0.875rem 2rem;
+            font-size: 1rem;
+        }
+
+        /* Hero */
+        .hero {
+            padding: 6rem 2rem;
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            font-weight: 600;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--color-accent);
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--color-ink-muted);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-note {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--color-ink-muted);
+        }
+
+        /* Features */
+        .features {
+            padding: 4rem 2rem;
+            background: var(--color-surface);
+            border-top: 1px solid var(--color-border);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .features-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        @media (max-width: 800px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+        }
+
+        .feature-card {
+            padding: 2rem;
+            background: var(--color-bg);
+            border-radius: 12px;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--color-accent-light);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            color: var(--color-accent);
+        }
+
+        .feature-card h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+            color: var(--color-ink-muted);
+        }
+
+        /* Social proof */
+        .social-proof {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .social-proof p {
+            color: var(--color-ink-muted);
+            margin-bottom: 2rem;
+        }
+
+        .logos {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            opacity: 0.5;
+        }
+
+        .logos span {
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: var(--color-ink-muted);
+        }
+
+        /* CTA */
+        .cta-section {
+            padding: 4rem 2rem;
+            background: var(--color-ink);
+            color: white;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            opacity: 0.8;
+            margin-bottom: 2rem;
+        }
+
+        .cta-section .btn-primary {
+            background: white;
+            color: var(--color-ink);
+        }
+
+        .cta-section .btn-primary:hover {
+            background: var(--color-bg);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 2rem;
+            text-align: center;
+            color: var(--color-ink-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer a {
+            color: var(--color-ink-muted);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: var(--color-ink);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="{{ url_for('main.index') }}" class="logo">TimeOff</a>
+            <nav class="header-nav">
+                <a href="{{ url_for('main.pricing') }}">Tarifs</a>
+                <a href="{{ url_for('auth.login') }}">Connexion</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Essai gratuit</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>La gestion des congés, <em>simplifiée</em></h1>
+        <p>Fini les tableaux Excel et les emails perdus. TimeOff centralise les demandes, les validations et le calendrier de votre équipe.</p>
+        <div class="hero-cta">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Commencer gratuitement</a>
+            <a href="{{ url_for('main.pricing') }}" class="btn btn-lg" style="background: var(--color-bg); border: 1px solid var(--color-border);">Voir les tarifs</a>
+        </div>
+        <p class="hero-note">Gratuit jusqu'à 5 utilisateurs. Sans carte bancaire.</p>
+    </section>
+
+    <section class="features">
+        <div class="features-inner">
+            <h2>Tout ce dont vous avez besoin</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <h3>Demandes en 2 clics</h3>
+                    <p>Vos employés font leurs demandes en quelques secondes. Plus besoin de chercher le bon formulaire.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3>Validation rapide</h3>
+                    <p>Managers et RH valident depuis leur téléphone ou leur ordinateur. Notifications instantanées.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3>Calendrier partagé</h3>
+                    <p>Visualisez en un coup d'oeil qui est absent. Anticipez et planifiez sereinement.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                        </svg>
+                    </div>
+                    <h3>Intégration Slack</h3>
+                    <p>Recevez les notifications directement dans Slack. Validez sans quitter votre outil de travail.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <h3>Soldes automatiques</h3>
+                    <p>Les compteurs se mettent à jour automatiquement. Acquisition mensuelle, reports, tout est géré.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <h3>Conforme RGPD</h3>
+                    <p>Données hébergées en France. Sécurité et confidentialité garanties.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="social-proof">
+        <p>Ils nous font confiance</p>
+        <div class="logos">
+            <span>Startup A</span>
+            <span>PME B</span>
+            <span>Agence C</span>
+            <span>Studio D</span>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <h2>Prêt à simplifier vos congés ?</h2>
+        <p>Créez votre compte en 30 secondes. Gratuit jusqu'à 5 utilisateurs.</p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Démarrer maintenant</a>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2024 TimeOff. <a href="mailto:contact@timeoff.fr">contact@timeoff.fr</a> · <a href="{{ url_for('main.pricing') }}">Tarifs</a></p>
+    </footer>
+</body>
+</html>

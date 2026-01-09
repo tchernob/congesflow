@@ -1,0 +1,194 @@
+{% extends "root/base_root.html" %}
+
+{% block title %}{{ company.name }}{% endblock %}
+{% block page_title %}{{ company.name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4);">
+    <a href="{{ url_for('root.companies') }}" class="btn btn-secondary btn-sm">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Retour
+    </a>
+    <a href="{{ url_for('root.edit_company', company_id=company.id) }}" class="btn btn-primary btn-sm">Modifier</a>
+    <a href="{{ url_for('root.impersonate', company_id=company.id) }}" class="btn btn-sm" style="background: var(--root-accent); color: white;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+        </svg>
+        Impersonate
+    </a>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+    <!-- Info card -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Informations</h2>
+
+        <div style="display: grid; gap: var(--space-4);">
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Nom</div>
+                <div style="font-weight: 500;">{{ company.name }}</div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Statut</div>
+                <div>
+                    {% if company.is_active %}
+                    <span style="color: var(--color-success); font-weight: 500;">Actif</span>
+                    {% else %}
+                    <span style="color: #EF4444; font-weight: 500;">Inactif</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Date d'inscription</div>
+                <div>{{ company.created_at.strftime('%d/%m/%Y à %H:%M') }}</div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Administrateur(s)</div>
+                <div>
+                    {% for admin in admins %}
+                    <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1);">
+                        <span>{{ admin.full_name }}</span>
+                        <span style="font-size: var(--text-xs); color: var(--color-ink-muted);">{{ admin.email }}</span>
+                    </div>
+                    {% else %}
+                    <span style="color: var(--color-ink-muted);">Aucun administrateur</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription card -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Abonnement</h2>
+
+        <div style="display: grid; gap: var(--space-4);">
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Plan actuel</div>
+                <div>
+                    <span class="plan-badge {{ company.plan }}" style="font-size: var(--text-sm);">{{ company.plan_label }}</span>
+                </div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Limite d'utilisateurs</div>
+                <div style="font-weight: 500;">{{ company.max_employees }} utilisateurs max</div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 4px;">Utilisation</div>
+                <div style="display: flex; align-items: center; gap: var(--space-3);">
+                    <div style="flex: 1; height: 8px; background: var(--color-border); border-radius: 4px; overflow: hidden;">
+                        <div style="width: {{ company.usage_percent }}%; height: 100%; background: {% if company.usage_percent >= 90 %}#EF4444{% elif company.usage_percent >= 70 %}#F59E0B{% else %}var(--color-accent){% endif %};"></div>
+                    </div>
+                    <span style="font-weight: 500;">{{ company.employee_count }} / {{ company.max_employees }}</span>
+                </div>
+            </div>
+
+            {% if company.subscription_ends_at %}
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Fin d'abonnement</div>
+                <div>{{ company.subscription_ends_at.strftime('%d/%m/%Y') }}</div>
+            </div>
+            {% endif %}
+
+            {% if company.plan != 'free' %}
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Prix mensuel</div>
+                <div style="font-weight: 500;">{{ company.plan_price }}€ / mois</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-top: var(--space-6);">
+    <div class="stat-card">
+        <div class="stat-card-label">Utilisateurs</div>
+        <div class="stat-card-value">{{ users|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-label">Demandes totales</div>
+        <div class="stat-card-value">{{ total_requests }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-label">En attente</div>
+        <div class="stat-card-value">{{ pending_requests }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-label">Places restantes</div>
+        <div class="stat-card-value">{{ company.slots_remaining }}</div>
+    </div>
+</div>
+
+<!-- Users list -->
+<div class="card-static" style="padding: var(--space-5); margin-top: var(--space-6);">
+    <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">
+        Utilisateurs ({{ users|length }})
+    </h2>
+
+    <table class="root-table">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                <th>Créé le</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td style="font-weight: 500;">{{ user.full_name }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                    <span style="font-size: var(--text-xs); background: var(--color-bg-sunken); padding: 2px 6px; border-radius: 4px;">
+                        {{ user.role.description }}
+                    </span>
+                </td>
+                <td>
+                    {% if user.is_active %}
+                    <span style="color: var(--color-success); font-size: var(--text-xs);">Actif</span>
+                    {% else %}
+                    <span style="color: #EF4444; font-size: var(--text-xs);">Inactif</span>
+                    {% endif %}
+                </td>
+                <td style="color: var(--color-ink-muted); font-size: var(--text-xs);">{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: var(--color-ink-muted);">Aucun utilisateur</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Actions -->
+<div class="card-static" style="padding: var(--space-5); margin-top: var(--space-6);">
+    <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Actions</h2>
+
+    <div style="display: flex; gap: var(--space-3);">
+        <form method="post" action="{{ url_for('root.toggle_company', company_id=company.id) }}" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if company.is_active %}
+            <button type="submit" class="btn btn-secondary" onclick="return confirm('Désactiver cette entreprise ? Les utilisateurs ne pourront plus se connecter.')">
+                Désactiver l'entreprise
+            </button>
+            {% else %}
+            <button type="submit" class="btn btn-primary">
+                Réactiver l'entreprise
+            </button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}

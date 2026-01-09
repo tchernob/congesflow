@@ -430,5 +430,57 @@ def init_year_balances(year, company_id):
     print(f"\n{created_count} solde(s) créé(s) pour {year}")
 
 
+@app.cli.command('create-superadmin')
+@click.argument('email')
+@click.argument('password')
+@click.option('--first-name', default='Super', help='First name')
+@click.option('--last-name', default='Admin', help='Last name')
+def create_superadmin(email, password, first_name, last_name):
+    """Create a superadmin user for platform management.
+
+    Usage: flask create-superadmin email@example.com mypassword
+    """
+    # Ensure roles exist
+    Role.insert_roles()
+
+    # Check if email already exists
+    existing = User.query.filter_by(email=email).first()
+    if existing:
+        if existing.is_superadmin:
+            print(f'Superadmin {email} already exists.')
+        else:
+            # Upgrade existing user to superadmin
+            existing.is_superadmin = True
+            db.session.commit()
+            print(f'User {email} upgraded to superadmin.')
+        return
+
+    # Get admin role (required for role_id)
+    admin_role = Role.query.filter_by(name='admin').first()
+    if not admin_role:
+        print('Error: Admin role not found. Run flask init-db first.')
+        return
+
+    # Create superadmin (no company_id)
+    superadmin = User(
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        role_id=admin_role.id,
+        company_id=None,
+        is_superadmin=True,
+        is_active=True,
+        email_verified=True
+    )
+    superadmin.set_password(password)
+    db.session.add(superadmin)
+    db.session.commit()
+
+    print(f'Superadmin created successfully!')
+    print(f'  Email: {email}')
+    print(f'  Password: {password}')
+    print(f'  Access: /root/')
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5007)

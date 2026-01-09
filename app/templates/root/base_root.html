@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Root Admin{% endblock %} - TimeOff</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --root-accent: #7C3AED;
+            --root-accent-light: #EDE9FE;
+        }
+
+        .root-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .root-sidebar {
+            width: 240px;
+            background: #1E1B4B;
+            color: white;
+            padding: var(--space-4);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .root-logo {
+            font-size: var(--text-xl);
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            margin-bottom: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .root-logo-badge {
+            background: var(--root-accent);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-size: var(--text-xs);
+            font-weight: 600;
+        }
+
+        .root-nav {
+            flex: 1;
+        }
+
+        .root-nav-section {
+            margin-bottom: var(--space-4);
+        }
+
+        .root-nav-title {
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: var(--space-2);
+            font-weight: 600;
+        }
+
+        .root-nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-2) var(--space-3);
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            transition: all 0.15s;
+        }
+
+        .root-nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .root-nav-link.active {
+            background: var(--root-accent);
+            color: white;
+        }
+
+        .root-nav-link svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.8;
+        }
+
+        .root-user {
+            padding: var(--space-3);
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .root-user-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--root-accent);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: var(--text-sm);
+        }
+
+        .root-user-info {
+            flex: 1;
+        }
+
+        .root-user-name {
+            font-weight: 500;
+            font-size: var(--text-sm);
+        }
+
+        .root-user-role {
+            font-size: var(--text-xs);
+            color: rgba(255,255,255,0.6);
+        }
+
+        .root-main {
+            flex: 1;
+            background: var(--color-bg);
+            overflow-y: auto;
+        }
+
+        .root-header {
+            background: white;
+            border-bottom: 1px solid var(--color-border);
+            padding: var(--space-4) var(--space-6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .root-header h1 {
+            font-size: var(--text-xl);
+            font-weight: 600;
+        }
+
+        .root-content {
+            padding: var(--space-6);
+        }
+
+        /* Stats cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-2);
+        }
+
+        .stat-card-label {
+            font-size: var(--text-sm);
+            color: var(--color-ink-muted);
+        }
+
+        .stat-card-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--root-accent-light);
+            color: var(--root-accent);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-card-value {
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-card-sub {
+            font-size: var(--text-sm);
+            color: var(--color-ink-muted);
+            margin-top: var(--space-1);
+        }
+
+        /* Tables */
+        .root-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .root-table th {
+            text-align: left;
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--text-xs);
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--color-ink-muted);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .root-table td {
+            padding: var(--space-3) var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+            font-size: var(--text-sm);
+        }
+
+        .root-table tr:hover {
+            background: var(--color-bg-sunken);
+        }
+
+        /* Plan badges */
+        .plan-badge {
+            display: inline-flex;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            font-weight: 600;
+        }
+
+        .plan-badge.free {
+            background: #F3F4F6;
+            color: #374151;
+        }
+
+        .plan-badge.pro {
+            background: #DBEAFE;
+            color: #1D4ED8;
+        }
+
+        .plan-badge.business {
+            background: #FEF3C7;
+            color: #B45309;
+        }
+
+        .plan-badge.enterprise {
+            background: #EDE9FE;
+            color: #7C3AED;
+        }
+
+        /* Company row */
+        .company-name {
+            font-weight: 500;
+        }
+
+        .company-created {
+            color: var(--color-ink-muted);
+            font-size: var(--text-xs);
+        }
+
+        /* Filters */
+        .filters-bar {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .filters-bar input,
+        .filters-bar select {
+            padding: var(--space-2) var(--space-3);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+        }
+
+        .filters-bar input {
+            min-width: 250px;
+        }
+
+        /* Impersonation banner */
+        .impersonation-banner {
+            background: #FEF3C7;
+            border-bottom: 1px solid #F59E0B;
+            padding: var(--space-2) var(--space-4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: var(--text-sm);
+        }
+
+        .impersonation-banner strong {
+            color: #B45309;
+        }
+    </style>
+</head>
+<body>
+    {% if session.get('impersonating_from') %}
+    <div class="impersonation-banner">
+        <span>Vous êtes connecté en tant qu'admin de <strong>{{ session.get('impersonating_company') }}</strong></span>
+        <a href="{{ url_for('root.stop_impersonation') }}" class="btn btn-sm" style="background: #B45309; color: white;">
+            Retour Root
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="root-layout">
+        <aside class="root-sidebar">
+            <a href="{{ url_for('root.dashboard') }}" class="root-logo">
+                TimeOff <span class="root-logo-badge">Root</span>
+            </a>
+
+            <nav class="root-nav">
+                <div class="root-nav-section">
+                    <div class="root-nav-title">Plateforme</div>
+                    <a href="{{ url_for('root.dashboard') }}" class="root-nav-link {% if request.endpoint == 'root.dashboard' %}active{% endif %}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('root.companies') }}" class="root-nav-link {% if 'companies' in request.endpoint or 'company' in request.endpoint %}active{% endif %}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        Entreprises
+                    </a>
+                    <a href="{{ url_for('root.users') }}" class="root-nav-link {% if request.endpoint == 'root.users' %}active{% endif %}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        Utilisateurs
+                    </a>
+                </div>
+            </nav>
+
+            <div class="root-user">
+                <div class="root-user-avatar">{{ current_user.initials }}</div>
+                <div class="root-user-info">
+                    <div class="root-user-name">{{ current_user.full_name }}</div>
+                    <div class="root-user-role">Super Admin</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="root-main">
+            <header class="root-header">
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                <div>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm">Déconnexion</a>
+                </div>
+            </header>
+
+            <div class="root-content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div style="margin-bottom: var(--space-4);">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }}" style="margin-bottom: var(--space-2);">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

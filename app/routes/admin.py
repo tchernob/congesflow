@@ -220,6 +220,13 @@ def users():
 @login_required
 @admin_required
 def new_user():
+    # Vérifier la limite du plan
+    company = current_user.company
+    if not company.can_add_employee:
+        flash(f'Limite du plan {company.plan_label} atteinte ({company.max_employees} utilisateurs). '
+              f'Passez à un plan supérieur pour ajouter plus d\'utilisateurs.', 'error')
+        return redirect(url_for('admin.subscription'))
+
     if request.method == 'POST':
         email = request.form.get('email')
         first_name = request.form.get('first_name')
@@ -228,6 +235,11 @@ def new_user():
         team_id = request.form.get('team_id', type=int)
         manager_id = request.form.get('manager_id', type=int)
         contract_type_id = request.form.get('contract_type_id', type=int)
+
+        # Revérifier la limite (en cas de concurrence)
+        if not company.can_add_employee:
+            flash('Limite du plan atteinte', 'error')
+            return redirect(url_for('admin.users'))
 
         # Check for existing user with same email (globally unique)
         existing_user = User.query.filter_by(email=email).first()
@@ -837,3 +849,19 @@ def init_contract_types():
     ContractType.insert_default_types(current_user.company_id)
     flash('Types de contrat par défaut créés', 'success')
     return redirect(url_for('admin.contract_types'))
+
+
+# Gestion de l'abonnement
+@bp.route('/subscription')
+@login_required
+@admin_required
+def subscription():
+    """Page de gestion de l'abonnement."""
+    from app.models.company import Company
+
+    company = current_user.company
+    plans = Company.get_plans_for_display()
+
+    return render_template('admin/subscription.html',
+                           company=company,
+                           plans=plans)

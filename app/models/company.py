@@ -36,23 +36,73 @@ class Company(db.Model):
     leave_types = db.relationship('LeaveType', backref='company', lazy='dynamic')
 
     # Plan constants
-    PLAN_TRIAL = 'trial'
-    PLAN_STARTER = 'starter'
+    PLAN_FREE = 'free'
     PLAN_PRO = 'pro'
+    PLAN_BUSINESS = 'business'
     PLAN_ENTERPRISE = 'enterprise'
 
+    # Legacy - pour migration
+    PLAN_TRIAL = 'trial'
+    PLAN_STARTER = 'starter'
+
     PLAN_LIMITS = {
-        'trial': 10,
+        'free': 5,
+        'pro': 25,
+        'business': 100,
+        'enterprise': 9999,
+        # Legacy
+        'trial': 5,
         'starter': 25,
-        'pro': 100,
-        'enterprise': 9999
     }
 
     PLAN_LABELS = {
-        'trial': 'Essai gratuit',
-        'starter': 'Starter',
+        'free': 'Gratuit',
         'pro': 'Pro',
-        'enterprise': 'Enterprise'
+        'business': 'Business',
+        'enterprise': 'Enterprise',
+        # Legacy
+        'trial': 'Essai',
+        'starter': 'Starter',
+    }
+
+    PLAN_PRICES = {
+        'free': {'monthly': 0, 'yearly': 0},
+        'pro': {'monthly': 39, 'yearly': 390},
+        'business': {'monthly': 79, 'yearly': 790},
+        'enterprise': {'monthly': None, 'yearly': None},  # Sur devis
+    }
+
+    PLAN_FEATURES = {
+        'free': [
+            'Jusqu\'à 5 utilisateurs',
+            'Demandes et validations',
+            'Calendrier d\'équipe',
+            '1 an d\'historique',
+        ],
+        'pro': [
+            'Jusqu\'à 25 utilisateurs',
+            'Tout le plan Gratuit',
+            'Intégration Slack',
+            'Notifications email',
+            'Export CSV',
+            'Support par email',
+        ],
+        'business': [
+            'Jusqu\'à 100 utilisateurs',
+            'Tout le plan Pro',
+            'Types de contrats',
+            'Rapports avancés',
+            'API (bientôt)',
+            'Support prioritaire',
+        ],
+        'enterprise': [
+            'Utilisateurs illimités',
+            'Tout le plan Business',
+            'SSO / SAML',
+            'SLA garanti',
+            'Account manager dédié',
+            'Personnalisation',
+        ],
     }
 
     @staticmethod
@@ -101,7 +151,44 @@ class Company(db.Model):
 
     def upgrade_plan(self, new_plan):
         self.plan = new_plan
-        self.max_employees = self.PLAN_LIMITS.get(new_plan, 10)
+        self.max_employees = self.PLAN_LIMITS.get(new_plan, 5)
+
+    @property
+    def usage_percent(self):
+        """Pourcentage d'utilisation du plan."""
+        if self.max_employees == 0:
+            return 100
+        return int((self.employee_count / self.max_employees) * 100)
+
+    @property
+    def slots_remaining(self):
+        """Nombre de places restantes."""
+        return max(0, self.max_employees - self.employee_count)
+
+    @property
+    def needs_upgrade(self):
+        """Indique si l'entreprise approche de la limite."""
+        return self.usage_percent >= 80
+
+    @property
+    def plan_price(self):
+        """Prix mensuel du plan actuel."""
+        return self.PLAN_PRICES.get(self.plan, {}).get('monthly', 0)
+
+    @classmethod
+    def get_plans_for_display(cls):
+        """Retourne les plans formatés pour affichage."""
+        plans = []
+        for plan_id in ['free', 'pro', 'business', 'enterprise']:
+            plans.append({
+                'id': plan_id,
+                'name': cls.PLAN_LABELS[plan_id],
+                'price_monthly': cls.PLAN_PRICES[plan_id]['monthly'],
+                'price_yearly': cls.PLAN_PRICES[plan_id]['yearly'],
+                'max_users': cls.PLAN_LIMITS[plan_id],
+                'features': cls.PLAN_FEATURES[plan_id],
+            })
+        return plans
 
     def __repr__(self):
         return f'<Company {self.name}>'

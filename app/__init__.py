@@ -27,7 +27,7 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     csrf.init_app(app)
 
-    from app.routes import auth, main, employee, manager, admin, api, marketing, slack
+    from app.routes import auth, main, employee, manager, admin, api, marketing, slack, root
     app.register_blueprint(marketing.bp)  # Marketing pages (homepage, signup, etc.)
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
@@ -36,6 +36,7 @@ def create_app(config_class=Config):
     app.register_blueprint(admin.bp)
     app.register_blueprint(api.bp)
     app.register_blueprint(slack.bp)
+    app.register_blueprint(root.bp)  # Superadmin platform management
 
     # Exempt Slack webhook from CSRF (it uses its own signature verification)
     csrf.exempt(slack.bp)
