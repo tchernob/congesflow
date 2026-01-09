@@ -7,9 +7,11 @@ Run this file to start the application.
 from app import create_app, db
 from app.models import (
     User, Role, LeaveType, LeaveBalance, Team, Company, CompanyInvitation,
-    LeaveRequest, CompanyLeaveSettings, Notification, SlackIntegration, SlackUserMapping
+    LeaveRequest, CompanyLeaveSettings, Notification, SlackIntegration, SlackUserMapping,
+    ContractType
 )
 from datetime import date, datetime, timedelta
+import click
 
 app = create_app()
 
@@ -184,6 +186,248 @@ def create_demo_company():
     print('  - Dev 1: dev1@demo.timeoff.com')
     print('  - Dev 2: dev2@demo.timeoff.com')
     print('  - Marketing: mkt1@demo.timeoff.com')
+
+
+@app.cli.command('accrue-leave')
+@click.option('--dry-run', is_flag=True, help='Simuler sans modifier la base de données')
+@click.option('--company-id', type=int, help='Traiter uniquement une entreprise spécifique')
+def accrue_leave(dry_run, company_id):
+    """
+    Acquisition mensuelle des congés.
+
+    Cette commande doit être exécutée le 1er de chaque mois via CRON.
+    Elle crédite les jours acquis selon le type de contrat de chaque employé.
+
+    Exemple CRON (1er de chaque mois à 6h00):
+        0 6 1 * * cd /home/tcher/timeoff && source venv/bin/activate && flask accrue-leave
+    """
+    current_month = date.today().replace(day=1)
+    current_year = current_month.year
+
+    print(f"=== Acquisition mensuelle des congés - {current_month.strftime('%B %Y')} ===")
+    if dry_run:
+        print("MODE SIMULATION - Aucune modification ne sera effectuée")
+    print()
+
+    # Statistiques
+    stats = {
+        'users_processed': 0,
+        'balances_updated': 0,
+        'days_accrued_cp': 0,
+        'days_accrued_rtt': 0,
+        'skipped_no_contract': 0,
+        'skipped_already_processed': 0,
+        'errors': []
+    }
+
+    # Récupérer les entreprises à traiter
+    if company_id:
+        companies = Company.query.filter_by(id=company_id).all()
+    else:
+        companies = Company.query.filter_by(is_active=True).all()
+
+    for company in companies:
+        print(f"\n--- {company.name} ---")
+
+        # Récupérer les utilisateurs actifs de cette entreprise
+        users = User.query.filter_by(
+            company_id=company.id,
+            is_active=True
+        ).all()
+
+        # Récupérer les types de congés
+        cp_type = LeaveType.query.filter_by(company_id=company.id, code='CP').first()
+        rtt_type = LeaveType.query.filter_by(company_id=company.id, code='RTT').first()
+
+        for user in users:
+            stats['users_processed'] += 1
+
+            # Vérifier le type de contrat
+            if not user.contract_type:
+                stats['skipped_no_contract'] += 1
+                print(f"  {user.full_name}: pas de type de contrat défini, ignoré")
+                continue
+
+            contract = user.contract_type
+
+            # Traiter les CP
+            if cp_type and contract.cp_acquisition_rate > 0:
+                balance = LeaveBalance.query.filter_by(
+                    user_id=user.id,
+                    leave_type_id=cp_type.id,
+                    year=current_year
+                ).first()
+
+                # Créer le solde s'il n'existe pas
+                if not balance:
+                    balance = LeaveBalance(
+                        user_id=user.id,
+                        leave_type_id=cp_type.id,
+                        year=current_year,
+                        initial_balance=0,
+                        accrued=0,
+                        last_accrual_date=None
+                    )
+                    if not dry_run:
+                        db.session.add(balance)
+
+                # Vérifier si déjà traité ce mois
+                if balance.last_accrual_date and balance.last_accrual_date >= current_month:
+                    stats['skipped_already_processed'] += 1
+                else:
+                    # Créditer les jours
+                    days_to_add = contract.cp_acquisition_rate
+
+                    # Ne pas dépasser le plafond annuel
+                    max_annual = contract.cp_annual_allowance
+                    current_accrued = balance.accrued or 0
+                    if current_accrued + days_to_add > max_annual:
+                        days_to_add = max(0, max_annual - current_accrued)
+
+                    if days_to_add > 0:
+                        if not dry_run:
+                            balance.accrued = (balance.accrued or 0) + days_to_add
+                            balance.initial_balance = balance.accrued
+                            balance.last_accrual_date = current_month
+
+                        stats['balances_updated'] += 1
+                        stats['days_accrued_cp'] += days_to_add
+                        print(f"  {user.full_name}: +{days_to_add:.2f}j CP (total: {(balance.accrued or 0) + days_to_add:.2f}j)")
+
+            # Traiter les RTT
+            if rtt_type and contract.has_rtt and contract.rtt_annual_allowance > 0:
+                balance = LeaveBalance.query.filter_by(
+                    user_id=user.id,
+                    leave_type_id=rtt_type.id,
+                    year=current_year
+                ).first()
+
+                # Créer le solde s'il n'existe pas
+                if not balance:
+                    balance = LeaveBalance(
+                        user_id=user.id,
+                        leave_type_id=rtt_type.id,
+                        year=current_year,
+                        initial_balance=0,
+                        accrued=0,
+                        last_accrual_date=None
+                    )
+                    if not dry_run:
+                        db.session.add(balance)
+
+                # Vérifier si déjà traité ce mois
+                if balance.last_accrual_date and balance.last_accrual_date >= current_month:
+                    pass  # Déjà compté dans skipped
+                else:
+                    # RTT = allocation annuelle / 12
+                    monthly_rtt = contract.rtt_annual_allowance / 12
+
+                    # Ne pas dépasser le plafond annuel
+                    max_annual = contract.rtt_annual_allowance
+                    current_accrued = balance.accrued or 0
+                    if current_accrued + monthly_rtt > max_annual:
+                        monthly_rtt = max(0, max_annual - current_accrued)
+
+                    if monthly_rtt > 0:
+                        if not dry_run:
+                            balance.accrued = (balance.accrued or 0) + monthly_rtt
+                            balance.initial_balance = balance.accrued
+                            balance.last_accrual_date = current_month
+
+                        stats['balances_updated'] += 1
+                        stats['days_accrued_rtt'] += monthly_rtt
+                        print(f"  {user.full_name}: +{monthly_rtt:.2f}j RTT (total: {(balance.accrued or 0) + monthly_rtt:.2f}j)")
+
+    if not dry_run:
+        db.session.commit()
+
+    # Afficher le résumé
+    print("\n" + "=" * 50)
+    print("RÉSUMÉ")
+    print("=" * 50)
+    print(f"Utilisateurs traités:      {stats['users_processed']}")
+    print(f"Soldes mis à jour:         {stats['balances_updated']}")
+    print(f"Jours CP acquis:           {stats['days_accrued_cp']:.2f}")
+    print(f"Jours RTT acquis:          {stats['days_accrued_rtt']:.2f}")
+    print(f"Ignorés (pas de contrat):  {stats['skipped_no_contract']}")
+    print(f"Ignorés (déjà traités):    {stats['skipped_already_processed']}")
+
+    if dry_run:
+        print("\n⚠️  MODE SIMULATION - Relancez sans --dry-run pour appliquer les modifications")
+
+
+@app.cli.command('init-year-balances')
+@click.option('--year', type=int, default=None, help='Année à initialiser (défaut: année en cours)')
+@click.option('--company-id', type=int, help='Traiter uniquement une entreprise spécifique')
+def init_year_balances(year, company_id):
+    """
+    Initialise les soldes de congés pour une nouvelle année.
+
+    À exécuter en janvier pour créer les soldes de la nouvelle année.
+    Les reports de l'année précédente sont automatiquement calculés.
+    """
+    if year is None:
+        year = date.today().year
+
+    print(f"=== Initialisation des soldes {year} ===")
+
+    # Récupérer les entreprises
+    if company_id:
+        companies = Company.query.filter_by(id=company_id).all()
+    else:
+        companies = Company.query.filter_by(is_active=True).all()
+
+    created_count = 0
+
+    for company in companies:
+        print(f"\n--- {company.name} ---")
+
+        users = User.query.filter_by(company_id=company.id, is_active=True).all()
+        leave_types = LeaveType.query.filter_by(company_id=company.id, is_active=True).all()
+
+        for user in users:
+            for lt in leave_types:
+                # Vérifier si le solde existe déjà
+                existing = LeaveBalance.query.filter_by(
+                    user_id=user.id,
+                    leave_type_id=lt.id,
+                    year=year
+                ).first()
+
+                if existing:
+                    continue
+
+                # Créer le nouveau solde
+                balance = LeaveBalance(
+                    user_id=user.id,
+                    leave_type_id=lt.id,
+                    year=year,
+                    initial_balance=0,
+                    accrued=0,
+                    last_accrual_date=None
+                )
+
+                # Calculer le report de l'année précédente (pour CP uniquement)
+                if lt.code == 'CP':
+                    prev_balance = LeaveBalance.query.filter_by(
+                        user_id=user.id,
+                        leave_type_id=lt.id,
+                        year=year - 1
+                    ).first()
+
+                    if prev_balance and prev_balance.available > 0:
+                        # Reporter les jours non utilisés (max 5 jours selon la loi)
+                        carryover = min(prev_balance.available, 5)
+                        balance.carried_over = carryover
+                        # Expiration au 31 mai de l'année en cours
+                        balance.carried_over_expires_at = date(year, 5, 31)
+                        print(f"  {user.full_name}: {carryover:.1f}j CP reportés de {year-1}")
+
+                db.session.add(balance)
+                created_count += 1
+
+    db.session.commit()
+    print(f"\n{created_count} solde(s) créé(s) pour {year}")
 
 
 if __name__ == '__main__':

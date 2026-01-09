@@ -93,6 +93,8 @@ class LeaveBalance(db.Model):
     # Acquisition progressive (2.08 jours/mois)
     acquisition_start_date = db.Column(db.Date, nullable=True)  # Date de début d'acquisition
     months_worked = db.Column(db.Float, default=12)  # Mois travaillés dans la période
+    last_accrual_date = db.Column(db.Date, nullable=True)  # Date de la dernière acquisition mensuelle
+    accrued = db.Column(db.Float, default=0)  # Total des jours acquis progressivement
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
