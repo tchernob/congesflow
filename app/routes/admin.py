@@ -512,8 +512,12 @@ def adjust_balance(user_id):
 
     leave_type_id = request.form.get('leave_type_id', type=int)
     year = request.form.get('year', date.today().year, type=int)
-    adjustment = request.form.get('adjustment', 0, type=float)
     reason = request.form.get('reason', '')
+
+    # Récupérer les ajustements (standard ou dual pour CP)
+    adjustment = request.form.get('adjustment', 0, type=float)
+    adjustment_n1 = request.form.get('adjustment_n1', 0, type=float)
+    adjustment_n = request.form.get('adjustment_n', 0, type=float)
 
     # Vérifier que le type de congé appartient à la même entreprise
     leave_type = LeaveType.query.filter_by(id=leave_type_id, company_id=current_user.company_id).first_or_404()
@@ -533,10 +537,29 @@ def adjust_balance(user_id):
         )
         db.session.add(balance)
 
-    balance.adjusted += adjustment
+    # Appliquer les ajustements
+    messages = []
+
+    if leave_type.code == 'CP' and (adjustment_n1 != 0 or adjustment_n != 0):
+        # Ajustement dual pour CP
+        if adjustment_n1 != 0:
+            balance.carried_over = (balance.carried_over or 0) + adjustment_n1
+            messages.append(f'CP N-1 : {adjustment_n1:+.1f}j')
+        if adjustment_n != 0:
+            balance.adjusted += adjustment_n
+            messages.append(f'CP N : {adjustment_n:+.1f}j')
+    elif adjustment != 0:
+        # Ajustement standard
+        balance.adjusted += adjustment
+        messages.append(f'{adjustment:+.1f}j')
+
     db.session.commit()
 
-    flash(f'Solde ajusté de {adjustment:+.1f} jours', 'success')
+    if messages:
+        flash(f'Solde ajusté ({", ".join(messages)})', 'success')
+    else:
+        flash('Aucun ajustement effectué', 'info')
+
     return redirect(url_for('admin.balances', year=year))
 
 
