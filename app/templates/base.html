@@ -17,8 +17,7 @@
         </a>
     </div>
     {% endif %}
-    {% set show_trial_banner = current_user.is_authenticated and current_user.company and current_user.company.is_in_trial %}
-    {% if show_trial_banner %}
+    {% if current_user.is_authenticated and current_user.company and current_user.company.is_in_trial %}
     {% set days_left = current_user.company.trial_days_remaining %}
     <div class="trial-banner {% if days_left <= 3 %}urgent{% elif days_left <= 7 %}warning{% endif %}">
         <div class="trial-banner-content">
@@ -38,7 +37,7 @@
     </div>
     {% endif %}
     {% if current_user.is_authenticated %}
-    <div class="app-container {% if show_trial_banner %}has-trial-banner{% endif %}">
+    <div class="app-container {% if current_user.company and current_user.company.is_in_trial %}has-trial-banner{% endif %}">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
