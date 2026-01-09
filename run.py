@@ -364,6 +364,50 @@ def process_trials(dry_run):
                 print(f"  - {error}")
 
 
+@app.cli.command('sync-leave-types')
+@click.option('--company-id', type=int, help='Traiter uniquement une entreprise spécifique')
+def sync_leave_types(company_id):
+    """
+    Synchronise les types de congés pour toutes les entreprises.
+
+    Ajoute les types de congés manquants (comme EXA pour les alternants)
+    aux entreprises existantes qui n'ont pas encore ces types.
+    """
+    print("=== Synchronisation des types de congés ===\n")
+
+    if company_id:
+        companies = Company.query.filter_by(id=company_id).all()
+    else:
+        companies = Company.query.filter_by(is_active=True).all()
+
+    default_types = LeaveType.get_default_types()
+    added_count = 0
+
+    for company in companies:
+        print(f"--- {company.name} ---")
+        existing_codes = {lt.code for lt in LeaveType.query.filter_by(company_id=company.id).all()}
+
+        for type_data in default_types:
+            if type_data['code'] not in existing_codes:
+                new_type = LeaveType(
+                    company_id=company.id,
+                    name=type_data['name'],
+                    code=type_data['code'],
+                    color=type_data.get('color', '#3B82F6'),
+                    description=type_data.get('description', ''),
+                    default_days=type_data.get('default_days', 0),
+                    requires_justification=type_data.get('requires_justification', False),
+                    max_consecutive_days=type_data.get('max_consecutive_days'),
+                    is_paid=type_data.get('is_paid', True)
+                )
+                db.session.add(new_type)
+                added_count += 1
+                print(f"  + {type_data['name']} ({type_data['code']})")
+
+    db.session.commit()
+    print(f"\n{added_count} type(s) de congés ajouté(s)")
+
+
 @app.cli.command('create-superadmin')
 @click.argument('email')
 @click.argument('password')

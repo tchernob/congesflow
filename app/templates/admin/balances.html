@@ -28,7 +28,7 @@
                     <th>Employé</th>
                     {% for lt in leave_types %}
                     <th class="text-center">
-                        <span class="balance-header">
+                        <span class="balance-header" title="{{ lt.name }}">
                             <span class="balance-dot" style="background: {{ lt.color }};"></span>
                             {{ lt.code }}
                         </span>

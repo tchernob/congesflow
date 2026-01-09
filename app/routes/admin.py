@@ -425,6 +425,52 @@ def new_team():
     return render_template('admin/new_team.html')
 
 
+@bp.route('/teams/<int:team_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_team(team_id):
+    team = Team.query.filter_by(id=team_id, company_id=current_user.company_id).first_or_404()
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        color = request.form.get('color', '#3B82F6')
+
+        # Vérifier si le nom existe déjà (sauf pour cette équipe)
+        existing = Team.query.filter_by(name=name, company_id=current_user.company_id).first()
+        if existing and existing.id != team.id:
+            flash('Une équipe avec ce nom existe déjà', 'error')
+            return redirect(url_for('admin.edit_team', team_id=team_id))
+
+        team.name = name
+        team.description = description
+        team.color = color
+        db.session.commit()
+
+        flash('Équipe modifiée avec succès', 'success')
+        return redirect(url_for('admin.teams'))
+
+    return render_template('admin/edit_team.html', team=team)
+
+
+@bp.route('/teams/<int:team_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_team(team_id):
+    team = Team.query.filter_by(id=team_id, company_id=current_user.company_id).first_or_404()
+
+    # Vérifier si l'équipe a des membres
+    if team.members.count() > 0:
+        flash(f'Impossible de supprimer l\'équipe "{team.name}" car elle contient encore des membres.', 'error')
+        return redirect(url_for('admin.teams'))
+
+    db.session.delete(team)
+    db.session.commit()
+
+    flash('Équipe supprimée avec succès', 'success')
+    return redirect(url_for('admin.teams'))
+
+
 # Gestion des types de congés
 @bp.route('/leave-types')
 @login_required
