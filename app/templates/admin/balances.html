@@ -112,9 +112,10 @@
                     <p class="info-type" id="modal_leave_type_name"></p>
                 </div>
 
-                <div class="balance-summary">
+                <!-- Récapitulatif standard (non-CP ou CP sans report) -->
+                <div class="balance-summary" id="modal_summary_standard">
                     <div class="summary-item">
-                        <span class="summary-label">Solde année N</span>
+                        <span class="summary-label">Acquis</span>
                         <span class="summary-value" id="modal_initial">0</span>
                     </div>
                     <div class="summary-item">
@@ -122,8 +123,28 @@
                         <span class="summary-value" id="modal_used">0</span>
                     </div>
                     <div class="summary-item highlight">
-                        <span class="summary-label">Disponible total</span>
+                        <span class="summary-label">Disponible</span>
                         <span class="summary-value" id="modal_available">0</span>
+                    </div>
+                </div>
+
+                <!-- Récapitulatif CP avec report N-1 -->
+                <div class="balance-summary-cp" id="modal_summary_cp" style="display: none;">
+                    <div class="cp-summary-row">
+                        <div class="cp-summary-item n1">
+                            <span class="cp-label">CP N-1 (report)</span>
+                            <span class="cp-value" id="modal_cp_n1">0</span>
+                        </div>
+                        <span class="cp-plus">+</span>
+                        <div class="cp-summary-item n">
+                            <span class="cp-label">CP N (année)</span>
+                            <span class="cp-value" id="modal_cp_n">0</span>
+                        </div>
+                        <span class="cp-equals">=</span>
+                        <div class="cp-summary-item total">
+                            <span class="cp-label">Total</span>
+                            <span class="cp-value" id="modal_cp_total">0</span>
+                        </div>
                     </div>
                 </div>
 
@@ -370,6 +391,74 @@
     color: var(--color-accent);
 }
 
+/* Récapitulatif CP avec N-1 */
+.balance-summary-cp {
+    margin-bottom: var(--space-5);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+}
+
+.cp-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+}
+
+.cp-summary-item {
+    text-align: center;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+}
+
+.cp-summary-item.n1 {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%);
+    border: 1px solid #F59E0B;
+}
+
+.cp-summary-item.n {
+    background: linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 100%);
+    border: 1px solid #10B981;
+}
+
+.cp-summary-item.total {
+    background: var(--color-accent-light);
+    border: 1px solid var(--color-accent);
+}
+
+.cp-label {
+    display: block;
+    font-size: 10px;
+    color: var(--color-ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.cp-value {
+    display: block;
+    font-size: var(--text-lg);
+    font-weight: 700;
+}
+
+.cp-summary-item.n1 .cp-value {
+    color: #B45309;
+}
+
+.cp-summary-item.n .cp-value {
+    color: #059669;
+}
+
+.cp-summary-item.total .cp-value {
+    color: var(--color-accent);
+}
+
+.cp-plus, .cp-equals {
+    color: var(--color-ink-muted);
+    font-weight: 600;
+    font-size: var(--text-lg);
+}
+
 .form-group {
     margin-bottom: var(--space-4);
 }
@@ -586,26 +675,39 @@ function openAdjustModal(userId, userName, leaveTypeId, leaveTypeName, initial, 
     document.getElementById('modal_user_name').textContent = userName;
     document.getElementById('modal_leave_type_name').textContent = leaveTypeName || 'Type inconnu';
     document.getElementById('modal_leave_type_id').value = leaveTypeId;
-    document.getElementById('modal_initial').textContent = initial;
-    document.getElementById('modal_used').textContent = used;
-    document.getElementById('modal_available').textContent = available;
 
     // Reset le motif
     document.getElementById('reason').value = '';
 
-    // Déterminer si c'est un CP (afficher dual adjustment)
-    isCP = (leaveTypeName === 'Congés payés');
+    // Déterminer si c'est un CP avec report N-1
+    var hasCPCarryOver = (leaveTypeName === 'Congés payés') && carriedOver > 0;
+    isCP = hasCPCarryOver;
+
     var singleAdj = document.getElementById('modal_single_adjustment');
     var dualAdj = document.getElementById('modal_dual_adjustment');
+    var summaryStandard = document.getElementById('modal_summary_standard');
+    var summaryCP = document.getElementById('modal_summary_cp');
 
-    if (isCP) {
-        // Afficher les deux champs avec les valeurs actuelles pré-remplies
+    if (hasCPCarryOver) {
+        // Afficher le récapitulatif CP et les deux champs d'ajustement
+        summaryStandard.style.display = 'none';
+        summaryCP.style.display = 'block';
+        document.getElementById('modal_cp_n1').textContent = carriedOver;
+        document.getElementById('modal_cp_n').textContent = currentYear;
+        document.getElementById('modal_cp_total').textContent = available;
+
         singleAdj.style.display = 'none';
         dualAdj.style.display = 'block';
         document.getElementById('new_balance_n1').value = formatNumber(carriedOver || 0);
         document.getElementById('new_balance_n').value = formatNumber(currentYear || 0);
     } else {
-        // Afficher le champ unique avec la valeur actuelle pré-remplie
+        // Afficher le récapitulatif standard et le champ unique
+        summaryStandard.style.display = 'grid';
+        summaryCP.style.display = 'none';
+        document.getElementById('modal_initial').textContent = initial;
+        document.getElementById('modal_used').textContent = used;
+        document.getElementById('modal_available').textContent = available;
+
         singleAdj.style.display = 'block';
         dualAdj.style.display = 'none';
         document.getElementById('new_balance').value = formatNumber(available || 0);
