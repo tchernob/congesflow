@@ -666,7 +666,7 @@ def send_expiry_alerts():
 # Gestion des types de contrat
 @bp.route('/contract-types')
 @login_required
-@admin_required
+@hr_required
 def contract_types():
     """Liste des types de contrat."""
     types = ContractType.query.filter_by(
@@ -677,7 +677,7 @@ def contract_types():
 
 @bp.route('/contract-types/new', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@hr_required
 def new_contract_type():
     """Créer un nouveau type de contrat."""
     if request.method == 'POST':
@@ -717,7 +717,7 @@ def new_contract_type():
 
 @bp.route('/contract-types/<int:type_id>/edit', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@hr_required
 def edit_contract_type(type_id):
     """Modifier un type de contrat."""
     contract_type = ContractType.query.filter_by(
@@ -746,7 +746,7 @@ def edit_contract_type(type_id):
 
 @bp.route('/contract-types/init', methods=['POST'])
 @login_required
-@admin_required
+@hr_required
 def init_contract_types():
     """Initialiser les types de contrat par défaut."""
     ContractType.insert_default_types(current_user.company_id)
