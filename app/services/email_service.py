@@ -99,3 +99,51 @@ def send_invitation_email(user, token, inviter):
         inviter=inviter,
         setup_url=setup_url
     )
+
+
+# Emails pour les demandes de congés
+
+def send_leave_request_notification(leave_request, approver):
+    """
+    Envoie un email à l'approbateur pour une nouvelle demande de congés.
+    """
+    review_url = url_for('manager.requests', _external=True)
+
+    send_email(
+        subject=f'TimeOff - Nouvelle demande de {leave_request.employee.full_name}',
+        recipient=approver.email,
+        template='leave_request_new',
+        leave_request=leave_request,
+        employee=leave_request.employee,
+        approver=approver,
+        review_url=review_url
+    )
+
+
+def send_leave_approved_notification(leave_request, approved_by):
+    """
+    Envoie un email à l'employé pour lui confirmer l'approbation.
+    """
+    send_email(
+        subject=f'TimeOff - Votre demande de congés a été approuvée',
+        recipient=leave_request.employee.email,
+        template='leave_request_approved',
+        leave_request=leave_request,
+        employee=leave_request.employee,
+        approved_by=approved_by
+    )
+
+
+def send_leave_rejected_notification(leave_request, rejected_by, reason=None):
+    """
+    Envoie un email à l'employé pour lui notifier le refus.
+    """
+    send_email(
+        subject=f'TimeOff - Votre demande de congés a été refusée',
+        recipient=leave_request.employee.email,
+        template='leave_request_rejected',
+        leave_request=leave_request,
+        employee=leave_request.employee,
+        rejected_by=rejected_by,
+        reason=reason
+    )

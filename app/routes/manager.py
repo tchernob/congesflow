@@ -174,6 +174,10 @@ def reject_request(request_id):
     from app.services.slack_service import notify_slack_rejected
     notify_slack_rejected(leave_request, current_user, reason)
 
+    # Notification email à l'employé
+    from app.services.email_service import send_leave_rejected_notification
+    send_leave_rejected_notification(leave_request, current_user, reason)
+
     flash('Demande refusée', 'success')
     return redirect(url_for('manager.requests'))
 

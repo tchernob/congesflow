@@ -131,6 +131,11 @@ def new_request():
         from app.services.slack_service import notify_slack_new_request
         notify_slack_new_request(leave_request)
 
+        # Notification email au manager
+        from app.services.email_service import send_leave_request_notification
+        if current_user.manager:
+            send_leave_request_notification(leave_request, current_user.manager)
+
         flash('Demande de congés créée avec succès', 'success')
         return redirect(url_for('employee.requests'))
 
