@@ -129,13 +129,12 @@
 
                 <!-- Ajustement standard (non-CP ou CP sans report) -->
                 <div id="modal_single_adjustment" class="form-group">
-                    <label class="form-label" for="adjustment">Ajustement</label>
-                    <div class="adjustment-input-group">
-                        <button type="button" class="adj-btn minus" onclick="adjustValue('adjustment', -1)">-</button>
-                        <input type="number" id="adjustment" name="adjustment" class="form-input adjustment-input" value="0" step="0.5">
-                        <button type="button" class="adj-btn plus" onclick="adjustValue('adjustment', 1)">+</button>
+                    <label class="form-label" for="new_balance">Nouveau solde</label>
+                    <div class="new-balance-input-group">
+                        <input type="text" id="new_balance" name="new_balance" class="form-input new-balance-input" placeholder="12,5" inputmode="decimal">
+                        <span class="input-suffix">jours</span>
                     </div>
-                    <span class="form-hint">Entrez une valeur positive pour ajouter des jours, négative pour en retirer</span>
+                    <span class="form-hint">Saisissez le nouveau solde souhaité (utilisez la virgule pour les décimales)</span>
                 </div>
 
                 <!-- Ajustement dual pour CP avec N-1 -->
@@ -144,26 +143,22 @@
                         <div class="form-group dual-adj-n1">
                             <label class="form-label">
                                 <span class="label-dot n1"></span>
-                                Ajustement CP N-1
+                                CP N-1 (report)
                             </label>
-                            <div class="current-balance">Actuel : <strong id="modal_n1_current">0</strong> j</div>
-                            <div class="adjustment-input-group">
-                                <button type="button" class="adj-btn minus" onclick="adjustValue('adjustment_n1', -1)">-</button>
-                                <input type="number" id="adjustment_n1" name="adjustment_n1" class="form-input adjustment-input" value="0" step="0.5">
-                                <button type="button" class="adj-btn plus" onclick="adjustValue('adjustment_n1', 1)">+</button>
+                            <div class="new-balance-input-group">
+                                <input type="text" id="new_balance_n1" name="new_balance_n1" class="form-input new-balance-input" placeholder="0" inputmode="decimal">
+                                <span class="input-suffix">j</span>
                             </div>
                             <span class="form-hint">Report année précédente</span>
                         </div>
                         <div class="form-group dual-adj-n">
                             <label class="form-label">
                                 <span class="label-dot n"></span>
-                                Ajustement CP N
+                                CP N (année en cours)
                             </label>
-                            <div class="current-balance">Actuel : <strong id="modal_n_current">0</strong> j</div>
-                            <div class="adjustment-input-group">
-                                <button type="button" class="adj-btn minus" onclick="adjustValue('adjustment_n', -1)">-</button>
-                                <input type="number" id="adjustment_n" name="adjustment_n" class="form-input adjustment-input" value="0" step="0.5">
-                                <button type="button" class="adj-btn plus" onclick="adjustValue('adjustment_n', 1)">+</button>
+                            <div class="new-balance-input-group">
+                                <input type="text" id="new_balance_n" name="new_balance_n" class="form-input new-balance-input" placeholder="25" inputmode="decimal">
+                                <span class="input-suffix">j</span>
                             </div>
                             <span class="form-hint">Solde année en cours</span>
                         </div>
@@ -407,37 +402,24 @@
     margin-top: var(--space-2);
 }
 
-.adjustment-input-group {
+.new-balance-input-group {
     display: flex;
     align-items: center;
     gap: var(--space-2);
 }
 
-.adjustment-input {
+.new-balance-input {
     text-align: center;
     font-weight: 600;
-    font-size: var(--text-lg);
-}
-
-.adj-btn {
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
     font-size: var(--text-xl);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    flex: 1;
 }
 
-.adj-btn:hover {
-    background: var(--color-accent-light);
-    border-color: var(--color-accent);
+.input-suffix {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+    white-space: nowrap;
 }
-
-.adj-btn.minus { color: #dc2626; }
-.adj-btn.plus { color: #16a34a; }
 
 /* Affichage dual N-1 / N dans le tableau */
 .balance-dual {
@@ -563,14 +545,8 @@
     background: #10B981;
 }
 
-.current-balance {
-    font-size: var(--text-sm);
-    color: var(--color-ink-muted);
-    margin-bottom: var(--space-2);
-}
-
-.dual-adj-n1 .adjustment-input,
-.dual-adj-n .adjustment-input {
+.dual-adj-n1 .new-balance-input,
+.dual-adj-n .new-balance-input {
     background: white;
 }
 
@@ -599,6 +575,11 @@ function applyFilters() {
     window.location.href = '{{ url_for("admin.balances") }}?year=' + year;
 }
 
+function formatNumber(num) {
+    // Formater le nombre avec virgule pour les décimales
+    return num.toString().replace('.', ',');
+}
+
 function openAdjustModal(userId, userName, leaveTypeId, leaveTypeName, initial, used, available, carriedOver, currentYear) {
     console.log('Opening modal for:', userName, leaveTypeName, leaveTypeId);
     document.getElementById('adjustForm').action = '/admin/balances/' + userId + '/adjust';
@@ -609,10 +590,7 @@ function openAdjustModal(userId, userName, leaveTypeId, leaveTypeName, initial, 
     document.getElementById('modal_used').textContent = used;
     document.getElementById('modal_available').textContent = available;
 
-    // Reset tous les champs
-    document.getElementById('adjustment').value = 0;
-    document.getElementById('adjustment_n1').value = 0;
-    document.getElementById('adjustment_n').value = 0;
+    // Reset le motif
     document.getElementById('reason').value = '';
 
     // Déterminer si c'est un CP (afficher dual adjustment)
@@ -621,30 +599,35 @@ function openAdjustModal(userId, userName, leaveTypeId, leaveTypeName, initial, 
     var dualAdj = document.getElementById('modal_dual_adjustment');
 
     if (isCP) {
-        // Afficher les deux champs d'ajustement
+        // Afficher les deux champs avec les valeurs actuelles pré-remplies
         singleAdj.style.display = 'none';
         dualAdj.style.display = 'block';
-        document.getElementById('modal_n1_current').textContent = carriedOver || 0;
-        document.getElementById('modal_n_current').textContent = currentYear || 0;
+        document.getElementById('new_balance_n1').value = formatNumber(carriedOver || 0);
+        document.getElementById('new_balance_n').value = formatNumber(currentYear || 0);
     } else {
-        // Afficher le champ unique
+        // Afficher le champ unique avec la valeur actuelle pré-remplie
         singleAdj.style.display = 'block';
         dualAdj.style.display = 'none';
+        document.getElementById('new_balance').value = formatNumber(available || 0);
     }
 
     var modal = document.getElementById('adjustModal');
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    // Focus sur le premier champ
+    setTimeout(() => {
+        if (isCP) {
+            document.getElementById('new_balance_n1').select();
+        } else {
+            document.getElementById('new_balance').select();
+        }
+    }, 100);
 }
 
 function closeModal() {
     document.getElementById('adjustModal').classList.remove('open');
     document.body.style.overflow = '';
-}
-
-function adjustValue(inputId, delta) {
-    const input = document.getElementById(inputId);
-    input.value = parseFloat(input.value || 0) + delta;
 }
 
 // Fermer avec Escape

@@ -577,6 +577,18 @@ def balances():
                            year=year)
 
 
+def parse_french_float(value):
+    """Parse a French-formatted number (comma as decimal separator)."""
+    if not value:
+        return None
+    # Replace comma with dot for parsing
+    value = str(value).strip().replace(',', '.')
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
 @bp.route('/balances/<int:user_id>/adjust', methods=['POST'])
 @login_required
 @hr_required
@@ -588,10 +600,10 @@ def adjust_balance(user_id):
     year = request.form.get('year', date.today().year, type=int)
     reason = request.form.get('reason', '')
 
-    # Récupérer les ajustements (standard ou dual pour CP)
-    adjustment = request.form.get('adjustment', 0, type=float)
-    adjustment_n1 = request.form.get('adjustment_n1', 0, type=float)
-    adjustment_n = request.form.get('adjustment_n', 0, type=float)
+    # Récupérer les nouveaux soldes souhaités (format français avec virgule)
+    new_balance = parse_french_float(request.form.get('new_balance'))
+    new_balance_n1 = parse_french_float(request.form.get('new_balance_n1'))
+    new_balance_n = parse_french_float(request.form.get('new_balance_n'))
 
     # Vérifier que le type de congé appartient à la même entreprise
     leave_type = LeaveType.query.filter_by(id=leave_type_id, company_id=current_user.company_id).first_or_404()
@@ -611,21 +623,31 @@ def adjust_balance(user_id):
         )
         db.session.add(balance)
 
-    # Appliquer les ajustements
+    # Appliquer les ajustements en calculant la différence
     messages = []
 
-    if leave_type.code == 'CP' and (adjustment_n1 != 0 or adjustment_n != 0):
+    if leave_type.code == 'CP' and (new_balance_n1 is not None or new_balance_n is not None):
         # Ajustement dual pour CP
-        if adjustment_n1 != 0:
-            balance.carried_over = (balance.carried_over or 0) + adjustment_n1
-            messages.append(f'CP N-1 : {adjustment_n1:+.1f}j')
-        if adjustment_n != 0:
-            balance.adjusted += adjustment_n
-            messages.append(f'CP N : {adjustment_n:+.1f}j')
-    elif adjustment != 0:
-        # Ajustement standard
-        balance.adjusted += adjustment
-        messages.append(f'{adjustment:+.1f}j')
+        if new_balance_n1 is not None:
+            current_n1 = balance.carried_over or 0
+            adjustment_n1 = new_balance_n1 - current_n1
+            if adjustment_n1 != 0:
+                balance.carried_over = new_balance_n1
+                messages.append(f'CP N-1 : {current_n1:.1f} → {new_balance_n1:.1f}j')
+        if new_balance_n is not None:
+            # Calculer le solde N actuel (initial + adjusted - used)
+            current_n = balance.initial_balance + balance.adjusted - balance.used
+            adjustment_n = new_balance_n - current_n
+            if adjustment_n != 0:
+                balance.adjusted += adjustment_n
+                messages.append(f'CP N : {current_n:.1f} → {new_balance_n:.1f}j')
+    elif new_balance is not None:
+        # Ajustement standard - calculer le solde actuel total
+        current_total = balance.initial_balance + (balance.carried_over or 0) + balance.adjusted - balance.used
+        adjustment = new_balance - current_total
+        if adjustment != 0:
+            balance.adjusted += adjustment
+            messages.append(f'{current_total:.1f} → {new_balance:.1f}j')
 
     db.session.commit()
 
