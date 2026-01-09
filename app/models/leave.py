@@ -34,6 +34,7 @@ class LeaveType(db.Model):
     NAISSANCE = 'NAI'
     DECES = 'DEC'
     DEMENAGEMENT = 'DEM'
+    EXAMEN = 'EXA'
 
     @staticmethod
     def get_default_types():
@@ -53,6 +54,8 @@ class LeaveType(db.Model):
              'description': 'Congé pour décès', 'default_days': 5},
             {'name': 'Déménagement', 'code': 'DEM', 'color': '#F59E0B', 'max_consecutive_days': 1,
              'description': 'Congé pour déménagement', 'default_days': 1},
+            {'name': 'Congés examens', 'code': 'EXA', 'color': '#06B6D4',
+             'description': 'Congés pour examens (alternants)', 'default_days': 5},
         ]
 
     @staticmethod
