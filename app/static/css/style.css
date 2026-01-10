@@ -302,6 +302,11 @@ a:hover {
   border-radius: var(--radius-lg);
 }
 
+.logo-full-img {
+  height: 36px;
+  width: auto;
+}
+
 .logo-text {
   font-weight: 700;
   font-size: var(--text-lg);

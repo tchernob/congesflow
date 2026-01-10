@@ -160,6 +160,11 @@
             border-radius: var(--radius-md);
         }
 
+        .nav-logo-full-img {
+            height: 32px;
+            width: auto;
+        }
+
         .nav-logo-text {
             font-size: var(--text-lg);
             font-weight: 600;
@@ -927,8 +932,7 @@
     <nav class="nav">
         <div class="nav-inner">
             <a href="{{ url_for('marketing.home') }}" class="nav-logo">
-                <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TimeOff" class="nav-logo-img">
-                <span class="nav-logo-text">TimeOff</span>
+                <img src="{{ url_for('static', filename='images/logo-full.svg') }}" alt="TimeOff" class="nav-logo-full-img">
             </a>
 
             <div class="nav-links">
@@ -952,8 +956,7 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <div class="footer-logo">
-                        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TimeOff" class="nav-logo-img">
-                        <span class="nav-logo-text">TimeOff</span>
+                        <img src="{{ url_for('static', filename='images/logo-full.svg') }}" alt="TimeOff" class="nav-logo-full-img">
                     </div>
                     <p class="footer-description">
                         La solution moderne pour simplifier la gestion des congés.
