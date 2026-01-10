@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Délégations d'approbation - TimeOff{% endblock %}
+{% block page_title %}Délégations d'approbation{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Create Delegation Form -->
+    <section class="card-static animate-slide-up">
+        <div class="card-header">
+            <h3 class="card-title">Nouvelle délégation</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('admin_advanced.create_delegation') }}" method="POST" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label class="form-label" for="delegator_id">Délégant (qui délègue)</label>
+                    <select class="form-select" name="delegator_id" id="delegator_id" required>
+                        <option value="">Sélectionner...</option>
+                        {% for manager in managers %}
+                        <option value="{{ manager.id }}">{{ manager.full_name }} ({{ manager.role.name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="delegate_id">Délégué (qui reçoit les droits)</label>
+                    <select class="form-select" name="delegate_id" id="delegate_id" required>
+                        <option value="">Sélectionner...</option>
+                        {% for manager in managers %}
+                        <option value="{{ manager.id }}">{{ manager.full_name }} ({{ manager.role.name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="start_date">Date début</label>
+                    <input type="date" class="form-input" name="start_date" id="start_date" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="end_date">Date fin</label>
+                    <input type="date" class="form-input" name="end_date" id="end_date" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="reason">Raison (optionnel)</label>
+                    <input type="text" class="form-input" name="reason" id="reason" placeholder="Ex: Congés annuels">
+                </div>
+
+                <div class="form-actions full-width">
+                    <button type="submit" class="btn btn-primary">Créer la délégation</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Delegations List -->
+    <section class="card-static animate-slide-up stagger-1">
+        <div class="card-header">
+            <h3 class="card-title">Délégations existantes</h3>
+        </div>
+        <div class="card-body p-0">
+            {% if delegations %}
+            <div class="table-container" style="border: none;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Délégant</th>
+                            <th>Délégué</th>
+                            <th>Période</th>
+                            <th>Raison</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in delegations %}
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="user-avatar-sm">{{ d.delegator.initials }}</div>
+                                    <span>{{ d.delegator.full_name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="user-avatar-sm" style="background: var(--color-primary);">{{ d.delegate.initials }}</div>
+                                    <span>{{ d.delegate.full_name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ d.start_date.strftime('%d/%m/%Y') }} - {{ d.end_date.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ d.reason or '-' }}</td>
+                            <td>
+                                {% if d.is_currently_active %}
+                                <span class="badge badge-success">Active</span>
+                                {% elif d.end_date < today %}
+                                <span class="badge badge-secondary">Terminée</span>
+                                {% else %}
+                                <span class="badge badge-info">Planifiée</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="{{ url_for('admin_advanced.delete_delegation', delegation_id=d.id) }}" method="POST" style="display: inline;"
+                                      onsubmit="return confirm('Supprimer cette délégation ?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-ghost btn-sm text-danger">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state p-8">
+                <div class="empty-state-icon">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
+                </div>
+                <p class="empty-state-text">Aucune délégation configurée</p>
+                <p class="text-muted text-sm">Les délégations permettent de transférer temporairement les droits d'approbation</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.user-avatar-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

@@ -27,13 +27,14 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     csrf.init_app(app)
 
-    from app.routes import auth, main, employee, manager, admin, api, marketing, slack, root, billing
+    from app.routes import auth, main, employee, manager, admin, admin_advanced, api, marketing, slack, root, billing
     app.register_blueprint(marketing.bp)  # Marketing pages (homepage, signup, etc.)
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(employee.bp)
     app.register_blueprint(manager.bp)
     app.register_blueprint(admin.bp)
+    app.register_blueprint(admin_advanced.bp)  # Advanced admin features
     app.register_blueprint(api.bp)
     app.register_blueprint(slack.bp)
     app.register_blueprint(root.bp)  # Superadmin platform management

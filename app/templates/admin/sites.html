@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Sites - TimeOff{% endblock %}
+{% block page_title %}Gestion des sites{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Create Site Form -->
+    <section class="card-static animate-slide-up">
+        <div class="card-header">
+            <h3 class="card-title">Nouveau site</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('admin_advanced.create_site') }}" method="POST" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label class="form-label" for="name">Nom du site</label>
+                    <input type="text" class="form-input" name="name" id="name" required placeholder="Ex: Paris, Lyon, Marseille...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="code">Code</label>
+                    <input type="text" class="form-input" name="code" id="code" placeholder="PAR, LYO, MRS..." maxlength="10" style="text-transform: uppercase;">
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="address">Adresse</label>
+                    <input type="text" class="form-input" name="address" id="address" placeholder="Adresse complète du site">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="country">Pays</label>
+                    <select class="form-select" name="country" id="country">
+                        <option value="FR" selected>France</option>
+                        <option value="BE">Belgique</option>
+                        <option value="CH">Suisse</option>
+                        <option value="LU">Luxembourg</option>
+                        <option value="DE">Allemagne</option>
+                        <option value="ES">Espagne</option>
+                        <option value="IT">Italie</option>
+                        <option value="GB">Royaume-Uni</option>
+                        <option value="US">États-Unis</option>
+                        <option value="CA">Canada</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Options</label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="is_main">
+                        Site principal (siège)
+                    </label>
+                </div>
+
+                <div class="form-actions full-width">
+                    <button type="submit" class="btn btn-primary">Créer le site</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Sites List -->
+    <section class="card-static animate-slide-up stagger-1">
+        <div class="card-header">
+            <h3 class="card-title">Sites existants</h3>
+        </div>
+        <div class="card-body">
+            {% if sites %}
+            <div class="sites-grid">
+                {% for site in sites %}
+                <a href="{{ url_for('admin_advanced.view_site', site_id=site.id) }}" class="site-card {{ 'site-main' if site.is_main else '' }}">
+                    <div class="site-header">
+                        <div class="site-icon">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                        </div>
+                        {% if site.is_main %}
+                        <span class="badge badge-accent">Siège</span>
+                        {% endif %}
+                    </div>
+                    <div class="site-info">
+                        <h4 class="site-name">{{ site.name }}</h4>
+                        {% if site.code %}
+                        <span class="site-code">{{ site.code }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="site-details">
+                        <span class="site-country">{{ site.country }}</span>
+                        {% if site.address %}
+                        <span class="site-address">{{ site.address[:30] }}{{ '...' if site.address|length > 30 else '' }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="site-stats">
+                        <span>{{ site.holidays.count() }} jours fériés</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state p-8">
+                <div class="empty-state-icon">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <p class="empty-state-text">Aucun site configuré</p>
+                <p class="text-muted text-sm">Créez des sites pour gérer les jours fériés par localisation</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+}
+
+.sites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+}
+
+.site-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+    color: var(--color-ink);
+}
+
+.site-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.site-main {
+    border-color: var(--color-accent);
+    background: linear-gradient(135deg, var(--color-accent-soft), transparent);
+}
+
+.site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.site-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-sunken);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-ink-muted);
+}
+
+.site-info {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+}
+
+.site-name {
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+.site-code {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    background: var(--color-bg-sunken);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+.site-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.site-stats {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    padding-top: var(--space-2);
+    border-top: var(--border-thin);
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

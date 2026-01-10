@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}{{ site.name }} - TimeOff{% endblock %}
+{% block page_title %}Site: {{ site.name }}{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="page-header-actions">
+        <a href="{{ url_for('admin_advanced.sites') }}" class="btn btn-secondary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Retour aux sites
+        </a>
+    </div>
+
+    <div class="site-layout">
+        <!-- Site Info -->
+        <section class="card-static animate-slide-up">
+            <div class="card-header">
+                <h3 class="card-title">Informations</h3>
+                {% if site.is_main %}
+                <span class="badge badge-accent">Siège</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Code</span>
+                        <span class="info-value">{{ site.code or '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Pays</span>
+                        <span class="info-value">{{ site.country }}</span>
+                    </div>
+                    <div class="info-item full-width">
+                        <span class="info-label">Adresse</span>
+                        <span class="info-value">{{ site.address or '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Jours de travail</span>
+                        <span class="info-value">{{ site.work_days }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Fuseau horaire</span>
+                        <span class="info-value">{{ site.timezone }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Users on this site -->
+        <section class="card-static animate-slide-up stagger-1">
+            <div class="card-header">
+                <h3 class="card-title">Employés sur ce site</h3>
+                <span class="badge">{{ users|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if users %}
+                <div class="users-list">
+                    {% for user in users[:10] %}
+                    <div class="user-item">
+                        <div class="user-avatar-sm">{{ user.initials }}</div>
+                        <span>{{ user.full_name }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if users|length > 10 %}
+                    <p class="text-muted text-sm">+ {{ users|length - 10 }} autres employés</p>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-muted">Aucun employé assigné à ce site</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <!-- Holidays -->
+    <section class="card-static animate-slide-up stagger-2">
+        <div class="card-header">
+            <h3 class="card-title">Jours fériés {{ year }}</h3>
+            <div class="year-nav">
+                <a href="?year={{ year - 1 }}" class="btn btn-ghost btn-sm">&lt; {{ year - 1 }}</a>
+                <span class="current-year">{{ year }}</span>
+                <a href="?year={{ year + 1 }}" class="btn btn-ghost btn-sm">{{ year + 1 }} &gt;</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Add Holiday Form -->
+            <form action="{{ url_for('admin_advanced.add_site_holiday', site_id=site.id) }}" method="POST" class="add-holiday-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="date" class="form-input" name="date" required>
+                <input type="text" class="form-input" name="name" placeholder="Nom du jour férié" required>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="is_recurring">
+                    Récurrent
+                </label>
+                <button type="submit" class="btn btn-primary btn-sm">Ajouter</button>
+            </form>
+
+            <!-- Holidays List -->
+            {% if holidays %}
+            <div class="holidays-list">
+                {% for h in holidays %}
+                <div class="holiday-item">
+                    <div class="holiday-date">
+                        <span class="holiday-day">{{ h.date.day }}</span>
+                        <span class="holiday-month">{{ h.date.strftime('%b') }}</span>
+                    </div>
+                    <div class="holiday-info">
+                        <span class="holiday-name">{{ h.name }}</span>
+                        <span class="holiday-weekday">{{ h.date.strftime('%A') }}</span>
+                    </div>
+                    <div class="holiday-badges">
+                        {% if h.is_recurring %}
+                        <span class="badge badge-info">Récurrent</span>
+                        {% endif %}
+                    </div>
+                    <form action="{{ url_for('admin_advanced.delete_site_holiday', site_id=site.id, holiday_id=h.id) }}" method="POST"
+                          onsubmit="return confirm('Supprimer ce jour férié ?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-ghost btn-sm text-danger">Supprimer</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state p-6">
+                <p class="empty-state-text">Aucun jour férié pour {{ year }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+.page-header-actions {
+    margin-bottom: var(--space-6);
+}
+
+.site-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    margin-bottom: var(--space-6);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.info-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.info-label {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    text-transform: uppercase;
+}
+
+.info-value {
+    font-weight: 500;
+}
+
+.users-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.user-avatar-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.year-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.current-year {
+    font-weight: 600;
+    min-width: 60px;
+    text-align: center;
+}
+
+.add-holiday-form {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-4);
+    background: var(--color-bg-sunken);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.add-holiday-form .form-input {
+    flex: 1;
+    min-width: 150px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    white-space: nowrap;
+}
+
+.holidays-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.holiday-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+}
+
+.holiday-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 50px;
+    padding: var(--space-2);
+    background: var(--color-accent-soft);
+    border-radius: var(--radius-sm);
+}
+
+.holiday-day {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+.holiday-month {
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    text-transform: uppercase;
+}
+
+.holiday-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.holiday-name {
+    font-weight: 500;
+}
+
+.holiday-weekday {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.holiday-badges {
+    display: flex;
+    gap: var(--space-2);
+}
+
+@media (max-width: 1024px) {
+    .site-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .add-holiday-form {
+        flex-direction: column;
+    }
+
+    .add-holiday-form .form-input {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

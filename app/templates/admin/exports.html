@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Exports - TimeOff{% endblock %}
+{% block page_title %}Exports{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="exports-grid">
+        <!-- Leaves Export -->
+        <section class="card-static animate-slide-up">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Export des congés
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="export-description">Exportez toutes les demandes de congés pour une période donnée.</p>
+                <form action="{{ url_for('admin_advanced.export_leaves_csv') }}" method="GET" class="export-form">
+                    <div class="form-group">
+                        <label class="form-label" for="leaves_year">Année</label>
+                        <select class="form-select" name="year" id="leaves_year">
+                            {% for y in range(2020, 2030) %}
+                            <option value="{{ y }}" {{ 'selected' if y == now.year else '' }}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="leaves_team">Équipe (optionnel)</label>
+                        <select class="form-select" name="team_id" id="leaves_team">
+                            <option value="">Toutes les équipes</option>
+                            {% for team in teams %}
+                            <option value="{{ team.id }}">{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="leaves_type">Type de congé (optionnel)</label>
+                        <select class="form-select" name="leave_type_id" id="leaves_type">
+                            <option value="">Tous les types</option>
+                            {% for lt in leave_types %}
+                            <option value="{{ lt.id }}">{{ lt.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Télécharger CSV
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Balances Export -->
+        <section class="card-static animate-slide-up stagger-1">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Export des soldes
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="export-description">Exportez les soldes de congés de tous les employés.</p>
+                <form action="{{ url_for('admin_advanced.export_balances_csv') }}" method="GET" class="export-form">
+                    <div class="form-group">
+                        <label class="form-label" for="balances_year">Année</label>
+                        <select class="form-select" name="year" id="balances_year">
+                            {% for y in range(2020, 2030) %}
+                            <option value="{{ y }}" {{ 'selected' if y == now.year else '' }}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Télécharger CSV
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Payroll Export -->
+        <section class="card-static animate-slide-up stagger-2">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Export paie
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="export-description">Format compatible avec les logiciels de paie (Silae, PayFit, etc.).</p>
+                <form action="{{ url_for('admin_advanced.export_payroll_csv') }}" method="GET" class="export-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="payroll_month">Mois</label>
+                            <select class="form-select" name="month" id="payroll_month">
+                                {% for m in range(1, 13) %}
+                                <option value="{{ m }}" {{ 'selected' if m == now.month else '' }}>
+                                    {{ ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'][m-1] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="payroll_year">Année</label>
+                            <select class="form-select" name="year" id="payroll_year">
+                                {% for y in range(2020, 2030) %}
+                                <option value="{{ y }}" {{ 'selected' if y == now.year else '' }}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Télécharger CSV
+                    </button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <!-- Format Info -->
+    <section class="card-static animate-slide-up stagger-3">
+        <div class="card-header">
+            <h3 class="card-title">Formats des exports</h3>
+        </div>
+        <div class="card-body">
+            <div class="format-info">
+                <div class="format-item">
+                    <h4>Export des congés</h4>
+                    <p>Employé, Email, Équipe, Type de congé, Date début, Date fin, Jours, Statut, Créée le</p>
+                </div>
+                <div class="format-item">
+                    <h4>Export des soldes</h4>
+                    <p>Employé, Email, Équipe, puis pour chaque type: Initial, Utilisé, Restant</p>
+                </div>
+                <div class="format-item">
+                    <h4>Export paie</h4>
+                    <p>Matricule, Nom, Prénom, Code absence, Date début, Date fin, Nombre de jours, Commentaire</p>
+                </div>
+            </div>
+            <p class="format-note">
+                <strong>Note:</strong> Les fichiers CSV utilisent le point-virgule (;) comme séparateur pour une meilleure compatibilité avec Excel en français.
+            </p>
+        </div>
+    </section>
+</div>
+
+<style>
+.exports-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-6);
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.export-description {
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-4);
+    font-size: var(--text-sm);
+}
+
+.export-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+}
+
+.format-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.format-item {
+    padding: var(--space-4);
+    background: var(--color-bg-sunken);
+    border-radius: var(--radius-md);
+}
+
+.format-item h4 {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.format-item p {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    font-family: monospace;
+}
+
+.format-note {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    padding: var(--space-3);
+    background: var(--color-warning-soft);
+    border-radius: var(--radius-md);
+}
+
+@media (max-width: 1200px) {
+    .exports-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .format-info {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .exports-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+{% endblock %}

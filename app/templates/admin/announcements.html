@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Annonces - TimeOff{% endblock %}
+{% block page_title %}Annonces entreprise{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Create Announcement Form -->
+    <section class="card-static animate-slide-up">
+        <div class="card-header">
+            <h3 class="card-title">Nouvelle annonce</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('admin_advanced.create_announcement') }}" method="POST" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="title">Titre</label>
+                    <input type="text" class="form-input" name="title" id="title" required placeholder="Titre de l'annonce">
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="content">Contenu</label>
+                    <textarea class="form-input" name="content" id="content" rows="4" required placeholder="Contenu de l'annonce..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="announcement_type">Type</label>
+                    <select class="form-select" name="announcement_type" id="announcement_type">
+                        {% for key, label in announcement_types.items() %}
+                        <option value="{{ key }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Options</label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="is_pinned">
+                        Épingler en haut
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="publish_at">Publier le (optionnel)</label>
+                    <input type="datetime-local" class="form-input" name="publish_at" id="publish_at">
+                    <p class="form-hint">Laisser vide pour publier immédiatement</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="expires_at">Expire le (optionnel)</label>
+                    <input type="datetime-local" class="form-input" name="expires_at" id="expires_at">
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label">Équipes ciblées</label>
+                    <div class="checkbox-group">
+                        {% for team in teams %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="team_ids" value="{{ team.id }}">
+                            {{ team.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="form-hint">Vide = visible par tous</p>
+                </div>
+
+                <div class="form-actions full-width">
+                    <button type="submit" class="btn btn-primary">Publier l'annonce</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Announcements List -->
+    <section class="card-static animate-slide-up stagger-1">
+        <div class="card-header">
+            <h3 class="card-title">Annonces existantes</h3>
+        </div>
+        <div class="card-body">
+            {% if announcements %}
+            <div class="announcements-list">
+                {% for a in announcements %}
+                <div class="announcement-card announcement-{{ a.announcement_type }} {{ 'opacity-50' if not a.is_active else '' }}">
+                    <div class="announcement-header">
+                        <div class="announcement-badges">
+                            {% if a.is_pinned %}
+                            <span class="badge badge-secondary">Épinglée</span>
+                            {% endif %}
+                            <span class="badge badge-{{ a.announcement_type }}">{{ announcement_types.get(a.announcement_type, a.announcement_type) }}</span>
+                            {% if not a.is_active %}
+                            <span class="badge badge-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                        <div class="announcement-actions">
+                            <a href="{{ url_for('admin_advanced.edit_announcement', announcement_id=a.id) }}" class="btn btn-ghost btn-sm">Modifier</a>
+                            <form action="{{ url_for('admin_advanced.delete_announcement', announcement_id=a.id) }}" method="POST" style="display: inline;"
+                                  onsubmit="return confirm('Supprimer cette annonce ?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-ghost btn-sm text-danger">Supprimer</button>
+                            </form>
+                        </div>
+                    </div>
+                    <h4 class="announcement-title">{{ a.title }}</h4>
+                    <p class="announcement-content">{{ a.content[:200] }}{{ '...' if a.content|length > 200 else '' }}</p>
+                    <div class="announcement-meta">
+                        <span>Par {{ a.author.full_name if a.author else 'Système' }}</span>
+                        <span>{{ a.created_at.strftime('%d/%m/%Y à %H:%M') }}</span>
+                        {% if a.expires_at %}
+                        <span>Expire: {{ a.expires_at.strftime('%d/%m/%Y') }}</span>
+                        {% endif %}
+                        {% if a.team_ids %}
+                        <span>{{ a.team_ids_list|length }} équipe(s)</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state p-8">
+                <div class="empty-state-icon">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
+                    </svg>
+                </div>
+                <p class="empty-state-text">Aucune annonce</p>
+                <p class="text-muted text-sm">Publiez des annonces pour informer vos employés</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+}
+
+.form-hint {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-1);
+}
+
+.announcements-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.announcement-card {
+    padding: var(--space-4);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--color-ink-muted);
+}
+
+.announcement-info { border-left-color: var(--color-info); }
+.announcement-warning { border-left-color: var(--color-warning); }
+.announcement-success { border-left-color: var(--color-success); }
+.announcement-urgent { border-left-color: var(--color-danger); }
+
+.announcement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-2);
+}
+
+.announcement-badges {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.badge-info { background: var(--color-info-soft); color: var(--color-info); }
+.badge-warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.badge-success { background: var(--color-success-soft); color: var(--color-success); }
+.badge-urgent { background: var(--color-danger-soft); color: var(--color-danger); }
+
+.announcement-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.announcement-content {
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-3);
+    line-height: 1.5;
+}
+
+.announcement-meta {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+}
+
+.announcement-actions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .announcement-header {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+}
+</style>
+{% endblock %}

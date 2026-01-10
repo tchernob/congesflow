@@ -172,6 +172,7 @@ class User(UserMixin, db.Model):
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
     manager_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     contract_type_id = db.Column(db.Integer, db.ForeignKey('contract_types.id'), nullable=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('sites.id'), nullable=True)
 
     # Superadmin flag (for platform-level administration)
     is_superadmin = db.Column(db.Boolean, default=False)
@@ -295,14 +296,41 @@ class User(UserMixin, db.Model):
             return True
         if self.is_manager() and leave_request.employee.manager_id == self.id:
             return True
+        # Check delegations
+        if self.is_manager():
+            from app.models.delegation import ApprovalDelegation
+            delegation = ApprovalDelegation.get_active_delegation_for(
+                leave_request.employee.manager_id,
+                self.id
+            )
+            if delegation:
+                return True
         return False
 
     def get_pending_approvals(self):
         from app.models.leave import LeaveRequest
         if self.is_hr():
-            return LeaveRequest.query.filter_by(status='pending_hr').all()
+            return LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
+                User.company_id == self.company_id,
+                LeaveRequest.status == 'pending_hr'
+            ).all()
         elif self.is_manager():
             subordinate_ids = [u.id for u in self.subordinates]
+
+            # Also get requests for managers who delegated to this user
+            from app.models.delegation import ApprovalDelegation
+            delegated_manager_ids = ApprovalDelegation.get_delegators_for(self.id)
+
+            for dm_id in delegated_manager_ids:
+                delegator = User.query.get(dm_id)
+                if delegator:
+                    subordinate_ids.extend([u.id for u in delegator.subordinates])
+
+            subordinate_ids = list(set(subordinate_ids))  # Remove duplicates
+
+            if not subordinate_ids:
+                return []
+
             return LeaveRequest.query.filter(
                 LeaveRequest.employee_id.in_(subordinate_ids),
                 LeaveRequest.status == 'pending_manager'

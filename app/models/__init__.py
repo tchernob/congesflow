@@ -7,6 +7,13 @@ from app.models.slack import SlackIntegration, SlackUserMapping
 from app.models.coupon import Coupon, CouponUsage
 from app.models.company_note import CompanyNote
 from app.models.activity_log import ActivityLog
+from app.models.delegation import ApprovalDelegation
+from app.models.blocked_period import BlockedPeriod
+from app.models.comment import LeaveRequestComment
+from app.models.announcement import Announcement
+from app.models.document import LeaveDocument
+from app.models.site import Site, SiteHoliday
+from app.models.auto_approval_rule import AutoApprovalRule
 
 __all__ = [
     'Company', 'CompanyInvitation',
@@ -16,5 +23,12 @@ __all__ = [
     'SlackIntegration', 'SlackUserMapping',
     'Coupon', 'CouponUsage',
     'CompanyNote',
-    'ActivityLog'
+    'ActivityLog',
+    'ApprovalDelegation',
+    'BlockedPeriod',
+    'LeaveRequestComment',
+    'Announcement',
+    'LeaveDocument',
+    'Site', 'SiteHoliday',
+    'AutoApprovalRule'
 ]

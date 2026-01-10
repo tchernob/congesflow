@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Organigramme - TimeOff{% endblock %}
+{% block page_title %}Organigramme{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- View Toggle -->
+    <div class="view-toggle animate-slide-up">
+        <button class="toggle-btn active" data-view="tree">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+            Hiérarchie
+        </button>
+        <button class="toggle-btn" data-view="teams">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Équipes
+        </button>
+    </div>
+
+    <!-- Tree View -->
+    <section id="tree-view" class="card-static animate-slide-up stagger-1">
+        <div class="card-header">
+            <h3 class="card-title">Hiérarchie de l'entreprise</h3>
+        </div>
+        <div class="card-body">
+            {% if roots %}
+            <div class="org-tree">
+                {% macro render_node(node, level=0) %}
+                <div class="org-node" style="--level: {{ level }};">
+                    <div class="org-card">
+                        <div class="org-avatar">{{ node.avatar }}</div>
+                        <div class="org-info">
+                            <span class="org-name">{{ node.name }}</span>
+                            <span class="org-role">{{ node.role }}</span>
+                            {% if node.team %}
+                            <span class="org-team">{{ node.team }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if node.children %}
+                    <div class="org-children">
+                        {% for child in node.children %}
+                        {{ render_node(child, level + 1) }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endmacro %}
+
+                {% for root in roots %}
+                {{ render_node(root) }}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state p-8">
+                <div class="empty-state-icon">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <p class="empty-state-text">Aucun employé</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Teams View (hidden by default) -->
+    <section id="teams-view" class="card-static animate-slide-up" style="display: none;">
+        <div class="card-header">
+            <h3 class="card-title">Par équipe</h3>
+        </div>
+        <div class="card-body">
+            <div class="teams-grid">
+                {% for team in teams %}
+                <div class="team-card">
+                    <h4 class="team-name">{{ team.name }}</h4>
+                    <div class="team-members">
+                        {% for member in team.members %}
+                        <div class="team-member">
+                            <div class="member-avatar">{{ member.initials }}</div>
+                            <div class="member-info">
+                                <span class="member-name">{{ member.full_name }}</span>
+                                <span class="member-role">{{ member.role.description if member.role else '' }}</span>
+                            </div>
+                            {% if member.id == team.manager_id %}
+                            <span class="badge badge-accent">Manager</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+.view-toggle {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+    justify-content: center;
+}
+
+.toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border: var(--border-thin);
+    background: var(--color-bg);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.toggle-btn:first-child {
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.toggle-btn:last-child {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin-left: -1px;
+}
+
+.toggle-btn.active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: white;
+}
+
+.toggle-btn:hover:not(.active) {
+    background: var(--color-bg-sunken);
+}
+
+/* Org Tree */
+.org-tree {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.org-node {
+    margin-left: calc(var(--level) * var(--space-8));
+    position: relative;
+}
+
+.org-node::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--space-6));
+    top: 50%;
+    width: var(--space-4);
+    height: 1px;
+    background: var(--color-border);
+}
+
+.org-node:first-child::before {
+    display: none;
+}
+
+.org-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-bg);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    width: fit-content;
+    transition: var(--transition-fast);
+}
+
+.org-card:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-sm);
+}
+
+.org-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--text-sm);
+}
+
+.org-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.org-name {
+    font-weight: 600;
+}
+
+.org-role {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.org-team {
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+}
+
+.org-children {
+    margin-top: var(--space-3);
+    padding-left: var(--space-6);
+    border-left: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+/* Teams Grid */
+.teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-6);
+}
+
+.team-card {
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.team-name {
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-bg-sunken);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    border-bottom: var(--border-thin);
+}
+
+.team-members {
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.team-member {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+.team-member:hover {
+    background: var(--color-bg-sunken);
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.member-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.member-name {
+    font-weight: 500;
+    font-size: var(--text-sm);
+}
+
+.member-role {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtns = document.querySelectorAll('.toggle-btn');
+    const treeView = document.getElementById('tree-view');
+    const teamsView = document.getElementById('teams-view');
+
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            toggleBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const view = this.dataset.view;
+            if (view === 'tree') {
+                treeView.style.display = 'block';
+                teamsView.style.display = 'none';
+            } else {
+                treeView.style.display = 'none';
+                teamsView.style.display = 'block';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

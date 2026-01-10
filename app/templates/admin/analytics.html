@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - TimeOff{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Year Selector -->
+    <div class="year-selector animate-slide-up">
+        <a href="?year={{ year - 1 }}" class="btn btn-secondary">&lt; {{ year - 1 }}</a>
+        <h2 class="year-display">{{ year }}</h2>
+        <a href="?year={{ year + 1 }}" class="btn btn-secondary">{{ year + 1 }} &gt;</a>
+    </div>
+
+    <!-- Stats Cards -->
+    <section class="stats-grid animate-slide-up stagger-1">
+        <div class="stat-card" style="--stat-color: var(--color-accent);">
+            <div class="stat-value">{{ total_employees }}</div>
+            <div class="stat-label">Employés actifs</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--color-primary);">
+            <div class="stat-value">{{ total_requests }}</div>
+            <div class="stat-label">Demandes ({{ year }})</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--color-success);">
+            <div class="stat-value">{{ approved_requests }}</div>
+            <div class="stat-label">Approuvées</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--color-warning);">
+            <div class="stat-value">{{ approval_rate }}%</div>
+            <div class="stat-label">Taux d'approbation</div>
+        </div>
+    </section>
+
+    <div class="charts-grid">
+        <!-- Absenteeism Chart -->
+        <section class="card-static animate-slide-up stagger-2">
+            <div class="card-header">
+                <h3 class="card-title">Jours d'absence par mois</h3>
+            </div>
+            <div class="card-body">
+                <div class="bar-chart">
+                    {% set max_days = absenteeism_by_month|map(attribute='days')|max or 1 %}
+                    {% for month in absenteeism_by_month %}
+                    <div class="bar-item">
+                        <div class="bar-container">
+                            <div class="bar" style="height: {{ (month.days / max_days * 100)|int }}%;"></div>
+                        </div>
+                        <span class="bar-label">{{ month.month }}</span>
+                        <span class="bar-value">{{ month.days|int }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Leave by Type -->
+        <section class="card-static animate-slide-up stagger-3">
+            <div class="card-header">
+                <h3 class="card-title">Répartition par type</h3>
+            </div>
+            <div class="card-body">
+                {% if leave_by_type %}
+                <div class="donut-chart-container">
+                    <div class="donut-legend">
+                        {% set total_leave = leave_by_type|map(attribute=2)|sum or 1 %}
+                        {% for name, color, days in leave_by_type %}
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background: {{ color }};"></span>
+                            <span class="legend-label">{{ name }}</span>
+                            <span class="legend-value">{{ days|int }}j ({{ (days / total_leave * 100)|round|int }}%)</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">Aucune donnée</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Leave by Team -->
+        <section class="card-static animate-slide-up stagger-4">
+            <div class="card-header">
+                <h3 class="card-title">Absences par équipe</h3>
+            </div>
+            <div class="card-body">
+                {% if leave_by_team %}
+                <div class="horizontal-bars">
+                    {% set max_team = leave_by_team|map(attribute=1)|max or 1 %}
+                    {% for name, days in leave_by_team %}
+                    <div class="h-bar-item">
+                        <span class="h-bar-label">{{ name }}</span>
+                        <div class="h-bar-container">
+                            <div class="h-bar" style="width: {{ (days / max_team * 100)|int }}%;"></div>
+                        </div>
+                        <span class="h-bar-value">{{ days|int }}j</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">Aucune donnée</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Top Employees -->
+        <section class="card-static animate-slide-up stagger-5">
+            <div class="card-header">
+                <h3 class="card-title">Top 5 - Plus de jours posés</h3>
+            </div>
+            <div class="card-body">
+                {% if top_employees %}
+                <div class="top-list">
+                    {% for first_name, last_name, total_days in top_employees %}
+                    <div class="top-item">
+                        <span class="top-rank">{{ loop.index }}</span>
+                        <span class="top-name">{{ first_name }} {{ last_name }}</span>
+                        <span class="top-value">{{ total_days|int }} jours</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">Aucune donnée</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <!-- Export Link -->
+    <div class="export-link animate-slide-up">
+        <a href="{{ url_for('admin_advanced.exports') }}" class="btn btn-secondary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Exporter les données
+        </a>
+    </div>
+</div>
+
+<style>
+.year-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+}
+
+.year-display {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    min-width: 100px;
+    text-align: center;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+}
+
+/* Bar Chart */
+.bar-chart {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 200px;
+    padding-top: var(--space-4);
+}
+
+.bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    gap: var(--space-1);
+}
+
+.bar-container {
+    width: 100%;
+    max-width: 30px;
+    height: 150px;
+    background: var(--color-bg-sunken);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    display: flex;
+    align-items: flex-end;
+}
+
+.bar {
+    width: 100%;
+    background: var(--color-accent);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    min-height: 2px;
+    transition: height 0.5s ease;
+}
+
+.bar-label {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+}
+
+.bar-value {
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+
+/* Donut Legend */
+.donut-chart-container {
+    display: flex;
+    justify-content: center;
+}
+
+.donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    width: 100%;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+}
+
+.legend-label {
+    flex: 1;
+}
+
+.legend-value {
+    font-weight: 600;
+    color: var(--color-ink-muted);
+}
+
+/* Horizontal Bars */
+.horizontal-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.h-bar-item {
+    display: grid;
+    grid-template-columns: 120px 1fr 60px;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.h-bar-label {
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.h-bar-container {
+    height: 20px;
+    background: var(--color-bg-sunken);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.h-bar {
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: var(--radius-sm);
+    transition: width 0.5s ease;
+}
+
+.h-bar-value {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-align: right;
+}
+
+/* Top List */
+.top-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.top-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg-sunken);
+    border-radius: var(--radius-md);
+}
+
+.top-rank {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent);
+    color: white;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: var(--text-sm);
+}
+
+.top-name {
+    flex: 1;
+}
+
+.top-value {
+    font-weight: 600;
+    color: var(--color-ink-muted);
+}
+
+.export-link {
+    margin-top: var(--space-8);
+    text-align: center;
+}
+
+@media (max-width: 1024px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

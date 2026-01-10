@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Règles d'auto-approbation - TimeOff{% endblock %}
+{% block page_title %}Règles d'auto-approbation{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Info Box -->
+    <div class="info-box animate-slide-up">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+            <strong>Comment ça marche ?</strong>
+            <p>Les règles sont évaluées par priorité (haute en premier). Si une demande correspond à une règle active, elle est approuvée automatiquement.</p>
+        </div>
+    </div>
+
+    <!-- Create Rule Form -->
+    <section class="card-static animate-slide-up stagger-1">
+        <div class="card-header">
+            <h3 class="card-title">Nouvelle règle</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('admin_advanced.create_auto_approval_rule') }}" method="POST" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="name">Nom de la règle</label>
+                    <input type="text" class="form-input" name="name" id="name" required placeholder="Ex: Demi-journées CP, RTT courtes...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="leave_type_id">Type de congé</label>
+                    <select class="form-select" name="leave_type_id" id="leave_type_id">
+                        <option value="">Tous les types</option>
+                        {% for lt in leave_types %}
+                        <option value="{{ lt.id }}">{{ lt.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="max_days">Durée maximum (jours)</label>
+                    <input type="number" class="form-input" name="max_days" id="max_days" step="0.5" min="0.5" placeholder="Ex: 0.5 ou 1">
+                    <p class="form-hint">Demandes de cette durée ou moins. Vide = pas de limite.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="min_advance_days">Préavis minimum (jours)</label>
+                    <input type="number" class="form-input" name="min_advance_days" id="min_advance_days" min="0" value="0">
+                    <p class="form-hint">Nombre de jours à l'avance minimum. 0 = pas de minimum.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="priority">Priorité</label>
+                    <input type="number" class="form-input" name="priority" id="priority" min="0" value="0">
+                    <p class="form-hint">Plus élevé = évalué en premier.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Équipes concernées</label>
+                    <div class="checkbox-group">
+                        {% for team in teams %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="team_ids" value="{{ team.id }}">
+                            {{ team.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="form-hint">Vide = toutes les équipes</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Rôles concernés</label>
+                    <div class="checkbox-group">
+                        {% for role in roles %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="role_ids" value="{{ role.id }}">
+                            {{ role.description or role.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="form-hint">Vide = tous les rôles</p>
+                </div>
+
+                <div class="form-actions full-width">
+                    <button type="submit" class="btn btn-primary">Créer la règle</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Rules List -->
+    <section class="card-static animate-slide-up stagger-2">
+        <div class="card-header">
+            <h3 class="card-title">Règles existantes</h3>
+        </div>
+        <div class="card-body p-0">
+            {% if rules %}
+            <div class="table-container" style="border: none;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Priorité</th>
+                            <th>Nom</th>
+                            <th>Conditions</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rules %}
+                        <tr class="{{ 'opacity-50' if not r.is_active else '' }}">
+                            <td>
+                                <span class="priority-badge">{{ r.priority }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ r.name }}</strong>
+                                {% if r.description %}
+                                <div class="text-xs text-muted">{{ r.description }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="conditions-list">
+                                    {% if r.leave_type %}
+                                    <span class="condition-tag">
+                                        <span class="balance-dot" style="background: {{ r.leave_type.color }};"></span>
+                                        {{ r.leave_type.name }}
+                                    </span>
+                                    {% endif %}
+                                    {% if r.max_days %}
+                                    <span class="condition-tag">≤ {{ r.max_days }} j</span>
+                                    {% endif %}
+                                    {% if r.min_advance_days > 0 %}
+                                    <span class="condition-tag">{{ r.min_advance_days }}j+ préavis</span>
+                                    {% endif %}
+                                    {% if r.applies_to_teams %}
+                                    <span class="condition-tag">{{ r.team_ids_list|length }} équipe(s)</span>
+                                    {% endif %}
+                                    {% if r.applies_to_roles %}
+                                    <span class="condition-tag">{{ r.role_ids_list|length }} rôle(s)</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if r.is_active %}
+                                <span class="badge badge-success">Active</span>
+                                {% else %}
+                                <span class="badge badge-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <form action="{{ url_for('admin_advanced.toggle_auto_approval_rule', rule_id=r.id) }}" method="POST" style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-ghost btn-sm">
+                                            {{ 'Désactiver' if r.is_active else 'Activer' }}
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('admin_advanced.delete_auto_approval_rule', rule_id=r.id) }}" method="POST" style="display: inline;"
+                                          onsubmit="return confirm('Supprimer cette règle ?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-ghost btn-sm text-danger">Supprimer</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state p-8">
+                <div class="empty-state-icon">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <p class="empty-state-text">Aucune règle d'auto-approbation</p>
+                <p class="text-muted text-sm">Créez des règles pour approuver automatiquement certaines demandes</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+.info-box {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-info-soft);
+    border: 1px solid var(--color-info);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-6);
+}
+
+.info-box svg {
+    flex-shrink: 0;
+    color: var(--color-info);
+}
+
+.info-box p {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-1);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+}
+
+.form-hint {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-1);
+}
+
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--color-accent);
+    color: white;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: var(--text-sm);
+}
+
+.conditions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+}
+
+.condition-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    background: var(--color-bg-sunken);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+}
+
+.balance-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

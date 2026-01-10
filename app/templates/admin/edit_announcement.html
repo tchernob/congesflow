@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier l'annonce - TimeOff{% endblock %}
+{% block page_title %}Modifier l'annonce{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <section class="card-static animate-slide-up">
+        <div class="card-header">
+            <h3 class="card-title">Modifier l'annonce</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('admin_advanced.edit_announcement', announcement_id=announcement.id) }}" method="POST" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="title">Titre</label>
+                    <input type="text" class="form-input" name="title" id="title" required value="{{ announcement.title }}">
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="content">Contenu</label>
+                    <textarea class="form-input" name="content" id="content" rows="4" required>{{ announcement.content }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="announcement_type">Type</label>
+                    <select class="form-select" name="announcement_type" id="announcement_type">
+                        {% for key, label in announcement_types.items() %}
+                        <option value="{{ key }}" {{ 'selected' if announcement.announcement_type == key else '' }}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Options</label>
+                    <div class="flex flex-col gap-2">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="is_pinned" {{ 'checked' if announcement.is_pinned else '' }}>
+                            Épingler en haut
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="is_active" {{ 'checked' if announcement.is_active else '' }}>
+                            Active (visible)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="publish_at">Publier le (optionnel)</label>
+                    <input type="datetime-local" class="form-input" name="publish_at" id="publish_at"
+                           value="{{ announcement.publish_at.strftime('%Y-%m-%dT%H:%M') if announcement.publish_at else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="expires_at">Expire le (optionnel)</label>
+                    <input type="datetime-local" class="form-input" name="expires_at" id="expires_at"
+                           value="{{ announcement.expires_at.strftime('%Y-%m-%dT%H:%M') if announcement.expires_at else '' }}">
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label">Équipes ciblées</label>
+                    <div class="checkbox-group">
+                        {% for team in teams %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="team_ids" value="{{ team.id }}"
+                                   {{ 'checked' if team.id in announcement.team_ids_list else '' }}>
+                            {{ team.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="form-hint">Vide = visible par tous</p>
+                </div>
+
+                <div class="form-actions full-width">
+                    <a href="{{ url_for('admin_advanced.announcements') }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+
+<style>
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+}
+
+.form-hint {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-1);
+}
+
+.form-actions {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

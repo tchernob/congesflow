@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Périodes bloquées - TimeOff{% endblock %}
+{% block page_title %}Périodes bloquées{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Create Period Form -->
+    <section class="card-static animate-slide-up">
+        <div class="card-header">
+            <h3 class="card-title">Nouvelle période bloquée</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('admin_advanced.create_blocked_period') }}" method="POST" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="name">Nom de la période</label>
+                    <input type="text" class="form-input" name="name" id="name" required placeholder="Ex: Clôture annuelle, Inventaire...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="start_date">Date début</label>
+                    <input type="date" class="form-input" name="start_date" id="start_date" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="end_date">Date fin</label>
+                    <input type="date" class="form-input" name="end_date" id="end_date" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="block_type">Type de blocage</label>
+                    <select class="form-select" name="block_type" id="block_type">
+                        <option value="soft">Souple (avertissement)</option>
+                        <option value="hard">Strict (refus automatique)</option>
+                    </select>
+                    <p class="form-hint">Souple: affiche un avertissement. Strict: bloque les demandes.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Équipes concernées</label>
+                    <div class="checkbox-group">
+                        {% for team in teams %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="team_ids" value="{{ team.id }}">
+                            {{ team.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="form-hint">Vide = toutes les équipes</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Types de congé concernés</label>
+                    <div class="checkbox-group">
+                        {% for lt in leave_types %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="leave_type_ids" value="{{ lt.id }}">
+                            <span class="balance-dot" style="background: {{ lt.color }};"></span>
+                            {{ lt.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="form-hint">Vide = tous les types</p>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="reason">Raison du blocage</label>
+                    <textarea class="form-input" name="reason" id="reason" rows="2" placeholder="Explication affichée aux employés"></textarea>
+                </div>
+
+                <div class="form-actions full-width">
+                    <button type="submit" class="btn btn-primary">Créer la période</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Periods List -->
+    <section class="card-static animate-slide-up stagger-1">
+        <div class="card-header">
+            <h3 class="card-title">Périodes configurées</h3>
+        </div>
+        <div class="card-body p-0">
+            {% if periods %}
+            <div class="table-container" style="border: none;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Période</th>
+                            <th>Type</th>
+                            <th>Équipes</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in periods %}
+                        <tr class="{{ 'opacity-50' if not p.is_active else '' }}">
+                            <td>
+                                <strong>{{ p.name }}</strong>
+                                {% if p.reason %}
+                                <div class="text-xs text-muted">{{ p.reason[:50] }}{{ '...' if p.reason|length > 50 else '' }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ p.start_date.strftime('%d/%m/%Y') }} - {{ p.end_date.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                {% if p.block_type == 'hard' %}
+                                <span class="badge badge-danger">Strict</span>
+                                {% else %}
+                                <span class="badge badge-warning">Souple</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.team_ids %}
+                                {{ p.team_ids_list|length }} équipe(s)
+                                {% else %}
+                                <span class="text-muted">Toutes</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.is_active %}
+                                <span class="badge badge-success">Active</span>
+                                {% else %}
+                                <span class="badge badge-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <form action="{{ url_for('admin_advanced.toggle_blocked_period', period_id=p.id) }}" method="POST" style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-ghost btn-sm">
+                                            {{ 'Désactiver' if p.is_active else 'Activer' }}
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('admin_advanced.delete_blocked_period', period_id=p.id) }}" method="POST" style="display: inline;"
+                                          onsubmit="return confirm('Supprimer cette période ?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-ghost btn-sm text-danger">Supprimer</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state p-8">
+                <div class="empty-state-icon">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <p class="empty-state-text">Aucune période bloquée</p>
+                <p class="text-muted text-sm">Bloquez certaines périodes pour limiter les demandes de congés</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+}
+
+.form-hint {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-1);
+}
+
+.balance-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

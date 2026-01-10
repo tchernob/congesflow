@@ -136,6 +136,83 @@
                 </div>
                 {% endif %}
             </div>
+
+            <!-- Documents Section -->
+            <div class="documents-section">
+                <h4 class="section-title">Justificatifs</h4>
+
+                {% if request.documents.count() > 0 %}
+                <div class="documents-list">
+                    {% for doc in request.documents %}
+                    <div class="document-item">
+                        <div class="document-icon">
+                            {% if doc.is_pdf %}
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            {% elif doc.is_image %}
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            {% else %}
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <div class="document-info">
+                            <div class="document-name">{{ doc.filename }}</div>
+                            <div class="document-meta">
+                                <span class="badge badge-secondary">{{ doc.type_label }}</span>
+                                <span>{{ doc.file_size_display }}</span>
+                                <span>{{ doc.created_at.strftime('%d/%m/%Y') }}</span>
+                            </div>
+                        </div>
+                        <div class="document-actions">
+                            <a href="{{ url_for('employee.view_document', request_id=request.id, document_id=doc.id) }}" class="btn btn-ghost btn-sm">
+                                Télécharger
+                            </a>
+                            {% if request.status in ['pending_manager', 'pending_hr'] %}
+                            <form action="{{ url_for('employee.delete_document', request_id=request.id, document_id=doc.id) }}" method="POST" style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-ghost btn-sm text-danger" onclick="return confirm('Supprimer ce document ?')">
+                                    Supprimer
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Aucun document joint</p>
+                {% endif %}
+
+                <!-- Upload Form -->
+                {% if request.status in ['pending_manager', 'pending_hr'] %}
+                <form action="{{ url_for('employee.upload_document', request_id=request.id) }}" method="POST" enctype="multipart/form-data" class="upload-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="upload-row">
+                        <div class="upload-field">
+                            <input type="file" name="document" id="document" class="file-input" accept=".pdf,.png,.jpg,.jpeg,.gif,.doc,.docx" required>
+                            <label for="document" class="file-label">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                </svg>
+                                Choisir un fichier
+                            </label>
+                            <span class="file-name" id="file-name">Aucun fichier</span>
+                        </div>
+                        <select name="document_type" class="form-select form-select-sm">
+                            <option value="other">Autre document</option>
+                            <option value="medical">Certificat médical</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Ajouter</button>
+                    </div>
+                    <p class="upload-hint">Formats acceptés : PDF, PNG, JPG, DOC. Max 5 MB.</p>
+                </form>
+                {% endif %}
+            </div>
         </div>
     </div>
 
@@ -294,6 +371,120 @@
     margin-top: var(--space-6);
 }
 
+/* Documents Section */
+.documents-section {
+    padding-top: var(--space-6);
+    border-top: var(--border-thin);
+    margin-top: var(--space-6);
+}
+
+.documents-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--color-bg-sunken);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+}
+
+.document-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg);
+    border: var(--border-thin);
+    border-radius: var(--radius-sm);
+    color: var(--color-ink-muted);
+}
+
+.document-info {
+    flex: 1;
+}
+
+.document-name {
+    font-weight: 500;
+    margin-bottom: var(--space-1);
+}
+
+.document-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+}
+
+.document-actions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+/* Upload Form */
+.upload-form {
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-bg-sunken);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.upload-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.upload-field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 1;
+    min-width: 200px;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg);
+    border: var(--border-thin);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    transition: var(--transition-fast);
+}
+
+.file-label:hover {
+    background: var(--color-bg-elevated);
+}
+
+.file-name {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+}
+
+.upload-hint {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-2);
+}
+
 @media (max-width: 768px) {
     .detail-grid {
         grid-template-columns: 1fr;
@@ -308,6 +499,18 @@
         height: 20px;
         margin-left: 19px;
     }
+
+    .upload-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 </style>
+
+<script>
+document.getElementById('document').addEventListener('change', function(e) {
+    var fileName = e.target.files[0] ? e.target.files[0].name : 'Aucun fichier';
+    document.getElementById('file-name').textContent = fileName;
+});
+</script>
 {% endblock %}
