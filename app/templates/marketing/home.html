@@ -1020,11 +1020,37 @@
             </p>
         </div>
 
-        <div class="pricing-grid three-cols">
+        <div class="pricing-grid four-cols">
+            <!-- Gratuit -->
+            <div class="pricing-card">
+                <div class="pricing-name">Gratuit</div>
+                <div class="pricing-price">0€ <span>/mois</span></div>
+                <p class="pricing-description">Pour les très petites équipes</p>
+                <ul class="pricing-features">
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Jusqu'à 5 employés
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Demandes et validations
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Calendrier d'équipe
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Notifications email
+                    </li>
+                </ul>
+                <a href="{{ url_for('marketing.signup') }}" class="btn btn-secondary btn-lg" style="width: 100%;">Commencer</a>
+            </div>
+
             <!-- Pro -->
             <div class="pricing-card">
                 <div class="pricing-name">Pro</div>
-                <div class="pricing-price">39€ <span>/mois</span></div>
+                <div class="pricing-price">29€ <span>/mois</span></div>
                 <p class="pricing-description">Pour les petites équipes</p>
                 <ul class="pricing-features">
                     <li class="pricing-feature">
@@ -1108,12 +1134,18 @@
 </section>
 
 <style>
-.pricing-grid.three-cols {
-    grid-template-columns: repeat(3, 1fr);
+.pricing-grid.four-cols {
+    grid-template-columns: repeat(4, 1fr);
 }
 
-@media (max-width: 900px) {
-    .pricing-grid.three-cols {
+@media (max-width: 1200px) {
+    .pricing-grid.four-cols {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .pricing-grid.four-cols {
         grid-template-columns: 1fr;
     }
 

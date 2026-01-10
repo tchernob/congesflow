@@ -70,8 +70,8 @@ class Company(db.Model):
 
     PLAN_PRICES = {
         'free': {'monthly': 0, 'yearly': 0},
-        'pro': {'monthly': 39, 'yearly': 390},  # 39€/mois, 390€/an (1 mois offert)
-        'business': {'monthly': 79, 'yearly': 790},  # 79€/mois, 790€/an (1 mois offert)
+        'pro': {'monthly': 29, 'yearly': 278},  # 29€/mois, ~23€/mois en annuel (-20%)
+        'business': {'monthly': 79, 'yearly': 758},  # 79€/mois, ~63€/mois en annuel (-20%)
         'enterprise': {'monthly': None, 'yearly': None},  # Sur devis
     }
 
