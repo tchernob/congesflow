@@ -296,6 +296,12 @@ a:hover {
   box-shadow: var(--shadow-md);
 }
 
+.logo-img {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+}
+
 .logo-text {
   font-weight: 700;
   font-size: var(--text-lg);

@@ -154,6 +154,12 @@
             font-size: var(--text-sm);
         }
 
+        .nav-logo-img {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-md);
+        }
+
         .nav-logo-text {
             font-size: var(--text-lg);
             font-weight: 600;
@@ -921,7 +927,7 @@
     <nav class="nav">
         <div class="nav-inner">
             <a href="{{ url_for('marketing.home') }}" class="nav-logo">
-                <div class="nav-logo-icon">T</div>
+                <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TimeOff" class="nav-logo-img">
                 <span class="nav-logo-text">TimeOff</span>
             </a>
 
@@ -946,7 +952,7 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <div class="footer-logo">
-                        <div class="nav-logo-icon">T</div>
+                        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TimeOff" class="nav-logo-img">
                         <span class="nav-logo-text">TimeOff</span>
                     </div>
                     <p class="footer-description">
