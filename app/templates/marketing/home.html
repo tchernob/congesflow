@@ -745,6 +745,268 @@
     </div>
 </section>
 
+<!-- Advanced Features Highlight -->
+<section class="advanced-highlight">
+    <div class="container">
+        <div class="advanced-highlight-grid">
+            <div class="advanced-highlight-content">
+                <div class="badge badge-green">Nouveau</div>
+                <h2 class="advanced-highlight-title">
+                    Des fonctionnalités<br>
+                    <span class="gradient-text-green">pour les entreprises exigeantes</span>
+                </h2>
+                <p class="advanced-highlight-subtitle">
+                    Automatisez les validations, bloquez les périodes critiques, exportez vers votre logiciel de paie.
+                    TimeOff s'adapte à vos process, pas l'inverse.
+                </p>
+                <div class="advanced-features-list">
+                    <div class="advanced-feature-item">
+                        <div class="advanced-feature-icon-small">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Délégation d'approbation</strong>
+                            <p>Le manager absent délègue ses validations</p>
+                        </div>
+                    </div>
+                    <div class="advanced-feature-item">
+                        <div class="advanced-feature-icon-small">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Auto-approbation</strong>
+                            <p>Règles intelligentes pour valider automatiquement</p>
+                        </div>
+                    </div>
+                    <div class="advanced-feature-item">
+                        <div class="advanced-feature-icon-small">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Périodes bloquées</strong>
+                            <p>Restreignez les congés pendant les pics d'activité</p>
+                        </div>
+                    </div>
+                    <div class="advanced-feature-item">
+                        <div class="advanced-feature-icon-small">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Export paie</strong>
+                            <p>Compatible Silae, PayFit et autres</p>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ url_for('marketing.features') }}" class="btn btn-secondary btn-lg">
+                    Voir toutes les fonctionnalités
+                </a>
+            </div>
+            <div class="advanced-highlight-visual">
+                <div class="analytics-preview">
+                    <div class="analytics-header">
+                        <span>Analytics - Janvier 2025</span>
+                    </div>
+                    <div class="analytics-stats">
+                        <div class="analytics-stat">
+                            <span class="analytics-value">156</span>
+                            <span class="analytics-label">Jours posés</span>
+                        </div>
+                        <div class="analytics-stat">
+                            <span class="analytics-value">94%</span>
+                            <span class="analytics-label">Taux d'approbation</span>
+                        </div>
+                        <div class="analytics-stat">
+                            <span class="analytics-value">2.3j</span>
+                            <span class="analytics-label">Délai moyen</span>
+                        </div>
+                    </div>
+                    <div class="analytics-chart">
+                        <div class="chart-bars">
+                            <div class="chart-bar" style="height: 60%"><span>Jan</span></div>
+                            <div class="chart-bar" style="height: 45%"><span>Fév</span></div>
+                            <div class="chart-bar" style="height: 80%"><span>Mar</span></div>
+                            <div class="chart-bar" style="height: 55%"><span>Avr</span></div>
+                            <div class="chart-bar" style="height: 90%"><span>Mai</span></div>
+                            <div class="chart-bar active" style="height: 100%"><span>Juin</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.advanced-highlight {
+    padding: var(--space-20) 0;
+    background: linear-gradient(180deg, var(--color-bg) 0%, #f0fdf4 50%, var(--color-bg) 100%);
+}
+
+.advanced-highlight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-16);
+    align-items: center;
+}
+
+.badge-green {
+    background: #10b981;
+    color: white;
+}
+
+.gradient-text-green {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.advanced-highlight-title {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--space-5);
+}
+
+.advanced-highlight-subtitle {
+    font-size: var(--text-lg);
+    color: var(--color-text-muted);
+    line-height: 1.7;
+    margin-bottom: var(--space-8);
+}
+
+.advanced-features-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+}
+
+.advanced-feature-item {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+}
+
+.advanced-feature-icon-small {
+    width: 40px;
+    height: 40px;
+    background: #d1fae5;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #059669;
+    flex-shrink: 0;
+}
+
+.advanced-feature-item strong {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.advanced-feature-item p {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+.analytics-preview {
+    background: white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+}
+
+.analytics-header {
+    padding: var(--space-4);
+    background: #059669;
+    color: white;
+    font-weight: 600;
+}
+
+.analytics-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.analytics-stat {
+    text-align: center;
+}
+
+.analytics-value {
+    display: block;
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: #059669;
+}
+
+.analytics-label {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.analytics-chart {
+    padding: var(--space-6);
+}
+
+.chart-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 120px;
+    gap: var(--space-2);
+}
+
+.chart-bar {
+    flex: 1;
+    background: #d1fae5;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: var(--space-2);
+    transition: all 0.3s ease;
+}
+
+.chart-bar.active {
+    background: #059669;
+}
+
+.chart-bar span {
+    font-size: 10px;
+    color: var(--color-text-muted);
+}
+
+.chart-bar.active span {
+    color: white;
+}
+
+@media (max-width: 1024px) {
+    .advanced-highlight-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-10);
+    }
+
+    .analytics-preview {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+}
+</style>
+
 <!-- Pricing Preview -->
 <section class="pricing">
     <div class="container">
@@ -786,29 +1048,29 @@
 
             <div class="pricing-card featured">
                 <div class="pricing-badge">Populaire</div>
-                <div class="pricing-name">Pro</div>
-                <div class="pricing-price">79€ <span>/mois</span></div>
-                <p class="pricing-description">Pour les équipes en croissance</p>
+                <div class="pricing-name">Business</div>
+                <div class="pricing-price">149€ <span>/mois</span></div>
+                <p class="pricing-description">Pour les entreprises exigeantes</p>
                 <ul class="pricing-features">
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Jusqu'à 100 employés
+                        Jusqu'à 250 employés
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Tout Starter +
+                        Délégation & Auto-approbation
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Rapports avancés
+                        Périodes bloquées
+                    </li>
+                    <li class="pricing-feature">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Analytics & Export paie
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                         Intégrations Slack / Teams
-                    </li>
-                    <li class="pricing-feature">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Support prioritaire
                     </li>
                 </ul>
                 <a href="{{ url_for('marketing.signup') }}" class="btn btn-primary btn-lg" style="width: 100%;">Commencer</a>
@@ -817,7 +1079,7 @@
             <div class="pricing-card">
                 <div class="pricing-name">Enterprise</div>
                 <div class="pricing-price">Sur mesure</div>
-                <p class="pricing-description">Pour les grandes organisations</p>
+                <p class="pricing-description">Pour les organisations multi-sites</p>
                 <ul class="pricing-features">
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -825,15 +1087,15 @@
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Tout Pro +
+                        Multi-sites & jours fériés locaux
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        SSO / SAML
+                        Organigramme visuel
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        API personnalisée
+                        SSO / SAML & API
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -843,8 +1105,29 @@
                 <a href="{{ url_for('marketing.contact') }}" class="btn btn-secondary btn-lg" style="width: 100%;">Nous contacter</a>
             </div>
         </div>
+
+        <p class="pricing-see-all">
+            <a href="{{ url_for('marketing.pricing') }}">Voir tous les plans et comparer →</a>
+        </p>
     </div>
 </section>
+
+<style>
+.pricing-see-all {
+    text-align: center;
+    margin-top: var(--space-8);
+}
+
+.pricing-see-all a {
+    color: var(--color-primary);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.pricing-see-all a:hover {
+    text-decoration: underline;
+}
+</style>
 
 <!-- Testimonials -->
 <section class="testimonials">
