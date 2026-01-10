@@ -33,11 +33,11 @@ class LeaveDocument(db.Model):
     uploaded_by = db.relationship('User', backref='uploaded_documents')
 
     # Constants
-    TYPE_MEDICAL = 'medical'
+    TYPE_JUSTIFICATIF = 'justificatif'
     TYPE_OTHER = 'other'
 
     TYPE_LABELS = {
-        'medical': 'Certificat médical',
+        'justificatif': 'Justificatif',
         'other': 'Autre document',
     }
 
