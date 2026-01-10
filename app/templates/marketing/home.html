@@ -1021,18 +1021,19 @@
         </div>
 
         <div class="pricing-grid four-cols">
+            <!-- Gratuit -->
             <div class="pricing-card">
-                <div class="pricing-name">Starter</div>
-                <div class="pricing-price">29€ <span>/mois</span></div>
-                <p class="pricing-description">Pour les petites équipes</p>
+                <div class="pricing-name">Gratuit</div>
+                <div class="pricing-price">0€ <span>/mois</span></div>
+                <p class="pricing-description">Pour les très petites équipes</p>
                 <ul class="pricing-features">
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Jusqu'à 25 employés
+                        Jusqu'à 5 employés
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Tous les types de congés
+                        Demandes et validations
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -1040,20 +1041,21 @@
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Support email
+                        Notifications email
                     </li>
                 </ul>
                 <a href="{{ url_for('marketing.signup') }}" class="btn btn-secondary btn-lg" style="width: 100%;">Commencer</a>
             </div>
 
+            <!-- Starter -->
             <div class="pricing-card">
-                <div class="pricing-name">Pro</div>
-                <div class="pricing-price">89€ <span>/mois</span></div>
-                <p class="pricing-description">Pour les équipes en croissance</p>
+                <div class="pricing-name">Starter</div>
+                <div class="pricing-price">39€ <span>/mois</span></div>
+                <p class="pricing-description">Pour les petites équipes</p>
                 <ul class="pricing-features">
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Jusqu'à 100 employés
+                        Jusqu'à 30 employés
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -1061,25 +1063,26 @@
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Annonces d'entreprise
+                        Workflow Manager → RH
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Statistiques & Export CSV
+                        Export CSV
                     </li>
                 </ul>
-                <a href="{{ url_for('marketing.signup') }}" class="btn btn-secondary btn-lg" style="width: 100%;">Commencer</a>
+                <a href="{{ url_for('marketing.signup') }}" class="btn btn-secondary btn-lg" style="width: 100%;">Essai gratuit</a>
             </div>
 
+            <!-- Business -->
             <div class="pricing-card featured">
                 <div class="pricing-badge">Populaire</div>
                 <div class="pricing-name">Business</div>
-                <div class="pricing-price">149€ <span>/mois</span></div>
-                <p class="pricing-description">Pour les entreprises exigeantes</p>
+                <div class="pricing-price">129€ <span>/mois</span></div>
+                <p class="pricing-description">Pour les PME exigeantes</p>
                 <ul class="pricing-features">
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Jusqu'à 250 employés
+                        Jusqu'à 200 employés
                     </li>
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -1094,13 +1097,14 @@
                         Analytics & Export paie
                     </li>
                 </ul>
-                <a href="{{ url_for('marketing.signup') }}" class="btn btn-primary btn-lg" style="width: 100%;">Commencer</a>
+                <a href="{{ url_for('marketing.signup') }}" class="btn btn-primary btn-lg" style="width: 100%;">Essai gratuit</a>
             </div>
 
+            <!-- Enterprise -->
             <div class="pricing-card">
                 <div class="pricing-name">Enterprise</div>
                 <div class="pricing-price">Sur mesure</div>
-                <p class="pricing-description">Pour les organisations multi-sites</p>
+                <p class="pricing-description">Pour les grandes organisations</p>
                 <ul class="pricing-features">
                     <li class="pricing-feature">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>

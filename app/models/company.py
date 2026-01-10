@@ -44,39 +44,40 @@ class Company(db.Model):
     # Plan constants
     PLAN_FREE = 'free'
     PLAN_STARTER = 'starter'
-    PLAN_PRO = 'pro'
     PLAN_BUSINESS = 'business'
     PLAN_ENTERPRISE = 'enterprise'
 
     # Legacy - pour migration
     PLAN_TRIAL = 'trial'
+    PLAN_PRO = 'pro'  # Redirigé vers Business
 
     PLAN_LIMITS = {
         'free': 5,
-        'starter': 25,
-        'pro': 100,
-        'business': 250,
+        'starter': 30,
+        'business': 200,
         'enterprise': 9999,
         # Legacy
         'trial': 5,
+        'pro': 200,  # Ancien Pro → Business
     }
 
     PLAN_LABELS = {
         'free': 'Gratuit',
         'starter': 'Starter',
-        'pro': 'Pro',
         'business': 'Business',
         'enterprise': 'Enterprise',
         # Legacy
         'trial': 'Essai',
+        'pro': 'Pro',
     }
 
     PLAN_PRICES = {
         'free': {'monthly': 0, 'yearly': 0},
-        'starter': {'monthly': 29, 'yearly': 278},  # ~23€/mois en annuel
-        'pro': {'monthly': 89, 'yearly': 854},  # ~71€/mois en annuel
-        'business': {'monthly': 149, 'yearly': 1428},  # ~119€/mois en annuel
+        'starter': {'monthly': 39, 'yearly': 374},  # ~31€/mois en annuel (-20%)
+        'business': {'monthly': 129, 'yearly': 1238},  # ~103€/mois en annuel (-20%)
         'enterprise': {'monthly': None, 'yearly': None},  # Sur devis
+        # Legacy
+        'pro': {'monthly': 129, 'yearly': 1238},
     }
 
     PLAN_FEATURES = {
@@ -84,33 +85,27 @@ class Company(db.Model):
             'Jusqu\'à 5 utilisateurs',
             'Demandes et validations',
             'Calendrier d\'équipe',
-            '1 an d\'historique',
+            'Notifications email',
         ],
         'starter': [
-            'Jusqu\'à 25 utilisateurs',
+            'Jusqu\'à 30 utilisateurs',
             'Tout le plan Gratuit',
             'Workflow Manager → RH',
             'Intégration Slack',
-            'Notifications email',
+            'Export CSV',
             'Support email',
         ],
-        'pro': [
-            'Jusqu\'à 100 utilisateurs',
+        'business': [
+            'Jusqu\'à 200 utilisateurs',
             'Tout le plan Starter',
             'Annonces d\'entreprise',
-            'Statistiques de base',
-            'Export CSV',
-            'Support prioritaire',
-        ],
-        'business': [
-            'Jusqu\'à 250 utilisateurs',
-            'Tout le plan Pro',
             'Délégation d\'approbation',
-            'Auto-approbation',
+            'Règles d\'auto-approbation',
             'Périodes bloquées',
             'Analytics avancés',
             'Export paie (Silae, PayFit)',
             'Détection conflits d\'équipe',
+            'Support prioritaire',
         ],
         'enterprise': [
             'Utilisateurs illimités',
@@ -122,6 +117,11 @@ class Company(db.Model):
             'Intégration Teams (sur demande)',
             'Account manager dédié',
             'SLA garanti 99.9%',
+        ],
+        # Legacy
+        'pro': [
+            'Jusqu\'à 200 utilisateurs',
+            'Plan migré vers Business',
         ],
     }
 
@@ -228,7 +228,7 @@ class Company(db.Model):
     def get_plans_for_display(cls):
         """Retourne les plans formatés pour affichage."""
         plans = []
-        for plan_id in ['free', 'starter', 'pro', 'business', 'enterprise']:
+        for plan_id in ['free', 'starter', 'business', 'enterprise']:
             plans.append({
                 'id': plan_id,
                 'name': cls.PLAN_LABELS[plan_id],
