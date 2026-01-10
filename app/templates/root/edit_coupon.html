@@ -1,0 +1,83 @@
+{% extends "root/base_root.html" %}
+
+{% block title %}Modifier {{ coupon.code }}{% endblock %}
+{% block page_title %}Modifier le coupon{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4);">
+    <a href="{{ url_for('root.view_coupon', coupon_id=coupon.id) }}" class="btn btn-secondary btn-sm">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Retour
+    </a>
+</div>
+
+<div class="card-static" style="padding: var(--space-5); max-width: 600px;">
+    <div style="background: var(--color-bg-sunken); padding: var(--space-3); border-radius: 8px; margin-bottom: var(--space-5);">
+        <span style="font-size: var(--text-xs); color: var(--color-ink-muted);">Code</span>
+        <div style="font-weight: 600; font-family: monospace; font-size: var(--text-lg); color: var(--root-accent);">{{ coupon.code }}</div>
+    </div>
+
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <input type="text" id="description" name="description" value="{{ coupon.description or '' }}">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+            <div class="form-group">
+                <label for="discount_type">Type de réduction</label>
+                <select id="discount_type" name="discount_type">
+                    <option value="percent" {% if coupon.discount_type == 'percent' %}selected{% endif %}>Pourcentage (%)</option>
+                    <option value="fixed" {% if coupon.discount_type == 'fixed' %}selected{% endif %}>Montant fixe (€)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="discount_value">Valeur</label>
+                <input type="number" id="discount_value" name="discount_value" step="0.01" min="0" required value="{{ coupon.discount_value }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="duration_months">Durée de la réduction (mois)</label>
+            <input type="number" id="duration_months" name="duration_months" min="1" value="{{ coupon.duration_months or '' }}" placeholder="Laisser vide pour permanent">
+        </div>
+
+        <div class="form-group">
+            <label for="max_uses">Nombre maximum d'utilisations</label>
+            <input type="number" id="max_uses" name="max_uses" min="1" value="{{ coupon.max_uses or '' }}" placeholder="Laisser vide pour illimité">
+            <small style="color: var(--color-ink-muted);">Actuellement utilisé {{ coupon.uses_count }} fois</small>
+        </div>
+
+        <div class="form-group">
+            <label for="valid_until">Valide jusqu'au</label>
+            <input type="date" id="valid_until" name="valid_until" value="{{ coupon.valid_until.strftime('%Y-%m-%d') if coupon.valid_until else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="valid_plans">Plans éligibles</label>
+            <select id="valid_plans" name="valid_plans">
+                <option value="">Tous les plans</option>
+                {% for plan_id, plan_name in plans.items() %}
+                <option value="{{ plan_id }}" {% if coupon.valid_plans == plan_id %}selected{% endif %}>{{ plan_name }} uniquement</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                <input type="checkbox" name="is_active" {% if coupon.is_active %}checked{% endif %}>
+                <span>Coupon actif</span>
+            </label>
+        </div>
+
+        <div style="margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--color-border);">
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

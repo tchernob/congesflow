@@ -1,0 +1,84 @@
+{% extends "root/base_root.html" %}
+
+{% block title %}Nouveau coupon{% endblock %}
+{% block page_title %}Créer un coupon{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4);">
+    <a href="{{ url_for('root.coupons') }}" class="btn btn-secondary btn-sm">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Retour
+    </a>
+</div>
+
+<div class="card-static" style="padding: var(--space-5); max-width: 600px;">
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label for="code">Code du coupon</label>
+            <input type="text" id="code" name="code" placeholder="Laisser vide pour générer automatiquement" style="text-transform: uppercase; font-family: monospace;">
+            <small style="color: var(--color-ink-muted);">Ex: SUMMER2024, WELCOME10</small>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <input type="text" id="description" name="description" placeholder="Ex: Promotion été 2024">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+            <div class="form-group">
+                <label for="discount_type">Type de réduction</label>
+                <select id="discount_type" name="discount_type">
+                    <option value="percent">Pourcentage (%)</option>
+                    <option value="fixed">Montant fixe (€)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="discount_value">Valeur</label>
+                <input type="number" id="discount_value" name="discount_value" step="0.01" min="0" required placeholder="Ex: 20">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="duration_months">Durée de la réduction (mois)</label>
+            <input type="number" id="duration_months" name="duration_months" min="1" placeholder="Laisser vide pour permanent">
+            <small style="color: var(--color-ink-muted);">Nombre de mois pendant lesquels la réduction s'applique après activation</small>
+        </div>
+
+        <div class="form-group">
+            <label for="max_uses">Nombre maximum d'utilisations</label>
+            <input type="number" id="max_uses" name="max_uses" min="1" placeholder="Laisser vide pour illimité">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+            <div class="form-group">
+                <label for="valid_from">Valide à partir du</label>
+                <input type="date" id="valid_from" name="valid_from">
+            </div>
+
+            <div class="form-group">
+                <label for="valid_until">Valide jusqu'au</label>
+                <input type="date" id="valid_until" name="valid_until">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="valid_plans">Plans éligibles</label>
+            <select id="valid_plans" name="valid_plans">
+                <option value="">Tous les plans</option>
+                {% for plan_id, plan_name in plans.items() %}
+                <option value="{{ plan_id }}">{{ plan_name }} uniquement</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--color-border);">
+            <button type="submit" class="btn btn-primary">Créer le coupon</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

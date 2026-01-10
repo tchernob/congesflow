@@ -1,0 +1,157 @@
+{% extends "root/base_root.html" %}
+
+{% block title %}Outils{% endblock %}
+{% block page_title %}Outils de maintenance{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-6);">
+    <!-- Recalculate balances -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-2);">
+            <svg width="20" height="20" fill="none" stroke="var(--root-accent)" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: var(--space-2);">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Recalculer les soldes
+        </h2>
+        <p style="color: var(--color-ink-muted); font-size: var(--text-sm); margin-bottom: var(--space-4);">
+            Recalcule les jours utilisés et en attente à partir des demandes de congés. Utile si les compteurs sont désynchronisés.
+        </p>
+
+        <form method="post" action="{{ url_for('root.recalculate_balances') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group" style="margin-bottom: var(--space-3);">
+                <select name="company_id" class="form-input" required>
+                    <option value="">Sélectionner une entreprise...</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}">{{ company.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Recalculer tous les soldes de cette entreprise ?')">
+                Recalculer
+            </button>
+        </form>
+    </div>
+
+    <!-- Reset passwords -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-2);">
+            <svg width="20" height="20" fill="none" stroke="var(--root-accent)" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: var(--space-2);">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+            </svg>
+            Réinitialiser les mots de passe
+        </h2>
+        <p style="color: var(--color-ink-muted); font-size: var(--text-sm); margin-bottom: var(--space-4);">
+            Génère des tokens de réinitialisation pour tous les utilisateurs d'une entreprise. Les liens seront affichés dans la liste des utilisateurs.
+        </p>
+
+        <form method="post" action="{{ url_for('root.reset_all_passwords') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group" style="margin-bottom: var(--space-3);">
+                <select name="company_id" class="form-input" required>
+                    <option value="">Sélectionner une entreprise...</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}">{{ company.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary" onclick="return confirm('Réinitialiser les mots de passe de tous les utilisateurs de cette entreprise ?')">
+                Réinitialiser
+            </button>
+        </form>
+    </div>
+
+    <!-- Sync leave types -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-2);">
+            <svg width="20" height="20" fill="none" stroke="var(--root-accent)" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: var(--space-2);">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+            </svg>
+            Synchroniser les types de congés
+        </h2>
+        <p style="color: var(--color-ink-muted); font-size: var(--text-sm); margin-bottom: var(--space-4);">
+            Ajoute les types de congés par défaut manquants (CP, RTT, Maladie, etc.) à une entreprise.
+        </p>
+
+        <form method="post" action="{{ url_for('root.sync_leave_types') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group" style="margin-bottom: var(--space-3);">
+                <select name="company_id" class="form-input" required>
+                    <option value="">Sélectionner une entreprise...</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}">{{ company.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                Synchroniser
+            </button>
+        </form>
+    </div>
+
+    <!-- Extend trial -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-2);">
+            <svg width="20" height="20" fill="none" stroke="var(--root-accent)" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: var(--space-2);">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Prolonger la période d'essai
+        </h2>
+        <p style="color: var(--color-ink-muted); font-size: var(--text-sm); margin-bottom: var(--space-4);">
+            Prolonge ou crée une période d'essai pour une entreprise. Les jours sont ajoutés à la fin actuelle de l'essai.
+        </p>
+
+        <form method="post" action="{{ url_for('root.extend_trial') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group" style="margin-bottom: var(--space-3);">
+                <select name="company_id" class="form-input" required>
+                    <option value="">Sélectionner une entreprise...</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}">
+                        {{ company.name }}
+                        {% if company.trial_ends_at %}
+                        (essai jusqu'au {{ company.trial_ends_at.strftime('%d/%m/%Y') }})
+                        {% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: var(--space-3);">
+                <label class="form-label">Jours à ajouter</label>
+                <select name="days" class="form-input">
+                    <option value="7">7 jours</option>
+                    <option value="14" selected>14 jours</option>
+                    <option value="30">30 jours</option>
+                    <option value="60">60 jours</option>
+                    <option value="90">90 jours</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                Prolonger
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Danger zone -->
+<div class="card-static" style="padding: var(--space-5); margin-top: var(--space-6); border: 2px solid #EF4444;">
+    <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4); color: #EF4444;">
+        <svg width="20" height="20" fill="none" stroke="#EF4444" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: var(--space-2);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+        Zone dangereuse
+    </h2>
+    <p style="color: var(--color-ink-muted); font-size: var(--text-sm); margin-bottom: var(--space-4);">
+        Ces actions sont irréversibles. Utilisez-les avec précaution.
+    </p>
+
+    <div style="display: flex; gap: var(--space-3);">
+        <button class="btn btn-secondary" disabled style="opacity: 0.5;">
+            Supprimer une entreprise (non implémenté)
+        </button>
+        <button class="btn btn-secondary" disabled style="opacity: 0.5;">
+            Purger les données de test (non implémenté)
+        </button>
+    </div>
+</div>
+{% endblock %}

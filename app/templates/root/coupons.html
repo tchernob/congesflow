@@ -1,0 +1,130 @@
+{% extends "root/base_root.html" %}
+
+{% block title %}Coupons{% endblock %}
+{% block page_title %}Coupons promotionnels{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom: var(--space-6);">
+    <div class="stat-card">
+        <div class="stat-card-label">Total coupons</div>
+        <div class="stat-card-value">{{ total_coupons }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-label">Coupons actifs</div>
+        <div class="stat-card-value">{{ active_coupons }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-label">Utilisations totales</div>
+        <div class="stat-card-value">{{ total_uses }}</div>
+    </div>
+</div>
+
+<div class="card-static" style="padding: var(--space-5);">
+    <!-- Actions bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+        <form method="get" class="filters-bar" style="margin-bottom: 0;">
+            <select name="status" onchange="this.form.submit()">
+                <option value="">Tous les statuts</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Actifs</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactifs</option>
+            </select>
+            {% if status_filter %}
+            <a href="{{ url_for('root.coupons') }}" class="btn btn-secondary btn-sm">Effacer</a>
+            {% endif %}
+        </form>
+        <a href="{{ url_for('root.create_coupon') }}" class="btn btn-primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Nouveau coupon
+        </a>
+    </div>
+
+    <!-- Results count -->
+    <p style="font-size: var(--text-sm); color: var(--color-ink-muted); margin-bottom: var(--space-4);">
+        {{ coupons|length }} coupon(s)
+    </p>
+
+    <!-- Table -->
+    <table class="root-table">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Réduction</th>
+                <th>Utilisations</th>
+                <th>Validité</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for coupon in coupons %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('root.view_coupon', coupon_id=coupon.id) }}" style="font-weight: 600; color: var(--root-accent); text-decoration: none; font-family: monospace;">
+                        {{ coupon.code }}
+                    </a>
+                </td>
+                <td style="color: var(--color-ink-muted); font-size: var(--text-sm);">
+                    {{ coupon.description[:40] }}{% if coupon.description|length > 40 %}...{% endif %}
+                </td>
+                <td>
+                    <span style="font-weight: 600; color: var(--color-success);">{{ coupon.discount_display }}</span>
+                    {% if coupon.duration_months %}
+                    <span style="font-size: var(--text-xs); color: var(--color-ink-muted);">
+                        ({{ coupon.duration_months }} mois)
+                    </span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if coupon.max_uses %}
+                    <span>{{ coupon.uses_count }} / {{ coupon.max_uses }}</span>
+                    {% else %}
+                    <span>{{ coupon.uses_count }} / ∞</span>
+                    {% endif %}
+                </td>
+                <td style="font-size: var(--text-sm);">
+                    {% if coupon.valid_until %}
+                        {% if coupon.valid_until < now() %}
+                        <span style="color: #EF4444;">Expiré</span>
+                        {% else %}
+                        <span>Jusqu'au {{ coupon.valid_until.strftime('%d/%m/%Y') }}</span>
+                        {% endif %}
+                    {% else %}
+                    <span style="color: var(--color-ink-muted);">Sans limite</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if coupon.is_valid %}
+                    <span style="color: var(--color-success); font-size: var(--text-xs); font-weight: 500;">Valide</span>
+                    {% elif not coupon.is_active %}
+                    <span style="color: #EF4444; font-size: var(--text-xs); font-weight: 500;">Désactivé</span>
+                    {% else %}
+                    <span style="color: #F59E0B; font-size: var(--text-xs); font-weight: 500;">Épuisé/Expiré</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display: flex; gap: var(--space-2);">
+                        <a href="{{ url_for('root.view_coupon', coupon_id=coupon.id) }}" class="btn btn-secondary btn-sm">Voir</a>
+                        <form method="post" action="{{ url_for('root.toggle_coupon', coupon_id=coupon.id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm {% if coupon.is_active %}btn-secondary{% else %}btn-primary{% endif %}">
+                                {{ 'Désactiver' if coupon.is_active else 'Activer' }}
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: var(--color-ink-muted); padding: var(--space-6);">
+                    Aucun coupon trouvé
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

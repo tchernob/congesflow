@@ -1,0 +1,157 @@
+{% extends "root/base_root.html" %}
+
+{% block title %}Coupon {{ coupon.code }}{% endblock %}
+{% block page_title %}Coupon {{ coupon.code }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4);">
+    <a href="{{ url_for('root.coupons') }}" class="btn btn-secondary btn-sm">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Retour
+    </a>
+    <a href="{{ url_for('root.edit_coupon', coupon_id=coupon.id) }}" class="btn btn-primary btn-sm">Modifier</a>
+    <form method="post" action="{{ url_for('root.toggle_coupon', coupon_id=coupon.id) }}" style="display: inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm {% if coupon.is_active %}btn-secondary{% else %}btn-primary{% endif %}">
+            {{ 'Désactiver' if coupon.is_active else 'Activer' }}
+        </button>
+    </form>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+    <!-- Info card -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Informations</h2>
+
+        <div style="display: grid; gap: var(--space-4);">
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Code</div>
+                <div style="font-weight: 600; font-family: monospace; font-size: var(--text-lg); color: var(--root-accent);">{{ coupon.code }}</div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Description</div>
+                <div>{{ coupon.description or '—' }}</div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Statut</div>
+                <div>
+                    {% if coupon.is_valid %}
+                    <span style="color: var(--color-success); font-weight: 500;">Valide</span>
+                    {% elif not coupon.is_active %}
+                    <span style="color: #EF4444; font-weight: 500;">Désactivé</span>
+                    {% else %}
+                    <span style="color: #F59E0B; font-weight: 500;">Épuisé ou Expiré</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Créé le</div>
+                <div>{{ coupon.created_at.strftime('%d/%m/%Y à %H:%M') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discount card -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Réduction</h2>
+
+        <div style="display: grid; gap: var(--space-4);">
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Valeur</div>
+                <div style="font-size: var(--text-xl); font-weight: 700; color: var(--color-success);">
+                    {{ coupon.discount_display }}
+                </div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Durée</div>
+                <div>
+                    {% if coupon.duration_months %}
+                    {{ coupon.duration_months }} mois
+                    {% else %}
+                    Permanent
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-bottom: 2px;">Plans éligibles</div>
+                <div>
+                    {% if coupon.valid_plans_list %}
+                    {% for plan in coupon.valid_plans_list %}
+                    <span class="plan-badge {{ plan }}">{{ plans.get(plan, plan) }}</span>
+                    {% endfor %}
+                    {% else %}
+                    Tous les plans
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Usage stats -->
+<div class="stats-grid" style="margin-top: var(--space-6);">
+    <div class="stat-card">
+        <div class="stat-card-label">Utilisations</div>
+        <div class="stat-card-value">{{ coupon.uses_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-label">Limite</div>
+        <div class="stat-card-value">{{ coupon.max_uses or '∞' }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-label">Restantes</div>
+        <div class="stat-card-value">{{ coupon.remaining_uses if coupon.remaining_uses is not none else '∞' }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-label">Expire le</div>
+        <div class="stat-card-value" style="font-size: var(--text-lg);">{{ coupon.valid_until.strftime('%d/%m/%Y') if coupon.valid_until else '—' }}</div>
+    </div>
+</div>
+
+<!-- Usage history -->
+<div class="card-static" style="padding: var(--space-5); margin-top: var(--space-6);">
+    <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">
+        Historique d'utilisation ({{ usages|length }})
+    </h2>
+
+    <table class="root-table">
+        <thead>
+            <tr>
+                <th>Entreprise</th>
+                <th>Date d'utilisation</th>
+                <th>Prix original</th>
+                <th>Prix réduit</th>
+                <th>Économie</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usage in usages %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('root.view_company', company_id=usage.company_id) }}" style="color: var(--color-ink); font-weight: 500;">
+                        {{ usage.company.name }}
+                    </a>
+                </td>
+                <td>{{ usage.used_at.strftime('%d/%m/%Y à %H:%M') }}</td>
+                <td>{{ '%.2f'|format(usage.original_price) }}€</td>
+                <td style="color: var(--color-success); font-weight: 500;">{{ '%.2f'|format(usage.discounted_price) }}€</td>
+                <td>{{ '%.2f'|format(usage.original_price - usage.discounted_price) }}€</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: var(--color-ink-muted); padding: var(--space-6);">
+                    Ce coupon n'a pas encore été utilisé
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

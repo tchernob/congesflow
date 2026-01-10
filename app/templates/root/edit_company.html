@@ -42,13 +42,47 @@
 
         <div class="form-group" style="margin-bottom: var(--space-4);">
             <label class="form-label">Plan</label>
-            <select name="plan" class="form-input">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-bottom: var(--space-3);">
+                {% set plan_prices = {'free': 0, 'pro': 39, 'business': 79, 'enterprise': None} %}
                 {% for plan_id, plan_name in plans.items() %}
-                <option value="{{ plan_id }}" {% if company.plan == plan_id %}selected{% endif %}>
-                    {{ plan_name }} ({{ plan_limits.get(plan_id, '?') }} utilisateurs)
-                </option>
+                {% if plan_id in ['free', 'pro', 'business', 'enterprise'] %}
+                <label class="plan-option" style="
+                    display: flex;
+                    flex-direction: column;
+                    padding: var(--space-3);
+                    border: 2px solid {% if company.plan == plan_id %}var(--root-accent){% else %}var(--color-border){% endif %};
+                    border-radius: var(--radius-md);
+                    cursor: pointer;
+                    transition: all 0.15s;
+                ">
+                    <input type="radio" name="plan" value="{{ plan_id }}"
+                           {% if company.plan == plan_id %}checked{% endif %}
+                           style="position: absolute; opacity: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="plan-badge {{ plan_id }}">{{ plan_name }}</span>
+                        {% if plan_prices[plan_id] is not none %}
+                        <span style="font-weight: 600;">{{ plan_prices[plan_id] }}€/mois</span>
+                        {% else %}
+                        <span style="font-size: var(--text-xs); color: var(--color-ink-muted);">Sur devis</span>
+                        {% endif %}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--color-ink-muted); margin-top: var(--space-1);">
+                        {{ plan_limits.get(plan_id, '?') }} utilisateurs max
+                    </div>
+                </label>
+                {% endif %}
                 {% endfor %}
-            </select>
+            </div>
+            <script>
+                document.querySelectorAll('.plan-option').forEach(label => {
+                    label.addEventListener('click', function() {
+                        document.querySelectorAll('.plan-option').forEach(l => {
+                            l.style.borderColor = 'var(--color-border)';
+                        });
+                        this.style.borderColor = 'var(--root-accent)';
+                    });
+                });
+            </script>
         </div>
 
         <div class="form-group" style="margin-bottom: var(--space-4);">

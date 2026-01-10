@@ -4,11 +4,17 @@ from app.models.leave import LeaveRequest, LeaveType, LeaveBalance, CompanyLeave
 from app.models.team import Team
 from app.models.notification import Notification
 from app.models.slack import SlackIntegration, SlackUserMapping
+from app.models.coupon import Coupon, CouponUsage
+from app.models.company_note import CompanyNote
+from app.models.activity_log import ActivityLog
 
 __all__ = [
     'Company', 'CompanyInvitation',
     'User', 'Role', 'ContractType',
     'LeaveRequest', 'LeaveType', 'LeaveBalance', 'CompanyLeaveSettings',
     'Team', 'Notification',
-    'SlackIntegration', 'SlackUserMapping'
+    'SlackIntegration', 'SlackUserMapping',
+    'Coupon', 'CouponUsage',
+    'CompanyNote',
+    'ActivityLog'
 ]

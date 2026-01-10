@@ -1,0 +1,121 @@
+{% extends "root/base_root.html" %}
+
+{% block title %}Activité{% endblock %}
+{% block page_title %}Logs d'activité{% endblock %}
+
+{% block content %}
+<div class="card-static" style="padding: var(--space-5);">
+    <!-- Filters -->
+    <form method="get" class="filters-bar">
+        <select name="category">
+            <option value="">Toutes les catégories</option>
+            {% for cat_id, cat_name in categories.items() %}
+            <option value="{{ cat_id }}" {% if category_filter == cat_id %}selected{% endif %}>{{ cat_name }}</option>
+            {% endfor %}
+        </select>
+        <select name="action">
+            <option value="">Toutes les actions</option>
+            {% for action_id, action_name in actions.items() %}
+            <option value="{{ action_id }}" {% if action_filter == action_id %}selected{% endif %}>{{ action_name }}</option>
+            {% endfor %}
+        </select>
+        <select name="company_id">
+            <option value="">Toutes les entreprises</option>
+            {% for company in companies %}
+            <option value="{{ company.id }}" {% if company_filter == company.id|string %}selected{% endif %}>{{ company.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+        {% if category_filter or action_filter or company_filter %}
+        <a href="{{ url_for('root.activity_logs') }}" class="btn btn-secondary btn-sm">Effacer</a>
+        {% endif %}
+    </form>
+
+    <!-- Results count -->
+    <p style="font-size: var(--text-sm); color: var(--color-ink-muted); margin-bottom: var(--space-4);">
+        {{ pagination.total }} entrée(s) - Page {{ pagination.page }} / {{ pagination.pages or 1 }}
+    </p>
+
+    <!-- Table -->
+    <table class="root-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Catégorie</th>
+                <th>Action</th>
+                <th>Utilisateur</th>
+                <th>Entreprise</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td style="white-space: nowrap; font-size: var(--text-xs); color: var(--color-ink-muted);">
+                    {{ log.created_at.strftime('%d/%m/%Y') }}<br>
+                    {{ log.created_at.strftime('%H:%M:%S') }}
+                </td>
+                <td>
+                    <span style="
+                        display: inline-block;
+                        padding: 2px 8px;
+                        border-radius: var(--radius-full);
+                        font-size: var(--text-xs);
+                        font-weight: 500;
+                        background: {{ log.category_color }}15;
+                        color: {{ log.category_color }};
+                    ">{{ log.category_label }}</span>
+                </td>
+                <td style="font-weight: 500;">{{ log.action_label }}</td>
+                <td>
+                    {% if log.user %}
+                    <span title="{{ log.user.email }}">{{ log.user.full_name }}</span>
+                    {% else %}
+                    <span style="color: var(--color-ink-muted);">Système</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.company %}
+                    <a href="{{ url_for('root.view_company', company_id=log.company_id) }}" style="color: var(--color-ink);">
+                        {{ log.company.name }}
+                    </a>
+                    {% else %}
+                    <span style="color: var(--color-ink-muted);">—</span>
+                    {% endif %}
+                </td>
+                <td style="font-size: var(--text-sm); color: var(--color-ink-muted); max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                    {{ log.description or '—' }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--color-ink-muted); padding: var(--space-6);">
+                    Aucune activité enregistrée
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <div style="display: flex; justify-content: center; gap: var(--space-2); margin-top: var(--space-4);">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('root.activity_logs', page=pagination.prev_num, category=category_filter, action=action_filter, company_id=company_filter) }}" class="btn btn-secondary btn-sm">
+            Précédent
+        </a>
+        {% endif %}
+
+        <span style="display: flex; align-items: center; padding: 0 var(--space-3); color: var(--color-ink-muted); font-size: var(--text-sm);">
+            Page {{ pagination.page }} / {{ pagination.pages }}
+        </span>
+
+        {% if pagination.has_next %}
+        <a href="{{ url_for('root.activity_logs', page=pagination.next_num, category=category_filter, action=action_filter, company_id=company_filter) }}" class="btn btn-secondary btn-sm">
+            Suivant
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

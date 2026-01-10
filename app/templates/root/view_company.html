@@ -172,6 +172,76 @@
     </table>
 </div>
 
+<!-- Notes internes -->
+<div class="card-static" style="padding: var(--space-5); margin-top: var(--space-6);">
+    <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">
+        Notes internes ({{ notes|length }})
+    </h2>
+
+    <!-- Add note form -->
+    <form method="post" action="{{ url_for('root.add_company_note', company_id=company.id) }}" style="margin-bottom: var(--space-4);">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display: flex; gap: var(--space-3); margin-bottom: var(--space-3);">
+            <select name="note_type" style="padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+                {% for type_id, type_name in note_types.items() %}
+                <option value="{{ type_id }}">{{ type_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display: flex; gap: var(--space-3);">
+            <textarea name="content" placeholder="Ajouter une note interne..." rows="2" style="flex: 1; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); resize: vertical;"></textarea>
+            <button type="submit" class="btn btn-primary" style="align-self: flex-end;">Ajouter</button>
+        </div>
+    </form>
+
+    <!-- Notes list -->
+    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+        {% for note in notes %}
+        <div style="padding: var(--space-3); background: {% if note.is_pinned %}var(--root-accent-light){% else %}var(--color-bg-sunken){% endif %}; border-radius: var(--radius-md); border-left: 3px solid {{ note.type_color }};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2);">
+                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                    <span style="font-size: var(--text-xs); padding: 2px 6px; background: {{ note.type_color }}20; color: {{ note.type_color }}; border-radius: var(--radius-sm); font-weight: 500;">
+                        {{ note.type_label }}
+                    </span>
+                    {% if note.is_pinned %}
+                    <svg width="14" height="14" fill="var(--root-accent)" viewBox="0 0 24 24">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>
+                    {% endif %}
+                </div>
+                <div style="display: flex; gap: var(--space-2);">
+                    <form method="post" action="{{ url_for('root.toggle_note_pin', note_id=note.id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-secondary" title="{{ 'Désépingler' if note.is_pinned else 'Épingler' }}">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                            </svg>
+                        </button>
+                    </form>
+                    <form method="post" action="{{ url_for('root.delete_company_note', note_id=note.id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm('Supprimer cette note ?')" title="Supprimer">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <p style="margin: 0; white-space: pre-wrap;">{{ note.content }}</p>
+            <div style="margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-ink-muted);">
+                Par {{ note.author.full_name }} · {{ note.created_at.strftime('%d/%m/%Y à %H:%M') }}
+            </div>
+        </div>
+        {% else %}
+        <p style="color: var(--color-ink-muted); text-align: center; padding: var(--space-4);">
+            Aucune note pour cette entreprise
+        </p>
+        {% endfor %}
+    </div>
+</div>
+
 <!-- Actions -->
 <div class="card-static" style="padding: var(--space-5); margin-top: var(--space-6);">
     <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Actions</h2>
