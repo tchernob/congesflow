@@ -592,7 +592,7 @@ def analytics():
             month_end = date(year, month + 1, 1) - timedelta(days=1)
 
         # Count approved leave days in this month
-        leaves = LeaveRequest.query.join(User).filter(
+        leaves = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
             User.company_id == company_id,
             LeaveRequest.status == 'approved',
             LeaveRequest.start_date <= month_end,
@@ -641,16 +641,16 @@ def analytics():
 
     # Stats globales
     total_employees = User.query.filter_by(company_id=company_id, is_active=True).count()
-    total_requests = LeaveRequest.query.join(User).filter(
+    total_requests = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == company_id,
         db.extract('year', LeaveRequest.created_at) == year
     ).count()
-    approved_requests = LeaveRequest.query.join(User).filter(
+    approved_requests = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == company_id,
         LeaveRequest.status == 'approved',
         db.extract('year', LeaveRequest.created_at) == year
     ).count()
-    rejected_requests = LeaveRequest.query.join(User).filter(
+    rejected_requests = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == company_id,
         LeaveRequest.status == 'rejected',
         db.extract('year', LeaveRequest.created_at) == year
@@ -695,7 +695,7 @@ def export_leaves_csv():
     team_id = request.args.get('team_id', type=int)
     leave_type_id = request.args.get('leave_type_id', type=int)
 
-    query = LeaveRequest.query.join(User).filter(
+    query = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == current_user.company_id,
         db.extract('year', LeaveRequest.start_date) == year
     )
@@ -812,7 +812,7 @@ def export_payroll_csv():
         month_end = date(year, month + 1, 1) - timedelta(days=1)
 
     # Get approved leaves for this month
-    leaves = LeaveRequest.query.join(User).filter(
+    leaves = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == current_user.company_id,
         LeaveRequest.status == 'approved',
         LeaveRequest.start_date <= month_end,
