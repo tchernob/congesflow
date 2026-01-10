@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
-from app.services.email_service import send_welcome_email
+from app.services.email_service import send_welcome_email, send_2fa_code_email
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -31,6 +31,20 @@ def login():
             flash('Veuillez vérifier votre adresse email avant de vous connecter.', 'error')
             return redirect(url_for('marketing.verification_sent', email=email))
 
+        # 2FA for superadmins
+        if user.is_superadmin:
+            # Generate and send 2FA code
+            code = user.generate_2fa_code()
+            db.session.commit()
+            send_2fa_code_email(user, code)
+
+            # Store user id in session for 2FA verification
+            session['2fa_user_id'] = user.id
+            session['2fa_remember'] = remember
+
+            flash('Un code de vérification a été envoyé à votre adresse email.', 'info')
+            return redirect(url_for('auth.verify_2fa'))
+
         login_user(user, remember=remember)
         next_page = request.args.get('next')
         if not next_page:
@@ -38,6 +52,64 @@ def login():
         return redirect(next_page)
 
     return render_template('auth/login.html')
+
+
+@bp.route('/verify-2fa', methods=['GET', 'POST'])
+def verify_2fa():
+    """Verify 2FA code for superadmin login."""
+    user_id = session.get('2fa_user_id')
+    if not user_id:
+        flash('Session expirée. Veuillez vous reconnecter.', 'error')
+        return redirect(url_for('auth.login'))
+
+    user = User.query.get(user_id)
+    if not user or not user.is_superadmin:
+        session.pop('2fa_user_id', None)
+        session.pop('2fa_remember', None)
+        flash('Session invalide.', 'error')
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        code = request.form.get('code', '').strip()
+
+        if user.verify_2fa_code(code):
+            # Clear 2FA code and session
+            user.clear_2fa_code()
+            db.session.commit()
+
+            remember = session.pop('2fa_remember', False)
+            session.pop('2fa_user_id', None)
+
+            login_user(user, remember=remember)
+            flash('Connexion réussie.', 'success')
+            return redirect(url_for('root.dashboard'))
+        else:
+            flash('Code invalide ou expiré.', 'error')
+
+    return render_template('auth/verify_2fa.html', user=user)
+
+
+@bp.route('/resend-2fa', methods=['POST'])
+def resend_2fa():
+    """Resend 2FA code."""
+    user_id = session.get('2fa_user_id')
+    if not user_id:
+        flash('Session expirée. Veuillez vous reconnecter.', 'error')
+        return redirect(url_for('auth.login'))
+
+    user = User.query.get(user_id)
+    if not user or not user.is_superadmin:
+        session.pop('2fa_user_id', None)
+        flash('Session invalide.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # Generate new code
+    code = user.generate_2fa_code()
+    db.session.commit()
+    send_2fa_code_email(user, code)
+
+    flash('Un nouveau code a été envoyé.', 'success')
+    return redirect(url_for('auth.verify_2fa'))
 
 
 @bp.route('/logout')

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code de vérification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #7C3AED;
+            margin: 0;
+            font-size: 28px;
+        }
+        .logo span {
+            background: #7C3AED;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        h2 {
+            color: #1f2937;
+            margin-top: 0;
+            text-align: center;
+        }
+        .code-box {
+            background: linear-gradient(135deg, #7C3AED 0%, #a855f7 100%);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .code {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: 8px;
+            color: white;
+            margin: 0;
+        }
+        .expiry {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .warning {
+            background: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 12px 16px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #92400E;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>TimeOff <span>Root</span></h1>
+        </div>
+
+        <h2>Code de vérification</h2>
+
+        <p>Bonjour {{ user.first_name }},</p>
+
+        <p>Une connexion à votre compte super-administrateur a été initiée. Utilisez le code ci-dessous pour confirmer votre identité :</p>
+
+        <div class="code-box">
+            <p class="code">{{ code }}</p>
+        </div>
+
+        <p class="expiry">Ce code expire dans <strong>10 minutes</strong>.</p>
+
+        <div class="warning">
+            <strong>Attention :</strong> Ne partagez jamais ce code avec qui que ce soit. L'équipe TimeOff ne vous demandera jamais votre code de vérification.
+        </div>
+
+        <p>Si vous n'avez pas tenté de vous connecter, quelqu'un pourrait essayer d'accéder à votre compte. Nous vous recommandons de changer votre mot de passe immédiatement.</p>
+
+        <div class="footer">
+            <p>&copy; 2025 TimeOff - Panel Super-Administrateur</p>
+        </div>
+    </div>
+</body>
+</html>

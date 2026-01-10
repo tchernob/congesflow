@@ -147,3 +147,16 @@ def send_leave_rejected_notification(leave_request, rejected_by, reason=None):
         rejected_by=rejected_by,
         reason=reason
     )
+
+
+def send_2fa_code_email(user, code):
+    """
+    Send 2FA verification code to superadmin.
+    """
+    send_email(
+        subject='TimeOff - Code de vérification',
+        recipient=user.email,
+        template='2fa_code',
+        user=user,
+        code=code
+    )

@@ -194,6 +194,10 @@ class User(UserMixin, db.Model):
     invitation_token_expires = db.Column(db.DateTime, nullable=True)
     invitation_sent_at = db.Column(db.DateTime, nullable=True)
 
+    # 2FA for superadmins
+    twofa_code = db.Column(db.String(6), nullable=True)
+    twofa_code_expires = db.Column(db.DateTime, nullable=True)
+
     # Relations
     leave_requests = db.relationship('LeaveRequest', backref='employee', lazy='dynamic',
                                      foreign_keys='LeaveRequest.employee_id')
@@ -251,6 +255,26 @@ class User(UserMixin, db.Model):
         self.email_verified = True
         self.email_verification_token = None
         self.email_verification_expires = None
+
+    def generate_2fa_code(self):
+        """Generate a 6-digit 2FA code valid for 10 minutes."""
+        import random
+        self.twofa_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        self.twofa_code_expires = datetime.utcnow() + timedelta(minutes=10)
+        return self.twofa_code
+
+    def verify_2fa_code(self, code):
+        """Verify the 2FA code."""
+        if not self.twofa_code or not self.twofa_code_expires:
+            return False
+        if datetime.utcnow() > self.twofa_code_expires:
+            return False
+        return self.twofa_code == code
+
+    def clear_2fa_code(self):
+        """Clear the 2FA code after successful verification."""
+        self.twofa_code = None
+        self.twofa_code_expires = None
 
     @property
     def is_pending_invitation(self):
