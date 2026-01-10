@@ -43,38 +43,39 @@ class Company(db.Model):
 
     # Plan constants
     PLAN_FREE = 'free'
+    PLAN_STARTER = 'starter'
     PLAN_PRO = 'pro'
     PLAN_BUSINESS = 'business'
     PLAN_ENTERPRISE = 'enterprise'
 
     # Legacy - pour migration
     PLAN_TRIAL = 'trial'
-    PLAN_STARTER = 'starter'
 
     PLAN_LIMITS = {
         'free': 5,
-        'pro': 25,
-        'business': 100,
+        'starter': 25,
+        'pro': 100,
+        'business': 250,
         'enterprise': 9999,
         # Legacy
         'trial': 5,
-        'starter': 25,
     }
 
     PLAN_LABELS = {
         'free': 'Gratuit',
+        'starter': 'Starter',
         'pro': 'Pro',
         'business': 'Business',
         'enterprise': 'Enterprise',
         # Legacy
         'trial': 'Essai',
-        'starter': 'Starter',
     }
 
     PLAN_PRICES = {
         'free': {'monthly': 0, 'yearly': 0},
-        'pro': {'monthly': 39, 'yearly': 390},
-        'business': {'monthly': 79, 'yearly': 790},
+        'starter': {'monthly': 29, 'yearly': 278},  # ~23€/mois en annuel
+        'pro': {'monthly': 89, 'yearly': 854},  # ~71€/mois en annuel
+        'business': {'monthly': 149, 'yearly': 1428},  # ~119€/mois en annuel
         'enterprise': {'monthly': None, 'yearly': None},  # Sur devis
     }
 
@@ -85,29 +86,41 @@ class Company(db.Model):
             'Calendrier d\'équipe',
             '1 an d\'historique',
         ],
-        'pro': [
+        'starter': [
             'Jusqu\'à 25 utilisateurs',
             'Tout le plan Gratuit',
-            'Intégration Slack',
+            'Workflow Manager → RH',
             'Notifications email',
+            'Support email',
+        ],
+        'pro': [
+            'Jusqu\'à 100 utilisateurs',
+            'Tout le plan Starter',
+            'Intégration Slack & Teams',
+            'Annonces d\'entreprise',
+            'Statistiques de base',
             'Export CSV',
-            'Support par email',
+            'Support prioritaire',
         ],
         'business': [
-            'Jusqu\'à 100 utilisateurs',
+            'Jusqu\'à 250 utilisateurs',
             'Tout le plan Pro',
-            'Types de contrats',
-            'Rapports avancés',
-            'API (bientôt)',
-            'Support prioritaire',
+            'Délégation d\'approbation',
+            'Auto-approbation',
+            'Périodes bloquées',
+            'Analytics avancés',
+            'Export paie (Silae, PayFit)',
+            'Détection conflits d\'équipe',
         ],
         'enterprise': [
             'Utilisateurs illimités',
             'Tout le plan Business',
+            'Multi-sites & jours fériés locaux',
+            'Organigramme visuel',
             'SSO / SAML',
-            'SLA garanti',
+            'API personnalisée',
             'Account manager dédié',
-            'Personnalisation',
+            'SLA garanti 99.9%',
         ],
     }
 
@@ -214,7 +227,7 @@ class Company(db.Model):
     def get_plans_for_display(cls):
         """Retourne les plans formatés pour affichage."""
         plans = []
-        for plan_id in ['free', 'pro', 'business', 'enterprise']:
+        for plan_id in ['free', 'starter', 'pro', 'business', 'enterprise']:
             plans.append({
                 'id': plan_id,
                 'name': cls.PLAN_LABELS[plan_id],

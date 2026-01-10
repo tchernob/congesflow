@@ -113,8 +113,8 @@
 
         <div class="plans-grid">
             {% for plan in plans %}
-            <div class="plan-card {% if plan.id == company.plan %}current{% endif %} {% if plan.id == 'pro' %}popular{% endif %}">
-                {% if plan.id == 'pro' %}
+            <div class="plan-card {% if plan.id == company.plan %}current{% endif %} {% if plan.id == 'business' %}popular{% endif %}">
+                {% if plan.id == 'business' %}
                 <span class="popular-badge">Populaire</span>
                 {% endif %}
                 {% if plan.id == company.plan %}
@@ -162,10 +162,10 @@
                         <button class="btn btn-secondary" disabled>Plan actuel</button>
                         {% endif %}
                     {% else %}
-                        <!-- Pro or Business plan -->
+                        <!-- Starter, Pro or Business plan -->
                         {% if company.plan == 'free' or (company.PLAN_LIMITS.get(plan.id, 0) > company.PLAN_LIMITS.get(company.plan, 0)) %}
                         <a href="{{ url_for('billing.checkout', plan=plan.id, billing_cycle='monthly') }}"
-                           class="btn {% if plan.id == 'pro' %}btn-primary{% else %}btn-secondary{% endif %} checkout-btn"
+                           class="btn {% if plan.id == 'business' %}btn-primary{% else %}btn-secondary{% endif %} checkout-btn"
                            data-plan="{{ plan.id }}">
                             Passer à {{ plan.name }}
                         </a>
@@ -414,8 +414,14 @@
 
 .plans-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-4);
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-3);
+}
+
+@media (max-width: 1100px) {
+    .plans-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 @media (max-width: 900px) {
