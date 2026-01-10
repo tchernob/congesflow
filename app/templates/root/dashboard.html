@@ -4,7 +4,21 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
+<!-- KPIs principaux -->
 <div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-label">MRR</span>
+            <div class="stat-card-icon" style="background: #DCFCE7; color: #16A34A;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="stat-card-value">{{ mrr }}€</div>
+        <div class="stat-card-sub">ARR: {{ arr }}€ · {{ paying_companies }} clients payants</div>
+    </div>
+
     <div class="stat-card">
         <div class="stat-card-header">
             <span class="stat-card-label">Entreprises</span>
@@ -15,11 +29,7 @@
             </div>
         </div>
         <div class="stat-card-value">{{ total_companies }}</div>
-        <div class="stat-card-sub">
-            {% for plan, count in companies_by_plan.items() %}
-            {{ count }} {{ plan }}{% if not loop.last %}, {% endif %}
-            {% endfor %}
-        </div>
+        <div class="stat-card-sub">{{ active_companies }} actives · {{ trials_active }} en essai</div>
     </div>
 
     <div class="stat-card">
@@ -37,101 +47,361 @@
 
     <div class="stat-card">
         <div class="stat-card-header">
-            <span class="stat-card-label">MRR</span>
-            <div class="stat-card-icon">
+            <span class="stat-card-label">Taux conversion</span>
+            <div class="stat-card-icon" style="background: {% if conversion_rate >= 20 %}#DCFCE7{% elif conversion_rate >= 10 %}#FEF3C7{% else %}#FEE2E2{% endif %}; color: {% if conversion_rate >= 20 %}#16A34A{% elif conversion_rate >= 10 %}#CA8A04{% else %}#DC2626{% endif %};">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                 </svg>
             </div>
         </div>
-        <div class="stat-card-value">{{ mrr }}€</div>
-        <div class="stat-card-sub">Revenu mensuel récurrent</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-card-header">
-            <span class="stat-card-label">Demandes (30j)</span>
-            <div class="stat-card-icon">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                </svg>
-            </div>
-        </div>
-        <div class="stat-card-value">{{ recent_requests }}</div>
-        <div class="stat-card-sub">Derniers 30 jours</div>
+        <div class="stat-card-value">{{ conversion_rate }}%</div>
+        <div class="stat-card-sub">Essai → Payant</div>
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6);">
-    <!-- Recent companies -->
+<!-- Graphiques -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
+    <!-- Inscriptions par mois -->
     <div class="card-static" style="padding: var(--space-5);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
-            <h2 style="font-size: var(--text-lg); font-weight: 600;">Dernières inscriptions</h2>
-            <a href="{{ url_for('root.companies') }}" class="btn btn-secondary btn-sm">Voir tout</a>
-        </div>
-
-        <table class="root-table">
-            <thead>
-                <tr>
-                    <th>Entreprise</th>
-                    <th>Plan</th>
-                    <th>Utilisateurs</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for company in recent_companies %}
-                <tr>
-                    <td>
-                        <a href="{{ url_for('root.view_company', company_id=company.id) }}" class="company-name" style="color: var(--color-ink); text-decoration: none;">
-                            {{ company.name }}
-                        </a>
-                    </td>
-                    <td><span class="plan-badge {{ company.plan }}">{{ company.plan_label }}</span></td>
-                    <td>{{ company.employee_count }} / {{ company.max_employees }}</td>
-                    <td class="company-created">{{ company.created_at.strftime('%d/%m/%Y') }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" style="text-align: center; color: var(--color-ink-muted);">Aucune entreprise</td>
-                </tr>
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Inscriptions (12 mois)</h2>
+        <div class="chart-container">
+            <div class="bar-chart">
+                {% for item in signups_by_month %}
+                <div class="bar-item">
+                    <div class="bar" style="height: {{ (item.count / (signups_by_month|map(attribute='count')|max or 1)) * 100 }}%;"></div>
+                    <span class="bar-label">{{ item.month }}</span>
+                    <span class="bar-value">{{ item.count }}</span>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        </div>
     </div>
 
-    <!-- Companies near limit -->
+    <!-- Répartition par plan -->
     <div class="card-static" style="padding: var(--space-5);">
-        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">
-            Proches de la limite
-        </h2>
-
-        {% if companies_near_limit %}
-        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
-            {% for company in companies_near_limit[:5] %}
-            <a href="{{ url_for('root.view_company', company_id=company.id) }}" style="text-decoration: none; color: inherit;">
-                <div style="padding: var(--space-3); background: var(--color-bg-sunken); border-radius: var(--radius-md);">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-2);">
-                        <span style="font-weight: 500;">{{ company.name }}</span>
-                        <span class="plan-badge {{ company.plan }}">{{ company.plan_label }}</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: var(--space-2);">
-                        <div style="flex: 1; height: 6px; background: var(--color-border); border-radius: 3px; overflow: hidden;">
-                            <div style="width: {{ company.usage_percent }}%; height: 100%; background: {% if company.usage_percent >= 90 %}#EF4444{% else %}#F59E0B{% endif %};"></div>
-                        </div>
-                        <span style="font-size: var(--text-xs); color: var(--color-ink-muted);">
-                            {{ company.employee_count }}/{{ company.max_employees }}
-                        </span>
-                    </div>
+        <h2 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4);">Répartition par plan</h2>
+        <div class="plan-distribution">
+            {% set total = companies_by_plan.values()|sum or 1 %}
+            {% for plan, count in companies_by_plan.items() %}
+            <div class="plan-row">
+                <div class="plan-info">
+                    <span class="plan-badge {{ plan }}">{{ plan|capitalize }}</span>
+                    <span class="plan-count">{{ count }} entreprises</span>
                 </div>
+                <div class="plan-bar-container">
+                    <div class="plan-bar plan-bar-{{ plan }}" style="width: {{ (count / total) * 100 }}%;"></div>
+                </div>
+                <span class="plan-percent">{{ ((count / total) * 100)|round(1) }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Alertes et actions -->
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
+    <!-- Essais expirant bientôt -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4);">
+            <div style="width: 8px; height: 8px; background: #F59E0B; border-radius: 50%;"></div>
+            <h2 style="font-size: var(--text-lg); font-weight: 600;">Essais expirant (7j)</h2>
+        </div>
+        {% if expiring_trials %}
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+            {% for company in expiring_trials[:5] %}
+            <a href="{{ url_for('root.view_company', company_id=company.id) }}" class="alert-item warning">
+                <span class="alert-item-name">{{ company.name }}</span>
+                <span class="alert-item-detail">{{ company.trial_days_remaining }}j restants</span>
             </a>
             {% endfor %}
         </div>
         {% else %}
-        <p style="color: var(--color-ink-muted); font-size: var(--text-sm);">
-            Aucune entreprise proche de sa limite.
-        </p>
+        <p class="empty-message">Aucun essai n'expire dans les 7 prochains jours</p>
+        {% endif %}
+    </div>
+
+    <!-- Proches de la limite -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4);">
+            <div style="width: 8px; height: 8px; background: #EF4444; border-radius: 50%;"></div>
+            <h2 style="font-size: var(--text-lg); font-weight: 600;">Proches limite</h2>
+        </div>
+        {% if companies_near_limit %}
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+            {% for company in companies_near_limit[:5] %}
+            <a href="{{ url_for('root.view_company', company_id=company.id) }}" class="alert-item danger">
+                <span class="alert-item-name">{{ company.name }}</span>
+                <span class="alert-item-detail">{{ company.employee_count }}/{{ company.max_employees }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-message">Aucune entreprise proche de sa limite</p>
+        {% endif %}
+    </div>
+
+    <!-- Paiements échoués -->
+    <div class="card-static" style="padding: var(--space-5);">
+        <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4);">
+            <div style="width: 8px; height: 8px; background: #DC2626; border-radius: 50%;"></div>
+            <h2 style="font-size: var(--text-lg); font-weight: 600;">Paiements échoués</h2>
+        </div>
+        {% if failed_payments %}
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+            {% for payment in failed_payments[:5] %}
+            <a href="{{ url_for('root.view_company', company_id=payment.company_id) }}" class="alert-item danger">
+                <span class="alert-item-name">{{ payment.company_name }}</span>
+                <span class="alert-item-detail">{{ payment.amount }}€</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-message">Aucun paiement échoué</p>
         {% endif %}
     </div>
 </div>
+
+<!-- Dernières inscriptions -->
+<div class="card-static" style="padding: var(--space-5);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+        <h2 style="font-size: var(--text-lg); font-weight: 600;">Dernières inscriptions</h2>
+        <a href="{{ url_for('root.companies') }}" class="btn btn-secondary btn-sm">Voir tout</a>
+    </div>
+
+    <table class="root-table">
+        <thead>
+            <tr>
+                <th>Entreprise</th>
+                <th>Plan</th>
+                <th>Utilisateurs</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for company in recent_companies %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('root.view_company', company_id=company.id) }}" class="company-name" style="color: var(--color-ink); text-decoration: none;">
+                        {{ company.name }}
+                    </a>
+                </td>
+                <td><span class="plan-badge {{ company.plan }}">{{ company.plan_label }}</span></td>
+                <td>{{ company.employee_count }} / {{ company.max_employees }}</td>
+                <td>
+                    {% if company.is_in_trial %}
+                    <span class="status-badge trial">Essai ({{ company.trial_days_remaining }}j)</span>
+                    {% elif company.is_active %}
+                    <span class="status-badge active">Actif</span>
+                    {% else %}
+                    <span class="status-badge inactive">Inactif</span>
+                    {% endif %}
+                </td>
+                <td class="company-created">{{ company.created_at.strftime('%d/%m/%Y') }}</td>
+                <td>
+                    <a href="{{ url_for('root.impersonate', company_id=company.id) }}" class="btn btn-ghost btn-sm" title="Impersonate">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--color-ink-muted);">Aucune entreprise</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+/* Charts */
+.chart-container {
+    height: 200px;
+    display: flex;
+    align-items: flex-end;
+}
+
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    gap: 4px;
+}
+
+.bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+    position: relative;
+}
+
+.bar {
+    width: 100%;
+    max-width: 30px;
+    background: linear-gradient(180deg, var(--root-accent) 0%, #A78BFA 100%);
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    margin-top: auto;
+    transition: height 0.3s ease;
+}
+
+.bar-label {
+    font-size: 10px;
+    color: var(--color-ink-muted);
+    margin-top: var(--space-2);
+}
+
+.bar-value {
+    position: absolute;
+    top: -20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-ink);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.bar-item:hover .bar-value {
+    opacity: 1;
+}
+
+/* Plan distribution */
+.plan-distribution {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.plan-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.plan-info {
+    width: 140px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.plan-count {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+}
+
+.plan-bar-container {
+    flex: 1;
+    height: 8px;
+    background: var(--color-bg-sunken);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.plan-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.plan-bar-free { background: #9CA3AF; }
+.plan-bar-starter { background: #3B82F6; }
+.plan-bar-pro { background: #8B5CF6; }
+.plan-bar-enterprise { background: #F59E0B; }
+
+.plan-percent {
+    width: 50px;
+    text-align: right;
+    font-size: var(--text-sm);
+    font-weight: 500;
+}
+
+/* Alert items */
+.alert-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.15s;
+}
+
+.alert-item:hover {
+    transform: translateX(4px);
+}
+
+.alert-item.warning {
+    background: #FEF3C7;
+}
+
+.alert-item.warning:hover {
+    background: #FDE68A;
+}
+
+.alert-item.danger {
+    background: #FEE2E2;
+}
+
+.alert-item.danger:hover {
+    background: #FECACA;
+}
+
+.alert-item-name {
+    font-weight: 500;
+    font-size: var(--text-sm);
+}
+
+.alert-item-detail {
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-flex;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background: #DCFCE7;
+    color: #16A34A;
+}
+
+.status-badge.inactive {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.status-badge.trial {
+    background: #FEF3C7;
+    color: #CA8A04;
+}
+
+/* Empty message */
+.empty-message {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+    text-align: center;
+    padding: var(--space-4);
+}
+
+/* Plan badges additions */
+.plan-badge.starter {
+    background: #DBEAFE;
+    color: #1D4ED8;
+}
+</style>
 {% endblock %}

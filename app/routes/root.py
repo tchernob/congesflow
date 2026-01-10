@@ -33,6 +33,7 @@ def dashboard():
     """Root dashboard with global platform stats."""
     # Company stats
     total_companies = Company.query.count()
+    active_companies = Company.query.filter_by(is_active=True).count()
     companies_by_plan = db.session.query(
         Company.plan, func.count(Company.id)
     ).group_by(Company.plan).all()
@@ -50,14 +51,19 @@ def dashboard():
 
     # MRR calculation
     mrr = 0
-    for company in Company.query.filter(Company.plan != 'free').all():
+    paying_companies = 0
+    for company in Company.query.filter(Company.plan != 'free', Company.is_active == True).all():
         price = Company.PLAN_PRICES.get(company.plan, {}).get('monthly', 0)
         if price:
             mrr += price
+            paying_companies += 1
+
+    # ARR (Annual Recurring Revenue)
+    arr = mrr * 12
 
     # Companies near limit (80%+ usage)
     companies_near_limit = []
-    for company in Company.query.all():
+    for company in Company.query.filter_by(is_active=True).all():
         if company.usage_percent >= 80:
             companies_near_limit.append(company)
 
@@ -67,15 +73,80 @@ def dashboard():
         LeaveRequest.created_at >= thirty_days_ago
     ).count()
 
+    # Trial stats
+    trials_active = Company.query.filter(
+        Company.is_active == True,
+        Company.trial_ends_at != None,
+        Company.trial_ends_at > datetime.utcnow()
+    ).count()
+
+    # Conversion rate (trial -> paid)
+    total_past_trials = Company.query.filter(
+        (Company.trial_ends_at != None) & (Company.trial_ends_at <= datetime.utcnow())
+    ).count()
+    converted_trials = Company.query.filter(
+        Company.trial_ends_at != None,
+        Company.trial_ends_at <= datetime.utcnow(),
+        Company.plan != 'free'
+    ).count()
+    conversion_rate = round((converted_trials / total_past_trials * 100), 1) if total_past_trials > 0 else 0
+
+    # Inscriptions par mois (12 derniers mois)
+    signups_by_month = []
+    for i in range(11, -1, -1):
+        month_start = (datetime.utcnow().replace(day=1) - timedelta(days=i*30)).replace(day=1)
+        if i > 0:
+            month_end = (month_start + timedelta(days=32)).replace(day=1)
+        else:
+            month_end = datetime.utcnow()
+        count = Company.query.filter(
+            Company.created_at >= month_start,
+            Company.created_at < month_end
+        ).count()
+        signups_by_month.append({
+            'month': month_start.strftime('%b'),
+            'count': count
+        })
+
+    # MRR évolution (6 derniers mois) - simplifié
+    # Note: pour un vrai calcul, il faudrait stocker l'historique des plans
+    mrr_history = []
+    for i in range(5, -1, -1):
+        month_start = (datetime.utcnow().replace(day=1) - timedelta(days=i*30)).replace(day=1)
+        mrr_history.append({
+            'month': month_start.strftime('%b'),
+            'mrr': mrr  # Simplifié - même valeur pour tous les mois
+        })
+
+    # Entreprises en période d'essai qui expirent bientôt (7 jours)
+    expiring_trials = Company.query.filter(
+        Company.is_active == True,
+        Company.trial_ends_at != None,
+        Company.trial_ends_at > datetime.utcnow(),
+        Company.trial_ends_at <= datetime.utcnow() + timedelta(days=7)
+    ).order_by(Company.trial_ends_at).all()
+
+    # Paiements échoués (placeholder - nécessite intégration Stripe webhooks)
+    failed_payments = []
+
     return render_template('root/dashboard.html',
         total_companies=total_companies,
+        active_companies=active_companies,
         companies_by_plan=companies_by_plan,
         total_users=total_users,
         active_users=active_users,
         recent_companies=recent_companies,
         mrr=mrr,
+        arr=arr,
+        paying_companies=paying_companies,
         companies_near_limit=companies_near_limit,
-        recent_requests=recent_requests
+        recent_requests=recent_requests,
+        trials_active=trials_active,
+        conversion_rate=conversion_rate,
+        signups_by_month=signups_by_month,
+        mrr_history=mrr_history,
+        expiring_trials=expiring_trials,
+        failed_payments=failed_payments
     )
 
 
