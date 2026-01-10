@@ -43,41 +43,36 @@ class Company(db.Model):
 
     # Plan constants
     PLAN_FREE = 'free'
-    PLAN_STARTER = 'starter'
+    PLAN_PRO = 'pro'
     PLAN_BUSINESS = 'business'
     PLAN_ENTERPRISE = 'enterprise'
 
     # Legacy - pour migration
     PLAN_TRIAL = 'trial'
-    PLAN_PRO = 'pro'  # Redirigé vers Business
 
     PLAN_LIMITS = {
         'free': 5,
-        'starter': 30,
+        'pro': 30,
         'business': 200,
         'enterprise': 9999,
         # Legacy
         'trial': 5,
-        'pro': 200,  # Ancien Pro → Business
     }
 
     PLAN_LABELS = {
         'free': 'Gratuit',
-        'starter': 'Starter',
+        'pro': 'Pro',
         'business': 'Business',
         'enterprise': 'Enterprise',
         # Legacy
         'trial': 'Essai',
-        'pro': 'Pro',
     }
 
     PLAN_PRICES = {
         'free': {'monthly': 0, 'yearly': 0},
-        'starter': {'monthly': 39, 'yearly': 374},  # ~31€/mois en annuel (-20%)
-        'business': {'monthly': 129, 'yearly': 1238},  # ~103€/mois en annuel (-20%)
+        'pro': {'monthly': 39, 'yearly': 390},  # 39€/mois, 390€/an (1 mois offert)
+        'business': {'monthly': 79, 'yearly': 790},  # 79€/mois, 790€/an (1 mois offert)
         'enterprise': {'monthly': None, 'yearly': None},  # Sur devis
-        # Legacy
-        'pro': {'monthly': 129, 'yearly': 1238},
     }
 
     PLAN_FEATURES = {
@@ -87,7 +82,7 @@ class Company(db.Model):
             'Calendrier d\'équipe',
             'Notifications email',
         ],
-        'starter': [
+        'pro': [
             'Jusqu\'à 30 utilisateurs',
             'Tout le plan Gratuit',
             'Workflow Manager → RH',
@@ -97,7 +92,7 @@ class Company(db.Model):
         ],
         'business': [
             'Jusqu\'à 200 utilisateurs',
-            'Tout le plan Starter',
+            'Tout le plan Pro',
             'Annonces d\'entreprise',
             'Délégation d\'approbation',
             'Règles d\'auto-approbation',
@@ -117,11 +112,6 @@ class Company(db.Model):
             'Intégration Teams (sur demande)',
             'Account manager dédié',
             'SLA garanti 99.9%',
-        ],
-        # Legacy
-        'pro': [
-            'Jusqu\'à 200 utilisateurs',
-            'Plan migré vers Business',
         ],
     }
 
@@ -228,7 +218,7 @@ class Company(db.Model):
     def get_plans_for_display(cls):
         """Retourne les plans formatés pour affichage."""
         plans = []
-        for plan_id in ['free', 'starter', 'business', 'enterprise']:
+        for plan_id in ['free', 'pro', 'business', 'enterprise']:
             plans.append({
                 'id': plan_id,
                 'name': cls.PLAN_LABELS[plan_id],
