@@ -23,7 +23,7 @@ class ActivityLog(db.Model):
     description = db.Column(db.Text)
 
     # Additional context stored as JSON string
-    metadata = db.Column(db.Text)  # JSON encoded extra data
+    extra_data = db.Column(db.Text)  # JSON encoded extra data
 
     # Request info
     ip_address = db.Column(db.String(45))  # IPv6 support
@@ -115,7 +115,7 @@ class ActivityLog(db.Model):
 
     @classmethod
     def log(cls, action, category='general', user_id=None, company_id=None,
-            description=None, metadata=None, ip_address=None, user_agent=None):
+            description=None, extra_data=None, ip_address=None, user_agent=None):
         """Create a new activity log entry."""
         import json
 
@@ -125,19 +125,19 @@ class ActivityLog(db.Model):
             user_id=user_id,
             company_id=company_id,
             description=description,
-            metadata=json.dumps(metadata) if metadata else None,
+            extra_data=json.dumps(extra_data) if extra_data else None,
             ip_address=ip_address,
             user_agent=user_agent
         )
         db.session.add(log_entry)
         return log_entry
 
-    def get_metadata(self):
-        """Parse and return metadata as dict."""
+    def get_extra_data(self):
+        """Parse and return extra_data as dict."""
         import json
-        if self.metadata:
+        if self.extra_data:
             try:
-                return json.loads(self.metadata)
+                return json.loads(self.extra_data)
             except json.JSONDecodeError:
                 return {}
         return {}
