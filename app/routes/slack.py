@@ -840,6 +840,10 @@ def handle_leave_request_submission(payload):
         else:
             pending_msg = "_Votre demande est en attente de validation par votre manager._"
 
+        # URLs pour les boutons
+        request_url = url_for('employee.view_request', request_id=leave_request.id, _external=True)
+        upload_url = f"{request_url}#upload"
+
         service = SlackService(integration)
         service.send_dm(
             slack_user_id,
@@ -849,13 +853,28 @@ def handle_leave_request_submission(payload):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*Demande enregistrée*\n\n"
-                               f"*Type:* {leave_request.leave_type.name}\n"
-                               f"*Du:* {start_date.strftime('%d/%m/%Y')}\n"
-                               f"*Au:* {end_date.strftime('%d/%m/%Y')}\n"
-                               f"*Durée:* {leave_request.days_count} jour(s)\n\n"
+                        "text": f":white_check_mark: *Demande #{leave_request.id} créée*\n\n"
+                               f":calendar: *{start_date.strftime('%d/%m/%Y')}* - *{end_date.strftime('%d/%m/%Y')}* ({leave_request.days_count} jour{'s' if leave_request.days_count > 1 else ''})\n"
+                               f":label: {leave_request.leave_type.name}\n\n"
                                f"{pending_msg}"
                     }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": ":paperclip: Ajouter un justificatif", "emoji": True},
+                            "url": upload_url,
+                            "action_id": "add_document"
+                        },
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Voir la demande", "emoji": True},
+                            "url": request_url,
+                            "action_id": "view_request_link"
+                        }
+                    ]
                 }
             ]
         )
