@@ -119,6 +119,7 @@ class Company(db.Model):
             'Organigramme visuel',
             'SSO / SAML',
             'API personnalisée',
+            'Intégration Teams (sur demande)',
             'Account manager dédié',
             'SLA garanti 99.9%',
         ],
