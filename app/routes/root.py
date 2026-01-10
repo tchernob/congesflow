@@ -145,8 +145,8 @@ def view_company(company_id):
     admins = User.query.filter_by(company_id=company_id, role_id=admin_role.id).all() if admin_role else []
 
     # Leave stats
-    total_requests = LeaveRequest.query.join(User).filter(User.company_id == company_id).count()
-    pending_requests = LeaveRequest.query.join(User).filter(
+    total_requests = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(User.company_id == company_id).count()
+    pending_requests = LeaveRequest.query.join(User, LeaveRequest.employee_id == User.id).filter(
         User.company_id == company_id,
         LeaveRequest.status.in_(['pending_manager', 'pending_hr'])
     ).count()
