@@ -151,7 +151,7 @@
                 <td>{{ user.email }}</td>
                 <td>
                     <span style="font-size: var(--text-xs); background: var(--color-bg-sunken); padding: 2px 6px; border-radius: 4px;">
-                        {{ user.role.description }}
+                        {{ user.role.description if user.role else 'N/A' }}
                     </span>
                 </td>
                 <td>
