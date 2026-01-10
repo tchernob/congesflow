@@ -98,7 +98,7 @@ class Company(db.Model):
             'Règles d\'auto-approbation',
             'Périodes bloquées',
             'Analytics avancés',
-            'Export paie (Silae, PayFit)',
+            'Export paie',
             'Détection conflits d\'équipe',
             'Support prioritaire',
         ],
