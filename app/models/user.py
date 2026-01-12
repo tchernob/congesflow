@@ -199,6 +199,10 @@ class User(UserMixin, db.Model):
     twofa_code = db.Column(db.String(6), nullable=True)
     twofa_code_expires = db.Column(db.DateTime, nullable=True)
 
+    # Password reset
+    password_reset_token = db.Column(db.String(100), unique=True, nullable=True)
+    password_reset_expires = db.Column(db.DateTime, nullable=True)
+
     # Relations
     leave_requests = db.relationship('LeaveRequest', backref='employee', lazy='dynamic',
                                      foreign_keys='LeaveRequest.employee_id')
@@ -276,6 +280,23 @@ class User(UserMixin, db.Model):
         """Clear the 2FA code after successful verification."""
         self.twofa_code = None
         self.twofa_code_expires = None
+
+    def generate_password_reset_token(self):
+        """Generate a secure password reset token valid for 1 hour."""
+        self.password_reset_token = secrets.token_urlsafe(32)
+        self.password_reset_expires = datetime.utcnow() + timedelta(hours=1)
+        return self.password_reset_token
+
+    def verify_password_reset_token(self):
+        """Check if the password reset token is still valid."""
+        if not self.password_reset_token or not self.password_reset_expires:
+            return False
+        return datetime.utcnow() < self.password_reset_expires
+
+    def clear_password_reset_token(self):
+        """Clear the password reset token after password is changed."""
+        self.password_reset_token = None
+        self.password_reset_expires = None
 
     @property
     def is_pending_invitation(self):

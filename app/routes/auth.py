@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
-from app.services.email_service import send_welcome_email, send_2fa_code_email
+from app.services.email_service import send_welcome_email, send_2fa_code_email, send_password_reset_email
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -122,16 +122,58 @@ def logout():
 
 @bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+
     if request.method == 'POST':
         email = request.form.get('email')
         user = User.query.filter_by(email=email).first()
-        if user:
-            # TODO: Envoyer email de réinitialisation
-            pass
-        flash('Si un compte existe avec cet email, vous recevrez un lien de réinitialisation', 'info')
+        if user and user.is_active:
+            token = user.generate_password_reset_token()
+            db.session.commit()
+            send_password_reset_email(user, token)
+        # Always show same message to prevent email enumeration
+        flash('Si un compte existe avec cet email, vous recevrez un lien de réinitialisation.', 'info')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/forgot_password.html')
+
+
+@bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+
+    user = User.query.filter_by(password_reset_token=token).first()
+
+    if not user:
+        flash('Lien de réinitialisation invalide.', 'error')
+        return redirect(url_for('auth.forgot_password'))
+
+    if not user.verify_password_reset_token():
+        flash('Ce lien a expiré. Veuillez faire une nouvelle demande.', 'error')
+        return redirect(url_for('auth.forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form.get('password')
+        password_confirm = request.form.get('password_confirm')
+
+        if not password or len(password) < 8:
+            flash('Le mot de passe doit contenir au moins 8 caractères.', 'error')
+            return render_template('auth/reset_password.html', token=token)
+
+        if password != password_confirm:
+            flash('Les mots de passe ne correspondent pas.', 'error')
+            return render_template('auth/reset_password.html', token=token)
+
+        user.set_password(password)
+        user.clear_password_reset_token()
+        db.session.commit()
+
+        flash('Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter.', 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('auth/reset_password.html', token=token)
 
 
 @bp.route('/setup-password/<token>', methods=['GET', 'POST'])
