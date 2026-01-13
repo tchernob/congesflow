@@ -7,6 +7,7 @@ from app.models.user import User, Role, ContractType
 from app.models.leave import LeaveRequest, LeaveType, LeaveBalance, CompanyLeaveSettings
 from app.models.team import Team
 from app.models.notification import Notification
+from app.models.school_period import SchoolPeriod
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -933,3 +934,155 @@ def subscription():
     return render_template('admin/subscription.html',
                            company=company,
                            plans=plans)
+
+
+# Gestion des périodes école (alternants)
+@bp.route('/school-periods')
+@login_required
+@hr_required
+def school_periods():
+    """Liste des périodes école pour tous les alternants."""
+    year_filter = request.args.get('year', date.today().year, type=int)
+    user_filter = request.args.get('user_id', type=int)
+
+    # Récupérer les alternants de l'entreprise
+    alternants = User.query.join(ContractType).filter(
+        User.company_id == current_user.company_id,
+        User.is_active == True,
+        ContractType.code == 'ALT'
+    ).order_by(User.last_name, User.first_name).all()
+
+    # Récupérer les périodes
+    query = SchoolPeriod.query.filter(
+        SchoolPeriod.company_id == current_user.company_id,
+        db.extract('year', SchoolPeriod.start_date) == year_filter
+    )
+
+    if user_filter:
+        query = query.filter(SchoolPeriod.user_id == user_filter)
+
+    periods = query.join(User).order_by(
+        User.last_name, User.first_name, SchoolPeriod.start_date
+    ).all()
+
+    return render_template('admin/school_periods.html',
+                           periods=periods,
+                           alternants=alternants,
+                           year_filter=year_filter,
+                           user_filter=user_filter)
+
+
+@bp.route('/school-periods/new', methods=['GET', 'POST'])
+@login_required
+@hr_required
+def new_school_period():
+    """Créer une nouvelle période école pour un alternant."""
+    if request.method == 'POST':
+        user_id = request.form.get('user_id', type=int)
+        start_date_str = request.form.get('start_date')
+        end_date_str = request.form.get('end_date')
+        description = request.form.get('description', '')
+
+        # Vérifier que l'utilisateur est un alternant de cette entreprise
+        user = User.query.join(ContractType).filter(
+            User.id == user_id,
+            User.company_id == current_user.company_id,
+            ContractType.code == 'ALT'
+        ).first()
+
+        if not user:
+            flash('Utilisateur non trouvé ou non alternant', 'error')
+            return redirect(url_for('admin.new_school_period'))
+
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            flash('Dates invalides', 'error')
+            return redirect(url_for('admin.new_school_period'))
+
+        if end_date < start_date:
+            flash('La date de fin doit être après la date de début', 'error')
+            return redirect(url_for('admin.new_school_period'))
+
+        period = SchoolPeriod(
+            user_id=user_id,
+            company_id=current_user.company_id,
+            start_date=start_date,
+            end_date=end_date,
+            description=description,
+            created_by_id=current_user.id
+        )
+        db.session.add(period)
+        db.session.commit()
+
+        flash(f'Période école ajoutée pour {user.full_name}', 'success')
+        return redirect(url_for('admin.school_periods'))
+
+    # Récupérer les alternants de l'entreprise
+    alternants = User.query.join(ContractType).filter(
+        User.company_id == current_user.company_id,
+        User.is_active == True,
+        ContractType.code == 'ALT'
+    ).order_by(User.last_name, User.first_name).all()
+
+    preselected_user = request.args.get('user_id', type=int)
+
+    return render_template('admin/new_school_period.html',
+                           alternants=alternants,
+                           preselected_user=preselected_user)
+
+
+@bp.route('/school-periods/<int:period_id>/edit', methods=['GET', 'POST'])
+@login_required
+@hr_required
+def edit_school_period(period_id):
+    """Modifier une période école."""
+    period = SchoolPeriod.query.filter_by(
+        id=period_id,
+        company_id=current_user.company_id
+    ).first_or_404()
+
+    if request.method == 'POST':
+        start_date_str = request.form.get('start_date')
+        end_date_str = request.form.get('end_date')
+        description = request.form.get('description', '')
+
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            flash('Dates invalides', 'error')
+            return redirect(url_for('admin.edit_school_period', period_id=period_id))
+
+        if end_date < start_date:
+            flash('La date de fin doit être après la date de début', 'error')
+            return redirect(url_for('admin.edit_school_period', period_id=period_id))
+
+        period.start_date = start_date
+        period.end_date = end_date
+        period.description = description
+        db.session.commit()
+
+        flash('Période école mise à jour', 'success')
+        return redirect(url_for('admin.school_periods'))
+
+    return render_template('admin/edit_school_period.html', period=period)
+
+
+@bp.route('/school-periods/<int:period_id>/delete', methods=['POST'])
+@login_required
+@hr_required
+def delete_school_period(period_id):
+    """Supprimer une période école."""
+    period = SchoolPeriod.query.filter_by(
+        id=period_id,
+        company_id=current_user.company_id
+    ).first_or_404()
+
+    user_name = period.user.full_name
+    db.session.delete(period)
+    db.session.commit()
+
+    flash(f'Période école supprimée pour {user_name}', 'success')
+    return redirect(url_for('admin.school_periods'))
