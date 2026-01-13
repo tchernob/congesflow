@@ -14,6 +14,7 @@ from app.models.slack import SlackIntegration, SlackUserMapping
 from app.models.leave import LeaveRequest, LeaveType, LeaveBalance, CompanyLeaveSettings
 from app.models.user import User
 from app.models.notification import Notification
+from app.models.school_period import SchoolPeriod
 from app.services.slack_service import SlackService, notify_slack_new_request
 
 bp = Blueprint('slack', __name__, url_prefix='/slack')
@@ -473,7 +474,14 @@ def handle_absents_command(slack_user_id, team_id):
         LeaveRequest.end_date >= today
     ).all()
 
-    if not absents:
+    # Get school periods for today
+    school_periods = SchoolPeriod.query.filter(
+        SchoolPeriod.company_id == user.company_id,
+        SchoolPeriod.start_date <= today,
+        SchoolPeriod.end_date >= today
+    ).all()
+
+    if not absents and not school_periods:
         return jsonify({
             'response_type': 'ephemeral',
             'text': f':office: Personne n\'est absent aujourd\'hui ({today.strftime("%d/%m/%Y")}) !'
@@ -506,10 +514,21 @@ def handle_absents_command(slack_user_id, team_id):
             }
         })
 
+    # Add school periods
+    for period in school_periods:
+        blocks.append({
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f":books: *{period.user.full_name}*\nÉcole ({period.description or 'Formation'})\nJusqu'au {period.end_date.strftime('%d/%m/%Y')}"
+            }
+        })
+
+    total_absent = len(absents) + len(school_periods)
     blocks.append({
         "type": "context",
         "elements": [
-            {"type": "mrkdwn", "text": f":busts_in_silhouette: {len(absents)} personne(s) absente(s)"}
+            {"type": "mrkdwn", "text": f":busts_in_silhouette: {total_absent} personne(s) absente(s)"}
         ]
     })
 
@@ -579,11 +598,25 @@ def handle_equipe_command(slack_user_id, team_id):
             LeaveRequest.end_date >= today
         ).all()
 
+        # Get school periods in the period
+        school_periods = SchoolPeriod.query.filter(
+            SchoolPeriod.user_id == member.id,
+            SchoolPeriod.start_date <= end_date,
+            SchoolPeriod.end_date >= today
+        ).all()
+
+        status_parts = []
+
         if leaves:
-            leave_info = []
             for leave in leaves:
-                leave_info.append(f"{leave.leave_type.name}: {leave.start_date.strftime('%d/%m')} - {leave.end_date.strftime('%d/%m')}")
-            status = ":palm_tree: " + ", ".join(leave_info)
+                status_parts.append(f":palm_tree: {leave.leave_type.name}: {leave.start_date.strftime('%d/%m')} - {leave.end_date.strftime('%d/%m')}")
+
+        if school_periods:
+            for period in school_periods:
+                status_parts.append(f":books: École: {period.start_date.strftime('%d/%m')} - {period.end_date.strftime('%d/%m')}")
+
+        if status_parts:
+            status = "\n".join(status_parts)
         else:
             status = ":white_check_mark: Présent(e)"
 

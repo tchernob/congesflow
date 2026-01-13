@@ -11,6 +11,8 @@ from app.models.blocked_period import BlockedPeriod
 from app.models.auto_approval_rule import AutoApprovalRule
 from app.models.announcement import Announcement
 from app.models.document import LeaveDocument
+from app.models.school_period import SchoolPeriod
+from app.models.user import ContractType
 
 bp = Blueprint('employee', __name__, url_prefix='/employee')
 
@@ -423,3 +425,147 @@ def mark_notification_read(notification_id):
     db.session.commit()
 
     return jsonify({'success': True})
+
+
+# =====================
+# School Periods (Alternants)
+# =====================
+
+@bp.route('/school-periods')
+@login_required
+def school_periods():
+    """Liste des périodes école pour l'utilisateur courant."""
+    # Vérifier que l'utilisateur est un alternant
+    is_alternant = (
+        current_user.contract_type and
+        current_user.contract_type.code == ContractType.ALTERNANT
+    )
+
+    if not is_alternant:
+        flash('Cette fonctionnalité est réservée aux alternants.', 'error')
+        return redirect(url_for('employee.dashboard'))
+
+    year_filter = request.args.get('year', date.today().year, type=int)
+
+    periods = SchoolPeriod.query.filter(
+        SchoolPeriod.user_id == current_user.id,
+        db.extract('year', SchoolPeriod.start_date) == year_filter
+    ).order_by(SchoolPeriod.start_date).all()
+
+    return render_template('employee/school_periods.html',
+                           periods=periods,
+                           year_filter=year_filter,
+                           is_alternant=is_alternant)
+
+
+@bp.route('/school-periods/new', methods=['GET', 'POST'])
+@login_required
+def new_school_period():
+    """Créer une nouvelle période école."""
+    # Vérifier que l'utilisateur est un alternant
+    is_alternant = (
+        current_user.contract_type and
+        current_user.contract_type.code == ContractType.ALTERNANT
+    )
+
+    if not is_alternant:
+        flash('Cette fonctionnalité est réservée aux alternants.', 'error')
+        return redirect(url_for('employee.dashboard'))
+
+    if request.method == 'POST':
+        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
+        end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date()
+        description = request.form.get('description', '').strip()
+
+        # Validation
+        if start_date > end_date:
+            flash('La date de fin doit être après la date de début.', 'error')
+            return redirect(url_for('employee.new_school_period'))
+
+        # Vérifier les chevauchements
+        existing = SchoolPeriod.query.filter(
+            SchoolPeriod.user_id == current_user.id,
+            SchoolPeriod.start_date <= end_date,
+            SchoolPeriod.end_date >= start_date
+        ).first()
+
+        if existing:
+            flash(f'Cette période chevauche une période existante ({existing.start_date.strftime("%d/%m")} - {existing.end_date.strftime("%d/%m")}).', 'error')
+            return redirect(url_for('employee.new_school_period'))
+
+        period = SchoolPeriod(
+            user_id=current_user.id,
+            company_id=current_user.company_id,
+            start_date=start_date,
+            end_date=end_date,
+            description=description or 'École',
+            created_by_id=current_user.id
+        )
+
+        db.session.add(period)
+        db.session.commit()
+
+        flash('Période école ajoutée avec succès.', 'success')
+        return redirect(url_for('employee.school_periods'))
+
+    today = date.today().strftime('%Y-%m-%d')
+    return render_template('employee/new_school_period.html', today=today)
+
+
+@bp.route('/school-periods/<int:period_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_school_period(period_id):
+    """Modifier une période école."""
+    period = SchoolPeriod.query.filter_by(
+        id=period_id,
+        user_id=current_user.id
+    ).first_or_404()
+
+    if request.method == 'POST':
+        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
+        end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date()
+        description = request.form.get('description', '').strip()
+
+        # Validation
+        if start_date > end_date:
+            flash('La date de fin doit être après la date de début.', 'error')
+            return redirect(url_for('employee.edit_school_period', period_id=period_id))
+
+        # Vérifier les chevauchements (exclure la période actuelle)
+        existing = SchoolPeriod.query.filter(
+            SchoolPeriod.user_id == current_user.id,
+            SchoolPeriod.id != period_id,
+            SchoolPeriod.start_date <= end_date,
+            SchoolPeriod.end_date >= start_date
+        ).first()
+
+        if existing:
+            flash(f'Cette période chevauche une période existante ({existing.start_date.strftime("%d/%m")} - {existing.end_date.strftime("%d/%m")}).', 'error')
+            return redirect(url_for('employee.edit_school_period', period_id=period_id))
+
+        period.start_date = start_date
+        period.end_date = end_date
+        period.description = description or 'École'
+
+        db.session.commit()
+
+        flash('Période école modifiée avec succès.', 'success')
+        return redirect(url_for('employee.school_periods'))
+
+    return render_template('employee/edit_school_period.html', period=period)
+
+
+@bp.route('/school-periods/<int:period_id>/delete', methods=['POST'])
+@login_required
+def delete_school_period(period_id):
+    """Supprimer une période école."""
+    period = SchoolPeriod.query.filter_by(
+        id=period_id,
+        user_id=current_user.id
+    ).first_or_404()
+
+    db.session.delete(period)
+    db.session.commit()
+
+    flash('Période école supprimée.', 'success')
+    return redirect(url_for('employee.school_periods'))

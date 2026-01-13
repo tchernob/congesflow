@@ -6,6 +6,7 @@ from app.models.user import User
 from app.models.leave import LeaveRequest, LeaveType, LeaveBalance, CompanyLeaveSettings
 from app.models.team import Team
 from app.models.notification import Notification
+from app.models.school_period import SchoolPeriod
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -73,7 +74,49 @@ def calendar_events():
                 'employee_name': leave.employee.full_name,
                 'leave_type': leave.leave_type.name,
                 'days_count': leave.days_count,
-                'status': leave.status
+                'status': leave.status,
+                'type': 'leave'
+            }
+        })
+
+    # Ajouter les périodes école (alternants)
+    school_query = SchoolPeriod.query.join(User, SchoolPeriod.user_id == User.id).filter(
+        SchoolPeriod.company_id == current_user.company_id,
+        SchoolPeriod.start_date <= end_date,
+        SchoolPeriod.end_date >= start_date
+    )
+
+    # Filtrer par équipe si nécessaire
+    if team_id:
+        team = Team.query.filter_by(id=team_id, company_id=current_user.company_id).first()
+        if team:
+            team_member_ids = [u.id for u in User.query.filter_by(team_id=team_id, company_id=current_user.company_id).all()]
+            school_query = school_query.filter(SchoolPeriod.user_id.in_(team_member_ids))
+    elif not current_user.is_hr():
+        if current_user.is_manager():
+            team_member_ids = [m.id for m in current_user.subordinates] + [current_user.id]
+        else:
+            team_member_ids = [current_user.id]
+            if current_user.team_id:
+                team_member_ids = [u.id for u in User.query.filter_by(team_id=current_user.team_id, company_id=current_user.company_id).all()]
+        school_query = school_query.filter(SchoolPeriod.user_id.in_(team_member_ids))
+
+    school_periods = school_query.all()
+
+    for period in school_periods:
+        events.append({
+            'id': f"school_{period.id}",
+            'title': f"{period.user.full_name} - École",
+            'start': period.start_date.isoformat(),
+            'end': (period.end_date + timedelta(days=1)).isoformat(),
+            'color': '#8B5CF6',  # Violet pour école
+            'extendedProps': {
+                'employee_id': period.user_id,
+                'employee_name': period.user.full_name,
+                'leave_type': period.description or 'École',
+                'days_count': period.duration_days,
+                'status': 'school',
+                'type': 'school'
             }
         })
 

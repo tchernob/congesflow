@@ -14,6 +14,7 @@ from app.models.announcement import Announcement
 from app.models.document import LeaveDocument
 from app.models.site import Site, SiteHoliday
 from app.models.auto_approval_rule import AutoApprovalRule
+from app.models.school_period import SchoolPeriod
 
 __all__ = [
     'Company', 'CompanyInvitation',
@@ -30,5 +31,6 @@ __all__ = [
     'Announcement',
     'LeaveDocument',
     'Site', 'SiteHoliday',
-    'AutoApprovalRule'
+    'AutoApprovalRule',
+    'SchoolPeriod'
 ]
