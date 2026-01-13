@@ -961,7 +961,7 @@ def school_periods():
     if user_filter:
         query = query.filter(SchoolPeriod.user_id == user_filter)
 
-    periods = query.join(User).order_by(
+    periods = query.join(User, SchoolPeriod.user_id == User.id).order_by(
         User.last_name, User.first_name, SchoolPeriod.start_date
     ).all()
 
