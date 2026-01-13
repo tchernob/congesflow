@@ -605,26 +605,45 @@ def handle_equipe_command(slack_user_id, team_id):
             SchoolPeriod.end_date >= today
         ).all()
 
-        status_parts = []
+        # Calculate absence days in the 7-day period
+        absence_details = []
+        total_absence_days = 0
 
-        if leaves:
-            for leave in leaves:
-                status_parts.append(f":palm_tree: {leave.leave_type.name}: {leave.start_date.strftime('%d/%m')} - {leave.end_date.strftime('%d/%m')}")
+        for leave in leaves:
+            # Calculate overlap with the 7-day period
+            overlap_start = max(leave.start_date, today)
+            overlap_end = min(leave.end_date, end_date)
+            days = (overlap_end - overlap_start).days + 1
+            total_absence_days += days
+            absence_details.append(f":palm_tree: {leave.leave_type.name}: {leave.start_date.strftime('%d/%m')} - {leave.end_date.strftime('%d/%m')}")
 
-        if school_periods:
-            for period in school_periods:
-                status_parts.append(f":books: École: {period.start_date.strftime('%d/%m')} - {period.end_date.strftime('%d/%m')}")
+        for period in school_periods:
+            # Calculate overlap with the 7-day period
+            overlap_start = max(period.start_date, today)
+            overlap_end = min(period.end_date, end_date)
+            days = (overlap_end - overlap_start).days + 1
+            total_absence_days += days
+            absence_details.append(f":books: École: {period.start_date.strftime('%d/%m')} - {period.end_date.strftime('%d/%m')}")
 
-        if status_parts:
-            status = "\n".join(status_parts)
+        # Determine status icon based on absence
+        if total_absence_days == 0:
+            # Fully present - green
+            status_icon = ":large_green_circle:"
+            status_text = "Présent(e)"
+        elif total_absence_days >= 7:
+            # Fully absent - red
+            status_icon = ":red_circle:"
+            status_text = "\n".join(absence_details)
         else:
-            status = ":white_check_mark: Présent(e)"
+            # Partially absent - orange
+            status_icon = ":large_orange_circle:"
+            status_text = "\n".join(absence_details)
 
         blocks.append({
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"*{member.full_name}*\n{status}"
+                "text": f"{status_icon} *{member.full_name}*\n{status_text}"
             }
         })
 
