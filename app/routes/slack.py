@@ -625,17 +625,29 @@ def handle_equipe_command(slack_user_id, team_id):
             total_absence_days += days
             absence_details.append(f":books: École: {period.start_date.strftime('%d/%m')} - {period.end_date.strftime('%d/%m')}")
 
+        # Check if absent today
+        absent_today = False
+        for leave in leaves:
+            if leave.start_date <= today <= leave.end_date:
+                absent_today = True
+                break
+        if not absent_today:
+            for period in school_periods:
+                if period.start_date <= today <= period.end_date:
+                    absent_today = True
+                    break
+
         # Determine status icon based on absence
         if total_absence_days == 0:
             # Fully present - green
             status_icon = ":large_green_circle:"
             status_text = "Présent(e)"
-        elif total_absence_days >= 7:
-            # Fully absent - red
+        elif absent_today or total_absence_days >= 7:
+            # Absent today or fully absent - red
             status_icon = ":red_circle:"
             status_text = "\n".join(absence_details)
         else:
-            # Partially absent - orange
+            # Partially absent (but present today) - orange
             status_icon = ":large_orange_circle:"
             status_text = "\n".join(absence_details)
 
