@@ -1038,11 +1038,15 @@ def handle_approve(leave_request, approver, payload):
     else:
         return jsonify({
             'response_type': 'ephemeral',
-            'text': 'Cette demande ne peut pas être approuvée dans son état actuel.'
+            'text': f'Cette demande ne peut pas être approuvée dans son état actuel (statut: {leave_request.status}).'
         })
 
     Notification.notify_leave_request_approved(leave_request, approver)
     db.session.commit()
+
+    # Send email notification
+    from app.services.email_service import send_leave_approved_notification
+    send_leave_approved_notification(leave_request, approver)
 
     # Update the original message
     return jsonify({
@@ -1066,12 +1070,16 @@ def handle_reject(leave_request, rejector, payload):
     if leave_request.status not in [LeaveRequest.STATUS_PENDING_MANAGER, LeaveRequest.STATUS_PENDING_HR]:
         return jsonify({
             'response_type': 'ephemeral',
-            'text': 'Cette demande ne peut pas être refusée dans son état actuel.'
+            'text': f'Cette demande ne peut pas être refusée dans son état actuel (statut: {leave_request.status}).'
         })
 
     leave_request.reject(rejector, "Refusé via Slack")
     Notification.notify_leave_request_rejected(leave_request, rejector)
     db.session.commit()
+
+    # Send email notification
+    from app.services.email_service import send_leave_rejected_notification
+    send_leave_rejected_notification(leave_request, rejector, "Refusé via Slack")
 
     # Update the original message
     return jsonify({
