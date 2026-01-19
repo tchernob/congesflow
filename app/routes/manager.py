@@ -139,10 +139,15 @@ def approve_request(request_id):
     db.session.commit()
 
     # Notification Slack
-    from app.services.slack_service import notify_slack_approved
+    from app.services.slack_service import notify_slack_approved, notify_slack_hr_pending
     notify_slack_approved(leave_request, current_user)
 
-    flash('Demande approuvée et transmise aux RH', 'success')
+    # Si la demande passe aux RH, les notifier
+    if leave_request.status == LeaveRequest.STATUS_PENDING_HR:
+        notify_slack_hr_pending(leave_request)
+        flash('Demande approuvée et transmise aux RH', 'success')
+    else:
+        flash('Demande approuvée', 'success')
     return redirect(url_for('manager.requests'))
 
 

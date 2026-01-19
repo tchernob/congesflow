@@ -63,6 +63,7 @@ class SlackService:
 
         employee = leave_request.employee
         leave_type = leave_request.leave_type
+        request_url = url_for('employee.view_request', request_id=leave_request.id, _external=True)
 
         blocks = [
             {
@@ -142,8 +143,8 @@ class SlackService:
                         "text": "Voir détails",
                         "emoji": True
                     },
-                    "action_id": "view_request",
-                    "value": str(leave_request.id)
+                    "url": request_url,
+                    "action_id": "view_request_link"
                 }
             ]
         })
@@ -190,6 +191,109 @@ class SlackService:
 
         if employee_mapping:
             self.send_dm(employee_mapping.slack_user_id, text, blocks)
+
+    def notify_hr_pending(self, leave_request):
+        """Notify HR users that a request is pending their approval."""
+        from app.models.user import User
+
+        employee = leave_request.employee
+        request_url = url_for('employee.view_request', request_id=leave_request.id, _external=True)
+
+        blocks = [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Demande en attente de validation RH",
+                    "emoji": True
+                }
+            },
+            {
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Employé:*\n{employee.full_name}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Type:*\n{leave_request.leave_type.name}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Du:*\n{leave_request.start_date.strftime('%d/%m/%Y')}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Au:*\n{leave_request.end_date.strftime('%d/%m/%Y')}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Durée:*\n{leave_request.days_count} jour(s)"
+                    }
+                ]
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"_Approuvée par le manager {leave_request.manager_approved_by.full_name if leave_request.manager_approved_by else ''}_"
+                    }
+                ]
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Approuver",
+                            "emoji": True
+                        },
+                        "style": "primary",
+                        "action_id": "approve_request",
+                        "value": str(leave_request.id)
+                    },
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Refuser",
+                            "emoji": True
+                        },
+                        "style": "danger",
+                        "action_id": "reject_request",
+                        "value": str(leave_request.id)
+                    },
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Voir détails",
+                            "emoji": True
+                        },
+                        "url": request_url,
+                        "action_id": "view_request_link"
+                    }
+                ]
+            }
+        ]
+
+        text = f"Demande de {employee.full_name} en attente de validation RH"
+
+        # Find HR users and notify them
+        hr_users = User.query.filter_by(
+            company_id=employee.company_id,
+            role='hr',
+            is_active=True
+        ).all()
+
+        for hr_user in hr_users:
+            hr_mapping = SlackUserMapping.query.filter_by(user_id=hr_user.id).first()
+            if hr_mapping:
+                self.send_dm(hr_mapping.slack_user_id, text, blocks)
 
     def notify_request_rejected(self, leave_request, rejected_by, reason=None):
         """Notify that a request was rejected."""
@@ -348,6 +452,16 @@ def notify_slack_rejected(leave_request, rejected_by, reason=None):
             service.notify_request_rejected(leave_request, rejected_by, reason)
         except Exception as e:
             current_app.logger.error(f'Failed to send Slack notification: {e}')
+
+
+def notify_slack_hr_pending(leave_request):
+    """Helper to notify HR via Slack that a request needs their approval."""
+    service = get_slack_service(leave_request.employee.company_id)
+    if service:
+        try:
+            service.notify_hr_pending(leave_request)
+        except Exception as e:
+            current_app.logger.error(f'Failed to send Slack HR notification: {e}')
 
 
 def link_user_to_slack(user):

@@ -1058,6 +1058,8 @@ def handle_block_action(payload):
 
 def handle_approve(leave_request, approver, payload):
     """Handle approval from Slack."""
+    was_pending_manager = leave_request.status == LeaveRequest.STATUS_PENDING_MANAGER
+
     if leave_request.status == LeaveRequest.STATUS_PENDING_MANAGER:
         leave_request.approve_by_manager(approver)
         action_text = "approuvée par le manager"
@@ -1076,6 +1078,11 @@ def handle_approve(leave_request, approver, payload):
     # Send email notification
     from app.services.email_service import send_leave_approved_notification
     send_leave_approved_notification(leave_request, approver)
+
+    # If approved by manager and now pending HR, notify HR users
+    if was_pending_manager and leave_request.status == LeaveRequest.STATUS_PENDING_HR:
+        from app.services.slack_service import notify_slack_hr_pending
+        notify_slack_hr_pending(leave_request)
 
     # Build the updated message
     updated_message = {
