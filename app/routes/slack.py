@@ -1034,7 +1034,7 @@ def handle_block_action(payload):
         return handle_reject(leave_request, user, payload)
     elif action_id == 'view_request':
         # Return a link to view the request
-        request_url = url_for('leave.view_request', request_id=request_id, _external=True)
+        request_url = url_for('employee.view_request', request_id=request_id, _external=True)
         return jsonify({
             'response_type': 'ephemeral',
             'text': f'<{request_url}|Voir la demande dans TimeOff>'
