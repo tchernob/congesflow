@@ -892,6 +892,11 @@ def handle_leave_request_submission(payload):
     # Send Slack notification to manager
     notify_slack_new_request(leave_request)
 
+    # Send email notification to manager
+    from app.services.email_service import send_leave_request_notification
+    if user.manager:
+        send_leave_request_notification(leave_request, user.manager)
+
     # Send confirmation to user via Slack DM
     slack_user_id = payload.get('user', {}).get('id')
     team_id = payload.get('team', {}).get('id')
