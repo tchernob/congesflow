@@ -996,6 +996,8 @@ def handle_block_action(payload):
     import json
 
     actions = payload.get('actions', [])
+    current_app.logger.info(f'Block action payload actions: {json.dumps(actions)}')
+
     if not actions:
         current_app.logger.warning('No actions in payload')
         return jsonify({'ok': True})
