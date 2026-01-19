@@ -767,6 +767,7 @@ def interactions():
     """Handle interactive messages from Slack (button clicks, modal submissions)."""
     # Verify request signature
     if not verify_slack_signature(request):
+        current_app.logger.warning('Slack signature verification failed')
         return jsonify({'error': 'Invalid signature'}), 403
 
     # Parse payload
@@ -774,12 +775,14 @@ def interactions():
     payload = json.loads(request.form.get('payload', '{}'))
 
     action_type = payload.get('type')
+    current_app.logger.info(f'Slack interaction received: type={action_type}')
 
     if action_type == 'block_actions':
         return handle_block_action(payload)
     elif action_type == 'view_submission':
         return handle_view_submission(payload)
 
+    current_app.logger.warning(f'Unknown Slack action type: {action_type}')
     return jsonify({'ok': True})
 
 
@@ -983,11 +986,14 @@ def handle_block_action(payload):
 
     actions = payload.get('actions', [])
     if not actions:
+        current_app.logger.warning('No actions in payload')
         return jsonify({'ok': True})
 
     action = actions[0]
     action_id = action.get('action_id')
     request_id = action.get('value')
+
+    current_app.logger.info(f'Block action: action_id={action_id}, request_id={request_id}')
 
     user_info = payload.get('user', {})
     slack_user_id = user_info.get('id')
@@ -995,6 +1001,7 @@ def handle_block_action(payload):
     # Find the user mapping
     user_mapping = SlackUserMapping.query.filter_by(slack_user_id=slack_user_id).first()
     if not user_mapping:
+        current_app.logger.warning(f'No user mapping for slack_user_id={slack_user_id}')
         return jsonify({
             'response_type': 'ephemeral',
             'text': 'Votre compte Slack n\'est pas lié à TimeOff. Connectez-vous à l\'application pour lier votre compte.'
@@ -1004,14 +1011,18 @@ def handle_block_action(payload):
     leave_request = LeaveRequest.query.get(request_id)
 
     if not leave_request:
+        current_app.logger.warning(f'Leave request not found: id={request_id}')
         return jsonify({
             'response_type': 'ephemeral',
             'text': 'Demande introuvable.'
         })
 
+    current_app.logger.info(f'Leave request found: id={leave_request.id}, status={leave_request.status}')
+
     # Check permissions: user must be HR or the manager of the employee
     is_employee_manager = leave_request.employee.manager_id == user.id
     if not is_employee_manager and not user.is_hr():
+        current_app.logger.warning(f'User {user.id} not authorized to approve request {leave_request.id}')
         return jsonify({
             'response_type': 'ephemeral',
             'text': 'Vous n\'êtes pas autorisé à traiter cette demande.'
