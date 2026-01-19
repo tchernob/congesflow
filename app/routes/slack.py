@@ -1004,8 +1004,9 @@ def handle_block_action(payload):
             'text': 'Demande introuvable.'
         })
 
-    # Check permissions
-    if not user.is_manager_of(leave_request.employee) and not user.is_hr():
+    # Check permissions: user must be HR or the manager of the employee
+    is_employee_manager = leave_request.employee.manager_id == user.id
+    if not is_employee_manager and not user.is_hr():
         return jsonify({
             'response_type': 'ephemeral',
             'text': 'Vous n\'êtes pas autorisé à traiter cette demande.'
