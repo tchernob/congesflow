@@ -965,8 +965,15 @@ def verify_slack_signature(req):
     timestamp = req.headers.get('X-Slack-Request-Timestamp', '')
     signature = req.headers.get('X-Slack-Signature', '')
 
+    current_app.logger.info(f'Slack signature check: timestamp={timestamp}, signature={signature[:20]}...')
+
     # Check timestamp to prevent replay attacks
-    if abs(time.time() - int(timestamp)) > 60 * 5:
+    try:
+        if abs(time.time() - int(timestamp)) > 60 * 5:
+            current_app.logger.warning(f'Slack timestamp too old: {timestamp}, current: {time.time()}')
+            return False
+    except (ValueError, TypeError) as e:
+        current_app.logger.warning(f'Invalid timestamp: {timestamp}, error: {e}')
         return False
 
     # Compute signature
@@ -977,7 +984,11 @@ def verify_slack_signature(req):
         hashlib.sha256
     ).hexdigest()
 
-    return hmac.compare_digest(my_signature, signature)
+    result = hmac.compare_digest(my_signature, signature)
+    if not result:
+        current_app.logger.warning(f'Signature mismatch: expected={my_signature[:20]}..., got={signature[:20]}...')
+
+    return result
 
 
 def handle_block_action(payload):
