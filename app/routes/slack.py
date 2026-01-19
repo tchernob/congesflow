@@ -1077,9 +1077,8 @@ def handle_approve(leave_request, approver, payload):
     from app.services.email_service import send_leave_approved_notification
     send_leave_approved_notification(leave_request, approver)
 
-    # Update the original message
-    return jsonify({
-        'response_type': 'in_channel',
+    # Build the updated message
+    updated_message = {
         'replace_original': True,
         'text': f'Demande de {leave_request.employee.full_name} {action_text} par {approver.full_name}.',
         'blocks': [
@@ -1091,7 +1090,19 @@ def handle_approve(leave_request, approver, payload):
                 }
             }
         ]
-    })
+    }
+
+    # Send update via response_url for reliable message update
+    response_url = payload.get('response_url')
+    if response_url:
+        try:
+            resp = requests.post(response_url, json=updated_message, timeout=5)
+            current_app.logger.info(f'Response URL update result: status={resp.status_code}, body={resp.text[:200]}')
+        except Exception as e:
+            current_app.logger.error(f'Failed to update message via response_url: {e}')
+
+    # Return empty 200 to acknowledge the interaction
+    return '', 200
 
 
 def handle_reject(leave_request, rejector, payload):
@@ -1110,9 +1121,8 @@ def handle_reject(leave_request, rejector, payload):
     from app.services.email_service import send_leave_rejected_notification
     send_leave_rejected_notification(leave_request, rejector, "Refusé via Slack")
 
-    # Update the original message
-    return jsonify({
-        'response_type': 'in_channel',
+    # Build the updated message
+    updated_message = {
         'replace_original': True,
         'text': f'Demande de {leave_request.employee.full_name} refusée par {rejector.full_name}.',
         'blocks': [
@@ -1124,7 +1134,19 @@ def handle_reject(leave_request, rejector, payload):
                 }
             }
         ]
-    })
+    }
+
+    # Send update via response_url for reliable message update
+    response_url = payload.get('response_url')
+    if response_url:
+        try:
+            resp = requests.post(response_url, json=updated_message, timeout=5)
+            current_app.logger.info(f'Response URL update result: status={resp.status_code}, body={resp.text[:200]}')
+        except Exception as e:
+            current_app.logger.error(f'Failed to update message via response_url: {e}')
+
+    # Return empty 200 to acknowledge the interaction
+    return '', 200
 
 
 # User Mapping
