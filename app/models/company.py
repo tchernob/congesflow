@@ -33,6 +33,7 @@ class Company(db.Model):
 
     # Status
     is_active = db.Column(db.Boolean, default=True)
+    is_internal = db.Column(db.Boolean, default=False)  # Internal company (no billing, all features)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -141,11 +142,31 @@ class Company(db.Model):
 
     @property
     def can_add_employee(self):
+        # Les entreprises internes n'ont pas de limite
+        if self.is_internal:
+            return True
         return self.employee_count < self.max_employees
+
+    @property
+    def effective_plan(self):
+        """Retourne le plan effectif (enterprise pour les internes)."""
+        if self.is_internal:
+            return self.PLAN_ENTERPRISE
+        return self.plan
+
+    @property
+    def effective_max_employees(self):
+        """Retourne la limite effective d'employés."""
+        if self.is_internal:
+            return 9999
+        return self.max_employees
 
     @property
     def is_in_trial(self):
         """Vérifie si l'entreprise est en période d'essai."""
+        # Les entreprises internes ne sont jamais en essai
+        if self.is_internal:
+            return False
         if not self.trial_ends_at:
             return False
         return datetime.utcnow() <= self.trial_ends_at
@@ -153,6 +174,9 @@ class Company(db.Model):
     @property
     def is_trial_expired(self):
         """Vérifie si l'essai est terminé."""
+        # Les entreprises internes n'ont pas d'essai qui expire
+        if self.is_internal:
+            return False
         if not self.trial_ends_at:
             return False
         return datetime.utcnow() > self.trial_ends_at
@@ -160,6 +184,9 @@ class Company(db.Model):
     @property
     def trial_days_remaining(self):
         """Nombre de jours restants dans l'essai."""
+        # Les entreprises internes n'ont pas de limite
+        if self.is_internal:
+            return 999
         if not self.trial_ends_at:
             return 0
         delta = self.trial_ends_at - datetime.utcnow()
@@ -168,6 +195,9 @@ class Company(db.Model):
     @property
     def is_subscription_active(self):
         """Vérifie si l'abonnement est actif."""
+        # Les entreprises internes ont toujours un abonnement actif
+        if self.is_internal:
+            return True
         # Si en essai, l'abonnement est "actif" pendant l'essai
         if self.is_in_trial:
             return True
