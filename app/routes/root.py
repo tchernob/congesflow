@@ -281,6 +281,16 @@ def edit_company(company_id):
         # Active status
         company.is_active = request.form.get('is_active') == 'on'
 
+        # Internal company (no billing, all features)
+        was_internal = company.is_internal
+        company.is_internal = request.form.get('is_internal') == 'on'
+
+        # If marked as internal, auto-set enterprise plan
+        if company.is_internal and not was_internal:
+            company.plan = Company.PLAN_ENTERPRISE
+            company.max_employees = 9999
+            flash('Entreprise marquée comme interne avec plan Enterprise illimité.', 'info')
+
         db.session.commit()
         flash('Entreprise mise à jour avec succès.', 'success')
         return redirect(url_for('root.view_company', company_id=company_id))

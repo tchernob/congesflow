@@ -66,6 +66,9 @@
                     <a href="{{ url_for('root.view_company', company_id=company.id) }}" class="company-name" style="color: var(--color-ink); text-decoration: none;">
                         {{ company.name }}
                     </a>
+                    {% if company.is_internal %}
+                    <span style="background: var(--root-accent); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 500;">INTERNE</span>
+                    {% endif %}
                 </td>
                 <td>
                     <span class="plan-badge {{ company.plan }}">{{ company.plan_label }}</span>
